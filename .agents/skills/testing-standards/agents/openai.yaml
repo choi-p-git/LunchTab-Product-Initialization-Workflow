@@ -1,0 +1,4 @@
+interface:
+  display_name: "Testing Standards"
+  short_description: "Plan focused, reliable tests for any codebase"
+  default_prompt: "Apply repository testing standards to identify observable contracts, select proportionate coverage, write reliable tests, and report results."

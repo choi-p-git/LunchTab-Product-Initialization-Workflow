@@ -1,0 +1,18 @@
+.venv/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+build/
+dist/
+release/
+business-analysis/
+business analysis/
+.agents/skills/business-analysis/
+
+# Source exports and generated artifacts stay local to the operator machine.
+Raw Data/
+Processed Data/
+
+# Local reference library; distill durable rules into docs/config before tracking.
+Lunch Tab Knowledge Base/

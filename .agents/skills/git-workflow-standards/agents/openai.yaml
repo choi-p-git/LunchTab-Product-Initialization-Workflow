@@ -1,0 +1,4 @@
+interface:
+  display_name: "Odin Git Workflow Standards"
+  short_description: "Apply safe Git practices for the Odin project"
+  default_prompt: "Use $git-workflow-standards to prepare an Odin Lunchtab Git change."

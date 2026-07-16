@@ -1,0 +1,4 @@
+interface:
+  display_name: "Odin GitHub Workflow Standards"
+  short_description: "Publish and review Odin changes safely on GitHub"
+  default_prompt: "Use $github-workflow-standards for an Odin Lunchtab GitHub workflow."

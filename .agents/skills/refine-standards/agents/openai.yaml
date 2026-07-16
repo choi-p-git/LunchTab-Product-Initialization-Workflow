@@ -1,0 +1,4 @@
+interface:
+  display_name: "Refine Standards"
+  short_description: "Improve repository skills from task evidence"
+  default_prompt: "Review task evidence and user feedback, identify durable deficiencies in repository skills, and make validated refinements when the evidence threshold is met."

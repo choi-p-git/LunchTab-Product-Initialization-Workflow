@@ -1,0 +1,4 @@
+interface:
+  display_name: "Odin Tkinter GUI Standards"
+  short_description: "Apply Odin desktop GUI and packaging standards"
+  default_prompt: "Use $tkinter-gui-standards for Odin Lunchtab desktop GUI work."
