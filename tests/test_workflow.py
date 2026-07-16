@@ -74,4 +74,8 @@ def test_build_product_import_accepts_complete_matched_row(tmp_path: Path) -> No
     with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
     assert rows[0]["BaseProductPosName"] == "AsstColdCereals"
-    assert rows[0]["ProductCategories"] == "Breakfast;"
+    assert rows[0]["ProductCategories"] == "Breakfast;Exempt Prepared;"
+    with result.summary.output_paths.category_audit.open(encoding="utf-8-sig", newline="") as file:
+        audit_rows = list(csv.DictReader(file))
+    assert audit_rows[0]["FinalCategories"] == "Breakfast;Exempt Prepared;"
+    assert audit_rows[0]["ConfidenceBand"] == "high"

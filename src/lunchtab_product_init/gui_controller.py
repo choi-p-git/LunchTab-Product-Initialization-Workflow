@@ -21,6 +21,7 @@ class AppState:
     product_template_path: Path | None = None
     recipe_list_path: Path | None = None
     odin_inventory_path: Path | None = None
+    category_profile_path: Path | None = None
     output_root: Path = default_output_root()
     phase: AppPhase = AppPhase.EMPTY
     result: BuildResult | None = None
@@ -51,6 +52,10 @@ class AppController:
 
     def select_output_root(self, path: Path) -> AppState:
         self.state = replace(self.state, output_root=path)
+        return self.state
+
+    def select_category_profile(self, path: Path | None) -> AppState:
+        self.state = replace(self.state, category_profile_path=path, result=None)
         return self.state
 
     def begin_build(self) -> AppState:

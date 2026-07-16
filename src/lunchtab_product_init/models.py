@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 
 LUNCHTAB_TEMPLATE_HEADERS = (
@@ -51,12 +52,64 @@ class PosNameResult:
     abbreviation_steps: tuple[str, ...]
 
 
+CategoryRole = Literal["food", "policy", "hybrid"]
+SpendingPolicy = Literal["none", "restrictable", "exempt"]
+CategoryRuleType = Literal[
+    "barcode",
+    "item_name",
+    "source_category",
+    "phrase",
+    "token",
+]
+
+
+@dataclass(frozen=True)
+class CategoryCatalogEntry:
+    name: str
+    role: CategoryRole
+    spending_policy: SpendingPolicy = "none"
+    enabled: bool = True
+    notes: str = ""
+
+
+@dataclass(frozen=True)
+class CategoryRule:
+    rule_id: str
+    rule_type: CategoryRuleType
+    pattern: str
+    categories: tuple[str, ...]
+    confidence: int
+    priority: int
+    enabled: bool = True
+    notes: str = ""
+
+
+@dataclass(frozen=True)
+class CategoryProfile:
+    schema_version: int
+    name: str
+    catalog: tuple[CategoryCatalogEntry, ...]
+    rules: tuple[CategoryRule, ...]
+
+
+@dataclass(frozen=True)
+class CategoryResult:
+    categories: tuple[str, ...]
+    status: str
+    confidence: int
+    confidence_band: str
+    reason: str
+    matched_rules: tuple[str, ...]
+    source_evidence: tuple[str, ...]
+
+
 @dataclass(frozen=True)
 class BuildInputs:
     product_template_path: Path
     recipe_list_path: Path
     odin_inventory_path: Path
     output_root: Path
+    category_profile_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -66,6 +119,7 @@ class OutputPaths:
     accepted_audit: Path
     rejected_audit: Path
     naming_audit: Path
+    category_audit: Path
     manifest: Path
     summary: Path
 
@@ -78,6 +132,7 @@ class BuildSummary:
     rejected_rows: int
     duplicate_barcodes: int
     duplicate_pos_names: int
+    category_review_rows: int
     output_paths: OutputPaths
 
 

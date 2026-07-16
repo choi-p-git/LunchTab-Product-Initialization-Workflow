@@ -10,6 +10,11 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from lunchtab_product_init.categories import (
+    format_product_categories,
+    infer_categories,
+    load_category_profile,
+)
 from lunchtab_product_init.io import read_csv, read_inventory_workbook, write_csv
 from lunchtab_product_init.models import (
     BuildInputs,
@@ -17,6 +22,7 @@ from lunchtab_product_init.models import (
     BuildSummary,
     LUNCHTAB_TEMPLATE_HEADERS,
     OutputPaths,
+    CategoryResult,
     PosNameResult,
     ProductCandidate,
 )
@@ -27,6 +33,7 @@ MANUAL_REVIEW_OUTPUT_NAME = "Manual Review Products.csv"
 ACCEPTED_AUDIT_NAME = "Accepted Product Audit.csv"
 REJECTED_AUDIT_NAME = "Rejected Product Audit.csv"
 NAMING_AUDIT_NAME = "BaseProductPosName Audit.csv"
+CATEGORY_AUDIT_NAME = "Product Category Audit.csv"
 
 
 def default_output_root() -> Path:
@@ -54,11 +61,6 @@ def _handle(name: str, barcode: str) -> str:
     base = "-".join(normalize_text(name).split())[:48].strip("-") or "product"
     suffix = re.sub(r"[^a-zA-Z0-9]", "", barcode)[-6:]
     return f"{base}-{suffix}" if suffix else base
-
-
-def _category(value: str) -> str:
-    cleaned = " ".join(str(value or "").split())
-    return f"{cleaned};" if cleaned and not cleaned.endswith(";") else cleaned
 
 
 def read_lunchtab_template(path: Path) -> list[str]:
@@ -176,6 +178,7 @@ def merge_candidates(
 
 def classify_candidates(
     candidates: list[ProductCandidate],
+    categories: dict[str, CategoryResult],
 ) -> tuple[list[ProductCandidate], list[ProductCandidate], dict[str, PosNameResult]]:
     barcode_duplicates = duplicate_values([candidate.barcode for candidate in candidates])
     generated: dict[str, PosNameResult] = {}
@@ -198,7 +201,10 @@ def classify_candidates(
             reasons.append("missing barcode")
         if candidate.barcode in barcode_duplicates:
             reasons.append("duplicate barcode")
-        if not candidate.category:
+        category_result = categories[candidate.source_key]
+        if category_result.status != "ok":
+            reasons.append(category_result.reason)
+        if not category_result.categories:
             reasons.append("missing category")
         if candidate.source != "recipe+odin":
             reasons.append("not matched between recipe list and Odin")
@@ -217,7 +223,12 @@ def classify_candidates(
     return accepted, review, generated
 
 
-def product_row(headers: list[str], candidate: ProductCandidate, pos_name: str) -> dict[str, str]:
+def product_row(
+    headers: list[str],
+    candidate: ProductCandidate,
+    pos_name: str,
+    category_result: CategoryResult,
+) -> dict[str, str]:
     row = {header: "" for header in headers}
     row.update(
         {
@@ -230,13 +241,17 @@ def product_row(headers: list[str], candidate: ProductCandidate, pos_name: str) 
             "ShortDescription": candidate.item_name,
             "IsPublished": "true",
             "IsOrderable": "true",
-            "ProductCategories": _category(candidate.category),
+            "ProductCategories": format_product_categories(category_result.categories),
         }
     )
     return row
 
 
-def _audit_row(candidate: ProductCandidate, name_result: PosNameResult) -> dict[str, str]:
+def _audit_row(
+    candidate: ProductCandidate,
+    name_result: PosNameResult,
+    category_result: CategoryResult,
+) -> dict[str, str]:
     return {
         "Source": candidate.source,
         "SourceKey": candidate.source_key,
@@ -250,6 +265,10 @@ def _audit_row(candidate: ProductCandidate, name_result: PosNameResult) -> dict[
         "Confidence": candidate.confidence,
         "ReviewReason": candidate.review_reason,
         "GeneratedBaseProductPosName": name_result.value,
+        "FinalCategories": format_product_categories(category_result.categories),
+        "CategoryConfidence": str(category_result.confidence),
+        "CategoryConfidenceBand": category_result.confidence_band,
+        "CategoryMatchedRules": " | ".join(category_result.matched_rules),
     }
 
 
@@ -260,6 +279,7 @@ def _output_paths(run_dir: Path) -> OutputPaths:
         accepted_audit=run_dir / ACCEPTED_AUDIT_NAME,
         rejected_audit=run_dir / REJECTED_AUDIT_NAME,
         naming_audit=run_dir / NAMING_AUDIT_NAME,
+        category_audit=run_dir / CATEGORY_AUDIT_NAME,
         manifest=run_dir / "run-manifest.json",
         summary=run_dir / "run-summary.md",
     )
@@ -275,15 +295,28 @@ def _sha256(path: Path) -> str:
 
 def build_product_import(inputs: BuildInputs) -> BuildResult:
     headers = read_lunchtab_template(inputs.product_template_path)
+    category_profile = load_category_profile(inputs.category_profile_path)
     recipes = read_recipe_candidates(inputs.recipe_list_path)
     odin = read_odin_candidates(inputs.odin_inventory_path)
     candidates = merge_candidates(recipes, odin)
-    accepted, review, names = classify_candidates(candidates)
+    category_results = {
+        candidate.source_key: infer_categories(candidate, category_profile)
+        for candidate in candidates
+    }
+    accepted, review, names = classify_candidates(candidates, category_results)
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     run_dir = inputs.output_root / timestamp
     paths = _output_paths(run_dir)
-    final_rows = [product_row(headers, candidate, names[candidate.source_key].value) for candidate in accepted]
+    final_rows = [
+        product_row(
+            headers,
+            candidate,
+            names[candidate.source_key].value,
+            category_results[candidate.source_key],
+        )
+        for candidate in accepted
+    ]
 
     audit_headers = [
         "Source",
@@ -298,6 +331,10 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
         "Confidence",
         "ReviewReason",
         "GeneratedBaseProductPosName",
+        "FinalCategories",
+        "CategoryConfidence",
+        "CategoryConfidenceBand",
+        "CategoryMatchedRules",
     ]
     naming_headers = [
         "SourceKey",
@@ -308,9 +345,29 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
         "Reason",
         "AbbreviationSteps",
     ]
+    category_headers = [
+        "SourceKey",
+        "ItemName",
+        "SourceCategory",
+        "FinalCategories",
+        "Status",
+        "Confidence",
+        "ConfidenceBand",
+        "Reason",
+        "MatchedRules",
+        "SourceEvidence",
+    ]
     write_csv(paths.final_import, headers, final_rows)
-    write_csv(paths.manual_review, audit_headers, (_audit_row(row, names[row.source_key]) for row in review))
-    write_csv(paths.accepted_audit, audit_headers, (_audit_row(row, names[row.source_key]) for row in accepted))
+    write_csv(
+        paths.manual_review,
+        audit_headers,
+        (_audit_row(row, names[row.source_key], category_results[row.source_key]) for row in review),
+    )
+    write_csv(
+        paths.accepted_audit,
+        audit_headers,
+        (_audit_row(row, names[row.source_key], category_results[row.source_key]) for row in accepted),
+    )
     write_csv(paths.rejected_audit, audit_headers, [])
     write_csv(
         paths.naming_audit,
@@ -328,9 +385,35 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
             for candidate in candidates
         ),
     )
+    write_csv(
+        paths.category_audit,
+        category_headers,
+        (
+            {
+                "SourceKey": candidate.source_key,
+                "ItemName": candidate.item_name,
+                "SourceCategory": candidate.category,
+                "FinalCategories": format_product_categories(
+                    category_results[candidate.source_key].categories
+                ),
+                "Status": category_results[candidate.source_key].status,
+                "Confidence": str(category_results[candidate.source_key].confidence),
+                "ConfidenceBand": category_results[candidate.source_key].confidence_band,
+                "Reason": category_results[candidate.source_key].reason,
+                "MatchedRules": " | ".join(category_results[candidate.source_key].matched_rules),
+                "SourceEvidence": " | ".join(category_results[candidate.source_key].source_evidence),
+            }
+            for candidate in candidates
+        ),
+    )
 
     barcode_counts = Counter(candidate.barcode for candidate in candidates if candidate.barcode)
     pos_counts = Counter(names[candidate.source_key].value for candidate in candidates if names[candidate.source_key].value)
+    category_review_rows = sum(
+        1
+        for result in category_results.values()
+        if result.status != "ok" or not result.categories
+    )
     summary = BuildSummary(
         candidate_rows=len(candidates),
         accepted_rows=len(accepted),
@@ -338,6 +421,7 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
         rejected_rows=0,
         duplicate_barcodes=sum(1 for _, count in barcode_counts.items() if count > 1),
         duplicate_pos_names=sum(1 for _, count in pos_counts.items() if count > 1),
+        category_review_rows=category_review_rows,
         output_paths=paths,
     )
     _write_manifest(inputs, paths, summary)
@@ -352,6 +436,7 @@ def _write_manifest(inputs: BuildInputs, paths: OutputPaths, summary: BuildSumma
         paths.accepted_audit,
         paths.rejected_audit,
         paths.naming_audit,
+        paths.category_audit,
         paths.summary,
     ]
     payload = {
@@ -377,6 +462,7 @@ def _write_manifest(inputs: BuildInputs, paths: OutputPaths, summary: BuildSumma
             "manual_review_rows": summary.manual_review_rows,
             "duplicate_barcodes": summary.duplicate_barcodes,
             "duplicate_pos_names": summary.duplicate_pos_names,
+            "category_review_rows": summary.category_review_rows,
         },
         "artifacts": {
             path.name: {"sha256": _sha256(path)}
@@ -399,6 +485,7 @@ def _write_summary(path: Path, summary: BuildSummary, run_dir: Path) -> None:
                 f"- Manual-review rows: {summary.manual_review_rows}",
                 f"- Duplicate barcodes: {summary.duplicate_barcodes}",
                 f"- Duplicate generated POS names: {summary.duplicate_pos_names}",
+                f"- Category-review rows: {summary.category_review_rows}",
             ]
         )
         + "\n",
@@ -412,6 +499,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--recipe-list", type=Path, required=True)
     parser.add_argument("--odin-inventory", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, default=default_output_root())
+    parser.add_argument("--category-profile", type=Path)
     return parser
 
 
@@ -423,6 +511,7 @@ def main() -> None:
             recipe_list_path=args.recipe_list,
             odin_inventory_path=args.odin_inventory,
             output_root=args.output_root,
+            category_profile_path=args.category_profile,
         )
     )
     print(f"Wrote {result.summary.accepted_rows} row(s) to {result.summary.output_paths.final_import}")

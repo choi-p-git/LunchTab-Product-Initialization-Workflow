@@ -14,6 +14,12 @@ def test_controller_ready_after_all_files_selected() -> None:
     assert state.can_build
 
 
+def test_controller_tracks_optional_category_profile() -> None:
+    controller = AppController()
+    state = controller.select_category_profile(Path("category-profile.json"))
+    assert state.category_profile_path == Path("category-profile.json")
+
+
 def test_controller_requires_all_files_before_build() -> None:
     controller = AppController()
     try:
