@@ -10,6 +10,7 @@ from lunchtab_product_init.models import (
     CategoryResult,
     CategoryRule,
     ProductCandidate,
+    SpendingPolicy,
 )
 from lunchtab_product_init.naming import normalize_text
 
@@ -19,36 +20,34 @@ HIGH_CONFIDENCE_THRESHOLD = 90
 
 def default_category_profile() -> CategoryProfile:
     catalog = (
-        CategoryCatalogEntry("Entrees", "food"),
+        CategoryCatalogEntry("Entrees", "food", "exempt"),
         CategoryCatalogEntry("Beverages", "food"),
-        CategoryCatalogEntry("Snacks", "food"),
-        CategoryCatalogEntry("Desserts/Snacks", "food"),
-        CategoryCatalogEntry("Breakfast", "food"),
-        CategoryCatalogEntry("Salads and Sides", "food"),
-        CategoryCatalogEntry("Sandwiches", "food"),
-        CategoryCatalogEntry("Soups and Ladles", "food"),
-        CategoryCatalogEntry("Transit", "food"),
         CategoryCatalogEntry(
-            "Restrictable Packaged",
-            "policy",
-            "restrictable",
-            notes="Packaged items restricted when funds are insufficient.",
+            "Packaged Snacks",
+            "food",
+            "non_exempt",
+            notes="Operator-created Lunchtab category for packaged, non-exempt snack items.",
         ),
         CategoryCatalogEntry(
-            "Exempt Prepared",
-            "policy",
+            "Plated Snacks",
+            "food",
             "exempt",
-            notes="Plated, trayed, or prepared items exempt from insufficient-funds policy.",
+            notes="Operator-created Lunchtab category for prepared, plated, or trayed snack items.",
         ),
+        CategoryCatalogEntry("Breakfast", "food", "exempt"),
+        CategoryCatalogEntry("Salads and Sides", "food", "exempt"),
+        CategoryCatalogEntry("Sandwiches", "food", "exempt"),
+        CategoryCatalogEntry("Soups and Ladles", "food", "exempt"),
+        CategoryCatalogEntry("Transit", "food"),
     )
     rules = (
-        CategoryRule("dept-entrees", "source_category", "Entrees", ("Entrees", "Exempt Prepared"), 95, 100),
-        CategoryRule("dept-breakfast", "source_category", "Breakfast", ("Breakfast", "Exempt Prepared"), 95, 100),
+        CategoryRule("dept-entrees", "source_category", "Entrees", ("Entrees",), 95, 100),
+        CategoryRule("dept-breakfast", "source_category", "Breakfast", ("Breakfast",), 95, 100),
         CategoryRule(
             "dept-salads-sides",
             "source_category",
             "Salads and Sides",
-            ("Salads and Sides", "Exempt Prepared"),
+            ("Salads and Sides",),
             95,
             100,
         ),
@@ -56,7 +55,7 @@ def default_category_profile() -> CategoryProfile:
             "dept-sandwiches",
             "source_category",
             "Sandwiches",
-            ("Sandwiches", "Exempt Prepared"),
+            ("Sandwiches",),
             95,
             100,
         ),
@@ -64,7 +63,7 @@ def default_category_profile() -> CategoryProfile:
             "dept-soups",
             "source_category",
             "Soups and Ladles",
-            ("Soups and Ladles", "Exempt Prepared"),
+            ("Soups and Ladles",),
             95,
             100,
         ),
@@ -74,7 +73,7 @@ def default_category_profile() -> CategoryProfile:
             "dept-desserts",
             "source_category",
             "Desserts/Snacks",
-            ("Desserts/Snacks", "Exempt Prepared"),
+            ("Plated Snacks",),
             92,
             100,
         ),
@@ -82,19 +81,20 @@ def default_category_profile() -> CategoryProfile:
             "dept-snacks",
             "source_category",
             "Snacks",
-            ("Snacks", "Restrictable Packaged"),
-            92,
+            ("Packaged Snacks",),
+            75,
             100,
+            notes="Source category alone suggests snacks but still needs operator confirmation.",
         ),
-        CategoryRule("phrase-chips", "phrase", "chips", ("Snacks", "Restrictable Packaged"), 90, 400),
-        CategoryRule("phrase-candy", "phrase", "candy", ("Snacks", "Restrictable Packaged"), 90, 400),
-        CategoryRule("phrase-cookie", "phrase", "cookie", ("Desserts/Snacks", "Exempt Prepared"), 90, 400),
-        CategoryRule("phrase-cookies", "phrase", "cookies", ("Desserts/Snacks", "Exempt Prepared"), 90, 400),
-        CategoryRule("phrase-entree", "phrase", "entree", ("Entrees", "Exempt Prepared"), 88, 400),
-        CategoryRule("phrase-wrap", "phrase", "wrap", ("Sandwiches", "Exempt Prepared"), 88, 400),
-        CategoryRule("phrase-sandwich", "phrase", "sandwich", ("Sandwiches", "Exempt Prepared"), 88, 400),
-        CategoryRule("phrase-soup", "phrase", "soup", ("Soups and Ladles", "Exempt Prepared"), 88, 400),
-        CategoryRule("phrase-yogurt", "phrase", "yogurt", ("Breakfast", "Exempt Prepared"), 84, 400),
+        CategoryRule("phrase-chips", "phrase", "chips", ("Packaged Snacks",), 90, 400),
+        CategoryRule("phrase-candy", "phrase", "candy", ("Packaged Snacks",), 90, 400),
+        CategoryRule("phrase-cookie", "phrase", "cookie", ("Plated Snacks",), 84, 400),
+        CategoryRule("phrase-cookies", "phrase", "cookies", ("Plated Snacks",), 84, 400),
+        CategoryRule("phrase-entree", "phrase", "entree", ("Entrees",), 88, 400),
+        CategoryRule("phrase-wrap", "phrase", "wrap", ("Sandwiches",), 88, 400),
+        CategoryRule("phrase-sandwich", "phrase", "sandwich", ("Sandwiches",), 88, 400),
+        CategoryRule("phrase-soup", "phrase", "soup", ("Soups and Ladles",), 88, 400),
+        CategoryRule("phrase-yogurt", "phrase", "yogurt", ("Breakfast",), 84, 400),
         CategoryRule("phrase-drink", "phrase", "drink", ("Beverages",), 84, 400),
         CategoryRule("phrase-milk", "phrase", "milk", ("Beverages",), 84, 400),
     )
@@ -144,7 +144,7 @@ def category_profile_from_dict(payload: dict[str, object]) -> CategoryProfile:
         CategoryCatalogEntry(
             name=str(entry["name"]).strip(),
             role=entry.get("role", "food"),  # type: ignore[arg-type]
-            spending_policy=entry.get("spending_policy", "none"),  # type: ignore[arg-type]
+            spending_policy=_normalize_spending_policy(str(entry.get("spending_policy", "none"))),
             enabled=bool(entry.get("enabled", True)),
             notes=str(entry.get("notes", "")),
         )
@@ -180,6 +180,12 @@ def validate_category_profile(profile: CategoryProfile) -> None:
     if len(names) != len(set(names)):
         raise ValueError("Category profile has duplicate enabled category names.")
     valid = set(names)
+    valid_policies = {"none", "non_exempt", "restrictable", "exempt"}
+    for entry in profile.catalog:
+        if entry.spending_policy not in valid_policies:
+            raise ValueError(
+                f"Category {entry.name} has invalid spending policy: {entry.spending_policy}"
+            )
     for rule in profile.rules:
         if not rule.enabled:
             continue
@@ -207,9 +213,21 @@ def format_product_categories(categories: tuple[str, ...]) -> str:
     return "".join(f"{category};" for category in cleaned)
 
 
+def format_restriction_policies(policies: tuple[SpendingPolicy, ...]) -> str:
+    cleaned = []
+    seen = set()
+    for policy in policies:
+        value = _normalize_spending_policy(policy)
+        if value != "none" and value not in seen:
+            cleaned.append(value)
+            seen.add(value)
+    return ";".join(cleaned)
+
+
 def infer_categories(candidate: ProductCandidate, profile: CategoryProfile) -> CategoryResult:
     validate_category_profile(profile)
-    enabled_categories = {entry.name for entry in profile.catalog if entry.enabled}
+    enabled_entries = {entry.name: entry for entry in profile.catalog if entry.enabled}
+    enabled_categories = set(enabled_entries)
     matches: list[tuple[int, int, str, CategoryRule]] = []
     normalized_name = normalize_text(candidate.item_name)
     normalized_source_category = normalize_text(candidate.category)
@@ -226,6 +244,7 @@ def infer_categories(candidate: ProductCandidate, profile: CategoryProfile) -> C
     if not matches:
         return CategoryResult(
             categories=(),
+            restriction_policies=(),
             status="review",
             confidence=0,
             confidence_band="low",
@@ -238,16 +257,27 @@ def infer_categories(candidate: ProductCandidate, profile: CategoryProfile) -> C
     priority = matches[0][0]
     selected = [rule for match_priority, _, _, rule in matches if match_priority == priority]
     categories: list[str] = []
+    restriction_policies: list[SpendingPolicy] = []
     for rule in selected:
         for category in rule.categories:
-            if category not in categories:
+            entry = enabled_entries[category]
+            if entry.role != "policy" and category not in categories:
                 categories.append(category)
+            policy = _normalize_spending_policy(entry.spending_policy)
+            if policy != "none" and policy not in restriction_policies:
+                restriction_policies.append(policy)
     confidence = min(rule.confidence for rule in selected)
     band = confidence_band(confidence)
-    status = "ok" if band == "high" else "review"
-    reason = "" if status == "ok" else "category confidence is not high enough"
+    status = "ok" if band == "high" and categories else "review"
+    if status == "ok":
+        reason = ""
+    elif not categories:
+        reason = "matched rule did not produce an output category"
+    else:
+        reason = "category confidence is not high enough"
     return CategoryResult(
         categories=tuple(categories),
+        restriction_policies=tuple(restriction_policies),
         status=status,
         confidence=confidence,
         confidence_band=band,
@@ -296,3 +326,12 @@ def _source_evidence(candidate: ProductCandidate) -> tuple[str, ...]:
     if candidate.barcode:
         evidence.append(f"barcode={candidate.barcode}")
     return tuple(evidence)
+
+
+def _normalize_spending_policy(value: str) -> SpendingPolicy:
+    normalized = value.strip().casefold().replace("-", "_").replace(" ", "_")
+    if normalized == "restrictable":
+        return "non_exempt"
+    if normalized in {"none", "non_exempt", "exempt"}:
+        return normalized  # type: ignore[return-value]
+    return value  # type: ignore[return-value]

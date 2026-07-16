@@ -12,6 +12,7 @@ from pathlib import Path
 
 from lunchtab_product_init.categories import (
     format_product_categories,
+    format_restriction_policies,
     infer_categories,
     load_category_profile,
 )
@@ -26,7 +27,7 @@ from lunchtab_product_init.models import (
     PosNameResult,
     ProductCandidate,
 )
-from lunchtab_product_init.naming import duplicate_values, generate_pos_name, normalize_text
+from lunchtab_product_init.naming import duplicate_values, generate_pos_name
 
 FINAL_OUTPUT_NAME = "Lunchtab Product Import.csv"
 MANUAL_REVIEW_OUTPUT_NAME = "Manual Review Products.csv"
@@ -34,6 +35,7 @@ ACCEPTED_AUDIT_NAME = "Accepted Product Audit.csv"
 REJECTED_AUDIT_NAME = "Rejected Product Audit.csv"
 NAMING_AUDIT_NAME = "BaseProductPosName Audit.csv"
 CATEGORY_AUDIT_NAME = "Product Category Audit.csv"
+ZERO_STOCK_REVIEW_NAME = "Zero Stock Odin Review.csv"
 
 
 def default_output_root() -> Path:
@@ -57,10 +59,17 @@ def _barcode(value: str) -> str:
     return re.sub(r"\s+", "", str(value or "").strip())
 
 
-def _handle(name: str, barcode: str) -> str:
-    base = "-".join(normalize_text(name).split())[:48].strip("-") or "product"
-    suffix = re.sub(r"[^a-zA-Z0-9]", "", barcode)[-6:]
-    return f"{base}-{suffix}" if suffix else base
+def _handle(name: str) -> str:
+    return " ".join(str(name or "").split())
+
+
+def _is_zero_stock(candidate: ProductCandidate) -> bool:
+    if candidate.source not in {"odin", "recipe+odin"}:
+        return False
+    try:
+        return Decimal(str(candidate.stock or "").strip()) == Decimal("0")
+    except InvalidOperation:
+        return False
 
 
 def read_lunchtab_template(path: Path) -> list[str]:
@@ -206,8 +215,8 @@ def classify_candidates(
             reasons.append(category_result.reason)
         if not category_result.categories:
             reasons.append("missing category")
-        if candidate.source != "recipe+odin":
-            reasons.append("not matched between recipe list and Odin")
+        if _is_zero_stock(candidate):
+            reasons.append("zero Odin stock")
         name_result = generated[candidate.source_key]
         if name_result.status != "ok":
             reasons.append(name_result.reason)
@@ -216,7 +225,9 @@ def classify_candidates(
 
         if reasons:
             review.append(
-                replace(candidate, confidence="review", review_reason="; ".join(sorted(set(reasons))))
+                replace(
+                    candidate, confidence="review", review_reason="; ".join(sorted(set(reasons)))
+                )
             )
         else:
             accepted.append(replace(candidate, confidence="auto", review_reason=""))
@@ -228,11 +239,12 @@ def product_row(
     candidate: ProductCandidate,
     pos_name: str,
     category_result: CategoryResult,
+    is_orderable: bool,
 ) -> dict[str, str]:
     row = {header: "" for header in headers}
     row.update(
         {
-            "Handle": _handle(candidate.item_name, candidate.barcode),
+            "Handle": _handle(candidate.item_name),
             "ProductVersionType": "Standard",
             "Price": candidate.price,
             "Barcodes": candidate.barcode,
@@ -240,7 +252,7 @@ def product_row(
             "BaseProductPosName": pos_name,
             "ShortDescription": candidate.item_name,
             "IsPublished": "true",
-            "IsOrderable": "true",
+            "IsOrderable": "true" if is_orderable else "false",
             "ProductCategories": format_product_categories(category_result.categories),
         }
     )
@@ -266,6 +278,7 @@ def _audit_row(
         "ReviewReason": candidate.review_reason,
         "GeneratedBaseProductPosName": name_result.value,
         "FinalCategories": format_product_categories(category_result.categories),
+        "RestrictionPolicy": format_restriction_policies(category_result.restriction_policies),
         "CategoryConfidence": str(category_result.confidence),
         "CategoryConfidenceBand": category_result.confidence_band,
         "CategoryMatchedRules": " | ".join(category_result.matched_rules),
@@ -276,6 +289,7 @@ def _output_paths(run_dir: Path) -> OutputPaths:
     return OutputPaths(
         final_import=run_dir / FINAL_OUTPUT_NAME,
         manual_review=run_dir / MANUAL_REVIEW_OUTPUT_NAME,
+        zero_stock_review=run_dir / ZERO_STOCK_REVIEW_NAME,
         accepted_audit=run_dir / ACCEPTED_AUDIT_NAME,
         rejected_audit=run_dir / REJECTED_AUDIT_NAME,
         naming_audit=run_dir / NAMING_AUDIT_NAME,
@@ -314,6 +328,7 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
             candidate,
             names[candidate.source_key].value,
             category_results[candidate.source_key],
+            inputs.is_orderable,
         )
         for candidate in accepted
     ]
@@ -332,6 +347,7 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
         "ReviewReason",
         "GeneratedBaseProductPosName",
         "FinalCategories",
+        "RestrictionPolicy",
         "CategoryConfidence",
         "CategoryConfidenceBand",
         "CategoryMatchedRules",
@@ -350,6 +366,7 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
         "ItemName",
         "SourceCategory",
         "FinalCategories",
+        "RestrictionPolicy",
         "Status",
         "Confidence",
         "ConfidenceBand",
@@ -361,12 +378,27 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
     write_csv(
         paths.manual_review,
         audit_headers,
-        (_audit_row(row, names[row.source_key], category_results[row.source_key]) for row in review),
+        (
+            _audit_row(row, names[row.source_key], category_results[row.source_key])
+            for row in review
+        ),
+    )
+    zero_stock_review = [row for row in review if _is_zero_stock(row)]
+    write_csv(
+        paths.zero_stock_review,
+        audit_headers,
+        (
+            _audit_row(row, names[row.source_key], category_results[row.source_key])
+            for row in zero_stock_review
+        ),
     )
     write_csv(
         paths.accepted_audit,
         audit_headers,
-        (_audit_row(row, names[row.source_key], category_results[row.source_key]) for row in accepted),
+        (
+            _audit_row(row, names[row.source_key], category_results[row.source_key])
+            for row in accepted
+        ),
     )
     write_csv(paths.rejected_audit, audit_headers, [])
     write_csv(
@@ -396,23 +428,30 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
                 "FinalCategories": format_product_categories(
                     category_results[candidate.source_key].categories
                 ),
+                "RestrictionPolicy": format_restriction_policies(
+                    category_results[candidate.source_key].restriction_policies
+                ),
                 "Status": category_results[candidate.source_key].status,
                 "Confidence": str(category_results[candidate.source_key].confidence),
                 "ConfidenceBand": category_results[candidate.source_key].confidence_band,
                 "Reason": category_results[candidate.source_key].reason,
                 "MatchedRules": " | ".join(category_results[candidate.source_key].matched_rules),
-                "SourceEvidence": " | ".join(category_results[candidate.source_key].source_evidence),
+                "SourceEvidence": " | ".join(
+                    category_results[candidate.source_key].source_evidence
+                ),
             }
             for candidate in candidates
         ),
     )
 
     barcode_counts = Counter(candidate.barcode for candidate in candidates if candidate.barcode)
-    pos_counts = Counter(names[candidate.source_key].value for candidate in candidates if names[candidate.source_key].value)
+    pos_counts = Counter(
+        names[candidate.source_key].value
+        for candidate in candidates
+        if names[candidate.source_key].value
+    )
     category_review_rows = sum(
-        1
-        for result in category_results.values()
-        if result.status != "ok" or not result.categories
+        1 for result in category_results.values() if result.status != "ok" or not result.categories
     )
     summary = BuildSummary(
         candidate_rows=len(candidates),
@@ -422,6 +461,7 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
         duplicate_barcodes=sum(1 for _, count in barcode_counts.items() if count > 1),
         duplicate_pos_names=sum(1 for _, count in pos_counts.items() if count > 1),
         category_review_rows=category_review_rows,
+        zero_stock_review_rows=len(zero_stock_review),
         output_paths=paths,
     )
     _write_manifest(inputs, paths, summary)
@@ -433,6 +473,7 @@ def _write_manifest(inputs: BuildInputs, paths: OutputPaths, summary: BuildSumma
     artifact_paths = [
         paths.final_import,
         paths.manual_review,
+        paths.zero_stock_review,
         paths.accepted_audit,
         paths.rejected_audit,
         paths.naming_audit,
@@ -463,11 +504,10 @@ def _write_manifest(inputs: BuildInputs, paths: OutputPaths, summary: BuildSumma
             "duplicate_barcodes": summary.duplicate_barcodes,
             "duplicate_pos_names": summary.duplicate_pos_names,
             "category_review_rows": summary.category_review_rows,
+            "zero_stock_review_rows": summary.zero_stock_review_rows,
         },
         "artifacts": {
-            path.name: {"sha256": _sha256(path)}
-            for path in artifact_paths
-            if path.is_file()
+            path.name: {"sha256": _sha256(path)} for path in artifact_paths if path.is_file()
         },
     }
     paths.manifest.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -486,6 +526,7 @@ def _write_summary(path: Path, summary: BuildSummary, run_dir: Path) -> None:
                 f"- Duplicate barcodes: {summary.duplicate_barcodes}",
                 f"- Duplicate generated POS names: {summary.duplicate_pos_names}",
                 f"- Category-review rows: {summary.category_review_rows}",
+                f"- Zero-stock Odin review rows: {summary.zero_stock_review_rows}",
             ]
         )
         + "\n",
@@ -500,6 +541,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--odin-inventory", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, default=default_output_root())
     parser.add_argument("--category-profile", type=Path)
+    parser.add_argument("--is-orderable", action="store_true")
     return parser
 
 
@@ -512,6 +554,9 @@ def main() -> None:
             odin_inventory_path=args.odin_inventory,
             output_root=args.output_root,
             category_profile_path=args.category_profile,
+            is_orderable=args.is_orderable,
         )
     )
-    print(f"Wrote {result.summary.accepted_rows} row(s) to {result.summary.output_paths.final_import}")
+    print(
+        f"Wrote {result.summary.accepted_rows} row(s) to {result.summary.output_paths.final_import}"
+    )

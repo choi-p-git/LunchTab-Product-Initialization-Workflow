@@ -22,6 +22,7 @@ class AppState:
     recipe_list_path: Path | None = None
     odin_inventory_path: Path | None = None
     category_profile_path: Path | None = None
+    is_orderable: bool = False
     output_root: Path = default_output_root()
     phase: AppPhase = AppPhase.EMPTY
     result: BuildResult | None = None
@@ -56,6 +57,10 @@ class AppController:
 
     def select_category_profile(self, path: Path | None) -> AppState:
         self.state = replace(self.state, category_profile_path=path, result=None)
+        return self.state
+
+    def set_is_orderable(self, value: bool) -> AppState:
+        self.state = replace(self.state, is_orderable=value, result=None)
         return self.state
 
     def begin_build(self) -> AppState:
@@ -100,6 +105,8 @@ class AppController:
             for key in ("product_template_path", "recipe_list_path", "odin_inventory_path")
         )
         values["phase"] = AppPhase.READY if ready else AppPhase.EMPTY
-        values["message"] = "Build the product import." if ready else "Select the three source files to begin."
+        values["message"] = (
+            "Build the product import." if ready else "Select the three source files to begin."
+        )
         self.state = replace(self.state, **values)
         return self.state

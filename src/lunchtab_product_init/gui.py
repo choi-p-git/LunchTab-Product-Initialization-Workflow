@@ -9,6 +9,7 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 from typing import Callable
 
 from lunchtab_product_init.categories import (
+    format_restriction_policies,
     infer_categories,
     load_category_profile,
     save_category_profile,
@@ -41,6 +42,7 @@ class ProductInitializationApp:
         self.recipe_list_text = tk.StringVar()
         self.odin_inventory_text = tk.StringVar()
         self.category_profile_text = tk.StringVar(value="Built-in current venue starter profile")
+        self.is_orderable = tk.BooleanVar(value=self.controller.state.is_orderable)
         self.output_text = tk.StringVar(value=str(self.controller.state.output_root))
         self.status_text = tk.StringVar(value=self.controller.state.message)
         self.details_text = tk.StringVar(value="")
@@ -63,16 +65,40 @@ class ProductInitializationApp:
         files = ttk.LabelFrame(outer, text="Source files", padding=14)
         files.pack(fill="x")
         files.columnconfigure(1, weight=1)
-        self._file_row(files, 0, "ProductData template", self.product_template_text, self._choose_template)
+        self._file_row(
+            files, 0, "ProductData template", self.product_template_text, self._choose_template
+        )
         self._file_row(files, 1, "Recipe list", self.recipe_list_text, self._choose_recipe)
         self._file_row(files, 2, "Odin inventory", self.odin_inventory_text, self._choose_odin)
-        self._file_row(files, 3, "Category profile", self.category_profile_text, self._choose_profile)
-        ttk.Button(files, text="Manage...", command=self._manage_profile).grid(row=3, column=3, pady=5)
+        self._file_row(
+            files, 3, "Category profile", self.category_profile_text, self._choose_profile
+        )
+        ttk.Button(files, text="Manage...", command=self._manage_profile).grid(
+            row=3, column=3, pady=5
+        )
         self._file_row(files, 4, "Save results in", self.output_text, self._choose_output)
+
+        config_pages = ttk.Notebook(outer)
+        config_pages.pack(fill="x", pady=(14, 0))
+        process_config = ttk.Frame(config_pages, padding=14)
+        config_pages.add(process_config, text="Process Config")
+        ttk.Checkbutton(
+            process_config,
+            text="Set target CSV IsOrderable to true",
+            variable=self.is_orderable,
+            command=self._set_is_orderable,
+        ).grid(row=0, column=0, sticky="w")
+        ttk.Label(
+            process_config,
+            text="Default is false. This writes the ProductData IsOrderable column for every accepted row.",
+            foreground="#555555",
+        ).grid(row=1, column=0, sticky="w", pady=(6, 0))
 
         actions = ttk.Frame(outer)
         actions.pack(fill="x", pady=14)
-        self.build_button = ttk.Button(actions, text="Build product import", command=self._start_build)
+        self.build_button = ttk.Button(
+            actions, text="Build product import", command=self._start_build
+        )
         self.build_button.grid(row=0, column=0, sticky="ew")
         actions.columnconfigure(0, weight=1)
         self.progress = ttk.Progressbar(actions, mode="indeterminate", length=180)
@@ -80,7 +106,9 @@ class ProductInitializationApp:
 
         results = ttk.LabelFrame(outer, text="Status and results", padding=14)
         results.pack(fill="both", expand=True)
-        ttk.Label(results, textvariable=self.status_text, font=("Segoe UI", 11, "bold")).pack(anchor="w")
+        ttk.Label(results, textvariable=self.status_text, font=("Segoe UI", 11, "bold")).pack(
+            anchor="w"
+        )
         ttk.Label(results, textvariable=self.details_text, justify="left", wraplength=700).pack(
             anchor="w", pady=(10, 14)
         )
@@ -99,7 +127,14 @@ class ProductInitializationApp:
             result_actions, text="Open naming audit", command=lambda: self._open_result("naming")
         )
         self.open_category_audit_button = ttk.Button(
-            result_actions, text="Open category audit", command=lambda: self._open_result("category")
+            result_actions,
+            text="Open category audit",
+            command=lambda: self._open_result("category"),
+        )
+        self.open_zero_stock_button = ttk.Button(
+            result_actions,
+            text="Open zero-stock review",
+            command=lambda: self._open_result("zero_stock"),
         )
         for index, button in enumerate(
             [
@@ -108,9 +143,16 @@ class ProductInitializationApp:
                 self.open_review_button,
                 self.open_audit_button,
                 self.open_category_audit_button,
+                self.open_zero_stock_button,
             ]
         ):
-            button.grid(row=index // 2, column=index % 2, sticky="ew", padx=(0 if index % 2 == 0 else 8, 0), pady=(0 if index < 2 else 8, 0))
+            button.grid(
+                row=index // 2,
+                column=index % 2,
+                sticky="ew",
+                padx=(0 if index % 2 == 0 else 8, 0),
+                pady=(0 if index < 2 else 8, 0),
+            )
         result_actions.columnconfigure(0, weight=1)
         result_actions.columnconfigure(1, weight=1)
 
@@ -129,25 +171,33 @@ class ProductInitializationApp:
         command: Callable[[], None],
     ) -> None:
         ttk.Label(parent, text=label, width=20).grid(row=row, column=0, sticky="w", pady=5)
-        ttk.Entry(parent, textvariable=variable, state="readonly").grid(row=row, column=1, sticky="ew", padx=8, pady=5)
+        ttk.Entry(parent, textvariable=variable, state="readonly").grid(
+            row=row, column=1, sticky="ew", padx=8, pady=5
+        )
         ttk.Button(parent, text="Browse...", command=command).grid(row=row, column=2, pady=5)
 
     def _choose_template(self) -> None:
-        selected = filedialog.askopenfilename(title="Select ProductData template", filetypes=[("CSV files", "*.csv")])
+        selected = filedialog.askopenfilename(
+            title="Select ProductData template", filetypes=[("CSV files", "*.csv")]
+        )
         if selected:
             self.product_template_text.set(selected)
             self.controller.select_product_template(Path(selected))
             self._render()
 
     def _choose_recipe(self) -> None:
-        selected = filedialog.askopenfilename(title="Select recipe list", filetypes=[("CSV files", "*.csv")])
+        selected = filedialog.askopenfilename(
+            title="Select recipe list", filetypes=[("CSV files", "*.csv")]
+        )
         if selected:
             self.recipe_list_text.set(selected)
             self.controller.select_recipe_list(Path(selected))
             self._render()
 
     def _choose_odin(self) -> None:
-        selected = filedialog.askopenfilename(title="Select Odin inventory workbook", filetypes=[("Excel workbooks", "*.xlsx")])
+        selected = filedialog.askopenfilename(
+            title="Select Odin inventory workbook", filetypes=[("Excel workbooks", "*.xlsx")]
+        )
         if selected:
             self.odin_inventory_text.set(selected)
             self.controller.select_odin_inventory(Path(selected))
@@ -159,6 +209,10 @@ class ProductInitializationApp:
             self.output_text.set(selected)
             self.controller.select_output_root(Path(selected))
             self._render()
+
+    def _set_is_orderable(self) -> None:
+        self.controller.set_is_orderable(bool(self.is_orderable.get()))
+        self._render()
 
     def _choose_profile(self) -> None:
         selected = filedialog.askopenfilename(
@@ -198,6 +252,7 @@ class ProductInitializationApp:
             odin_inventory_path=state.odin_inventory_path,  # type: ignore[arg-type]
             output_root=state.output_root,
             category_profile_path=state.category_profile_path,
+            is_orderable=state.is_orderable,
         )
         self._run_worker("built", lambda: build_product_import(inputs))
 
@@ -232,6 +287,7 @@ class ProductInitializationApp:
             "folder": result.run_dir,
             "final": result.summary.output_paths.final_import,
             "review": result.summary.output_paths.manual_review,
+            "zero_stock": result.summary.output_paths.zero_stock_review,
             "naming": result.summary.output_paths.naming_audit,
             "category": result.summary.output_paths.category_audit,
         }
@@ -258,6 +314,7 @@ class ProductInitializationApp:
                 f"Duplicate barcodes: {summary.duplicate_barcodes}\n"
                 f"Duplicate generated POS names: {summary.duplicate_pos_names}\n\n"
                 f"Category-review rows: {summary.category_review_rows}\n"
+                f"Zero-stock Odin review rows: {summary.zero_stock_review_rows}\n"
                 f"\n"
                 f"Saved to: {state.result.run_dir}"
             )
@@ -269,6 +326,7 @@ class ProductInitializationApp:
         self.open_review_button.configure(state=result_state)
         self.open_audit_button.configure(state=result_state)
         self.open_category_audit_button.configure(state=result_state)
+        self.open_zero_stock_button.configure(state=result_state)
 
 
 class CategoryProfileManager(tk.Toplevel):
@@ -389,26 +447,14 @@ class CategoryProfileManager(tk.Toplevel):
             )
 
     def _add_category(self) -> None:
-        name = simpledialog.askstring("Add category", "Category name", parent=self)
-        if not name:
+        dialog = CategoryEntryDialog(self)
+        self.wait_window(dialog)
+        if dialog.entry is None:
             return
-        role = simpledialog.askstring("Add category", "Role: food, policy, or hybrid", parent=self)
-        if role not in {"food", "policy", "hybrid"}:
-            messagebox.showerror(APP_TITLE, "Role must be food, policy, or hybrid.")
-            return
-        policy = simpledialog.askstring(
-            "Add category",
-            "Spending policy: none, restrictable, or exempt",
-            parent=self,
-        )
-        if policy not in {"none", "restrictable", "exempt"}:
-            messagebox.showerror(APP_TITLE, "Spending policy must be none, restrictable, or exempt.")
-            return
-        entry = CategoryCatalogEntry(name=name.strip(), role=role, spending_policy=policy)
         self.profile = CategoryProfile(
             self.profile.schema_version,
             self.profile.name,
-            (*self.profile.catalog, entry),
+            (*self.profile.catalog, dialog.entry),
             self.profile.rules,
         )
         self._refresh()
@@ -428,10 +474,12 @@ class CategoryProfileManager(tk.Toplevel):
         pattern = simpledialog.askstring("Add rule", "Pattern", parent=self)
         categories = simpledialog.askstring(
             "Add rule",
-            "Target categories separated by semicolons",
+            "Output Lunchtab categories separated by semicolons",
             parent=self,
         )
-        confidence = simpledialog.askinteger("Add rule", "Confidence 0-100", parent=self, initialvalue=90)
+        confidence = simpledialog.askinteger(
+            "Add rule", "Confidence 0-100", parent=self, initialvalue=90
+        )
         priority = simpledialog.askinteger("Add rule", "Priority", parent=self, initialvalue=300)
         if not pattern or not categories or confidence is None or priority is None:
             return
@@ -439,7 +487,9 @@ class CategoryProfileManager(tk.Toplevel):
             rule_id=rule_id.strip(),
             rule_type=rule_type,
             pattern=pattern.strip(),
-            categories=tuple(category.strip() for category in categories.split(";") if category.strip()),
+            categories=tuple(
+                category.strip() for category in categories.split(";") if category.strip()
+            ),
             confidence=confidence,
             priority=priority,
         )
@@ -469,6 +519,7 @@ class CategoryProfileManager(tk.Toplevel):
             "Categories: "
             + "; ".join(result.categories)
             + "\n"
+            + f"Restriction policy: {format_restriction_policies(result.restriction_policies) or 'None'}\n"
             + f"Status: {result.status}\n"
             + f"Confidence: {result.confidence} ({result.confidence_band})\n"
             + f"Matched rules: {' | '.join(result.matched_rules) or 'None'}\n"
@@ -490,6 +541,75 @@ class CategoryProfileManager(tk.Toplevel):
             return
         self.saved_path = Path(selected)
         messagebox.showinfo(APP_TITLE, f"Category profile saved to {selected}")
+
+
+class CategoryEntryDialog(tk.Toplevel):
+    def __init__(self, parent: tk.Toplevel) -> None:
+        super().__init__(parent)
+        self.entry: CategoryCatalogEntry | None = None
+        self.title("Add Category")
+        self.transient(parent)
+        self.grab_set()
+        self.resizable(False, False)
+        self.name = tk.StringVar()
+        self.role = tk.StringVar(value="food")
+        self.policy = tk.StringVar(value="none")
+        self.notes = tk.StringVar()
+        self._build()
+        self.bind("<Return>", lambda _event: self._save())
+        self.bind("<Escape>", lambda _event: self.destroy())
+        self.name_entry.focus_set()
+
+    def _build(self) -> None:
+        outer = ttk.Frame(self, padding=16)
+        outer.pack(fill="both", expand=True)
+        outer.columnconfigure(1, weight=1)
+        ttk.Label(outer, text="Category name").grid(row=0, column=0, sticky="w", pady=5)
+        self.name_entry = ttk.Entry(outer, textvariable=self.name, width=34)
+        self.name_entry.grid(row=0, column=1, sticky="ew", pady=5)
+
+        ttk.Label(outer, text="Role").grid(row=1, column=0, sticky="w", pady=5)
+        role_group = ttk.Frame(outer)
+        role_group.grid(row=1, column=1, sticky="w", pady=5)
+        for value, label in (("food", "Food"), ("hybrid", "Hybrid")):
+            ttk.Radiobutton(role_group, text=label, value=value, variable=self.role).pack(
+                side="left"
+            )
+
+        ttk.Label(outer, text="Spending policy").grid(row=2, column=0, sticky="w", pady=5)
+        policy_group = ttk.Frame(outer)
+        policy_group.grid(row=2, column=1, sticky="w", pady=5)
+        for value, label in (
+            ("none", "None"),
+            ("non_exempt", "Non-exempt"),
+            ("exempt", "Exempt"),
+        ):
+            ttk.Radiobutton(policy_group, text=label, value=value, variable=self.policy).pack(
+                side="left"
+            )
+
+        ttk.Label(outer, text="Notes").grid(row=3, column=0, sticky="w", pady=5)
+        ttk.Entry(outer, textvariable=self.notes, width=34).grid(
+            row=3, column=1, sticky="ew", pady=5
+        )
+
+        actions = ttk.Frame(outer)
+        actions.grid(row=4, column=0, columnspan=2, sticky="e", pady=(12, 0))
+        ttk.Button(actions, text="Cancel", command=self.destroy).pack(side="right")
+        ttk.Button(actions, text="Add", command=self._save).pack(side="right", padx=(0, 8))
+
+    def _save(self) -> None:
+        name = " ".join(self.name.get().split())
+        if not name:
+            messagebox.showerror(APP_TITLE, "Category name is required.", parent=self)
+            return
+        self.entry = CategoryCatalogEntry(
+            name=name,
+            role=self.role.get(),  # type: ignore[arg-type]
+            spending_policy=self.policy.get(),  # type: ignore[arg-type]
+            notes=self.notes.get().strip(),
+        )
+        self.destroy()
 
 
 def build_parser() -> argparse.ArgumentParser:

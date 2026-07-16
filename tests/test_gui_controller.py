@@ -20,6 +20,12 @@ def test_controller_tracks_optional_category_profile() -> None:
     assert state.category_profile_path == Path("category-profile.json")
 
 
+def test_controller_tracks_is_orderable_setting() -> None:
+    controller = AppController()
+    state = controller.set_is_orderable(True)
+    assert state.is_orderable
+
+
 def test_controller_requires_all_files_before_build() -> None:
     controller = AppController()
     try:

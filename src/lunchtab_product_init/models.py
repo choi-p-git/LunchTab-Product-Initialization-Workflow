@@ -53,7 +53,7 @@ class PosNameResult:
 
 
 CategoryRole = Literal["food", "policy", "hybrid"]
-SpendingPolicy = Literal["none", "restrictable", "exempt"]
+SpendingPolicy = Literal["none", "non_exempt", "restrictable", "exempt"]
 CategoryRuleType = Literal[
     "barcode",
     "item_name",
@@ -95,6 +95,7 @@ class CategoryProfile:
 @dataclass(frozen=True)
 class CategoryResult:
     categories: tuple[str, ...]
+    restriction_policies: tuple[SpendingPolicy, ...]
     status: str
     confidence: int
     confidence_band: str
@@ -110,12 +111,14 @@ class BuildInputs:
     odin_inventory_path: Path
     output_root: Path
     category_profile_path: Path | None = None
+    is_orderable: bool = False
 
 
 @dataclass(frozen=True)
 class OutputPaths:
     final_import: Path
     manual_review: Path
+    zero_stock_review: Path
     accepted_audit: Path
     rejected_audit: Path
     naming_audit: Path
@@ -133,6 +136,7 @@ class BuildSummary:
     duplicate_barcodes: int
     duplicate_pos_names: int
     category_review_rows: int
+    zero_stock_review_rows: int
     output_paths: OutputPaths
 
 

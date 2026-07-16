@@ -16,13 +16,10 @@ from lunchtab_product_init.models import ProductCandidate
 
 
 def test_format_product_categories_deduplicates_and_adds_semicolons() -> None:
-    assert (
-        format_product_categories(("Snacks", "Restrictable Packaged", "Snacks"))
-        == "Snacks;Restrictable Packaged;"
-    )
+    assert format_product_categories(("Packaged Snacks", "Packaged Snacks")) == "Packaged Snacks;"
 
 
-def test_default_profile_maps_prepared_department_to_food_and_policy() -> None:
+def test_default_profile_maps_prepared_department_to_category_with_policy_metadata() -> None:
     result = infer_categories(
         ProductCandidate(
             source="recipe+odin",
@@ -36,11 +33,12 @@ def test_default_profile_maps_prepared_department_to_food_and_policy() -> None:
     )
     assert result.status == "ok"
     assert result.confidence_band == "high"
-    assert result.categories == ("Entrees", "Exempt Prepared")
+    assert result.categories == ("Entrees",)
+    assert result.restriction_policies == ("exempt",)
     assert result.matched_rules == ("dept-entrees",)
 
 
-def test_default_profile_maps_packaged_phrase_to_restrictable_policy() -> None:
+def test_default_profile_maps_packaged_phrase_to_category_with_policy_metadata() -> None:
     result = infer_categories(
         ProductCandidate(
             source="recipe",
@@ -53,7 +51,25 @@ def test_default_profile_maps_packaged_phrase_to_restrictable_policy() -> None:
         default_category_profile(),
     )
     assert result.status == "ok"
-    assert result.categories == ("Snacks", "Restrictable Packaged")
+    assert result.categories == ("Packaged Snacks",)
+    assert result.restriction_policies == ("non_exempt",)
+
+
+def test_default_profile_routes_snack_department_suggestion_to_review() -> None:
+    result = infer_categories(
+        ProductCandidate(
+            source="recipe+odin",
+            source_key="row-4",
+            item_name="Assorted Snack",
+            price="1.50",
+            barcode="JKL",
+            category="Snacks",
+        ),
+        default_category_profile(),
+    )
+    assert result.status == "review"
+    assert result.categories == ("Packaged Snacks",)
+    assert result.reason == "category confidence is not high enough"
 
 
 def test_default_profile_routes_unknown_category_to_review() -> None:
