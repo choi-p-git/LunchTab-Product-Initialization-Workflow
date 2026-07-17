@@ -7,10 +7,50 @@ from typing import Iterable
 
 from openpyxl import load_workbook
 
+CSV_ENCODINGS = (
+    "utf-8-sig",
+    "utf-8",
+    "utf-16",
+    "utf-16-le",
+    "utf-16-be",
+    "cp1252",
+    "iso-8859-1",
+)
+
+
+def _decode_csv_bytes(data: bytes, path: Path) -> str:
+    errors = []
+    for encoding in CSV_ENCODINGS:
+        try:
+            text = data.decode(encoding)
+        except UnicodeDecodeError as error:
+            errors.append(f"{encoding}: byte {error.start}")
+            continue
+        if _looks_like_csv_text(text):
+            return text
+        errors.append(f"{encoding}: decoded text did not look like CSV")
+    raise UnicodeDecodeError(
+        "csv",
+        data,
+        0,
+        1,
+        f"could not decode {path} using supported encodings ({'; '.join(errors)})",
+    )
+
+
+def _looks_like_csv_text(text: str) -> bool:
+    sample = text[:4096]
+    if not sample.strip():
+        return True
+    if "\x00" in sample:
+        return False
+    first_line = sample.splitlines()[0] if sample.splitlines() else sample
+    return any(delimiter in first_line for delimiter in (",", "\t", ";"))
+
 
 def read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     data = path.read_bytes()
-    text = data.decode("utf-8-sig") if data.startswith(b"\xef\xbb\xbf") else data.decode("utf-8")
+    text = _decode_csv_bytes(data, path)
     reader = csv.DictReader(io.StringIO(text, newline=""), strict=True)
     if reader.fieldnames is None:
         raise ValueError(f"CSV has no header row: {path}")

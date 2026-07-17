@@ -15,6 +15,7 @@ audit, naming audit, category audit, run manifest, and run summary.
 ```powershell
 uv sync
 uv run lunchtab-product-init
+uv run lunchtab-pos-name
 ```
 
 Focused checks:
@@ -23,6 +24,7 @@ Focused checks:
 uv run pytest -q
 uv run ruff check .
 uv run lunchtab-product-init --smoke-test
+uv run lunchtab-pos-name --smoke-test
 ```
 
 ## Operator Workflow
@@ -78,3 +80,21 @@ Each run folder contains:
 - `run-summary.md` - human-readable build summary.
 
 See `docs/business-requirements-and-roadmap.md` for the tracked roadmap summary.
+
+## BaseProductPosName-only App
+
+For the smaller one-file automation, run:
+
+```powershell
+uv run lunchtab-pos-name
+```
+
+Select an existing Lunchtab target CSV. The app requires the CSV header to exactly match the
+expected ProductData target header. Rows with an existing `BaseProductPosName` of 15 characters or
+fewer are preserved and skipped; other rows receive generated names. The app writes a timestamped
+folder containing:
+
+- `BaseProductPosName Processed.csv` - a copy of the selected CSV with generated
+  `BaseProductPosName` values;
+- `BaseProductPosName Audit.csv` - row-level naming evidence and review status;
+- `run-summary.md` - row counts and duplicate-name counts.
