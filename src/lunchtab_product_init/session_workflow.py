@@ -52,6 +52,7 @@ class PosNamePreferenceProfile:
 class SessionRow:
     row_id: str
     candidate: ProductCandidate
+    old_category: str = ""
     category: str = ""
     pos_name: str = ""
     status: RowStatus = "active"
@@ -168,6 +169,7 @@ def filter_rows(
     session: ImportSession,
     *,
     keyword: str = "",
+    old_category: str = "",
     price_operator: PriceFilterOperator = "any",
     price_value: str = "",
     price_upper: str = "",
@@ -176,6 +178,7 @@ def filter_rows(
     include_deleted: bool = False,
 ) -> tuple[SessionRow, ...]:
     keyword_norm = normalize_text(keyword)
+    old_category_norm = normalize_text(old_category)
     price_operator = _normalize_price_operator(price_operator)
     if min_price or max_price:
         price_operator = "range"
@@ -187,6 +190,8 @@ def filter_rows(
     filtered = []
     for row in rows:
         if keyword_norm and keyword_norm not in normalize_text(row.item_name):
+            continue
+        if old_category_norm and old_category_norm not in normalize_text(row.old_category):
             continue
         price = _decimal_or_none(row.price)
         if not _price_matches(price, price_operator, target_price, upper_price):
@@ -474,6 +479,7 @@ def _session_row(index: int, candidate: ProductCandidate, barcode_duplicates: se
     return SessionRow(
         row_id=f"row-{index}",
         candidate=candidate,
+        old_category=candidate.category,
         status=status if not reasons else "needs_edit",
         review_reason="; ".join(reasons),
     )
@@ -559,7 +565,16 @@ def _summary(session: ImportSession, paths: SessionOutputPaths) -> SessionBuildS
 
 
 def _category_audit_headers() -> list[str]:
-    return ["RowId", "ItemName", "Price", "Barcode", "Category", "Status", "ReviewReason"]
+    return [
+        "RowId",
+        "ItemName",
+        "Price",
+        "Barcode",
+        "OldCategory",
+        "Category",
+        "Status",
+        "ReviewReason",
+    ]
 
 
 def _category_audit_rows(session: ImportSession):
@@ -569,6 +584,7 @@ def _category_audit_rows(session: ImportSession):
             "ItemName": row.item_name,
             "Price": row.price,
             "Barcode": row.barcode,
+            "OldCategory": row.old_category,
             "Category": row.category,
             "Status": row.status,
             "ReviewReason": row.review_reason,
@@ -599,6 +615,7 @@ def _session_audit_headers() -> list[str]:
         "ItemName",
         "Price",
         "Barcode",
+        "OldCategory",
         "Category",
         "BaseProductPosName",
         "Status",
@@ -618,6 +635,7 @@ def _session_audit_rows(rows_or_session):
             "ItemName": row.item_name,
             "Price": row.price,
             "Barcode": row.barcode,
+            "OldCategory": row.old_category,
             "Category": row.category,
             "BaseProductPosName": row.pos_name,
             "Status": row.status,

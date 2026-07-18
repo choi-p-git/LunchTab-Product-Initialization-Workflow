@@ -54,6 +54,7 @@ class ProductInitializationApp:
         self.is_orderable = tk.BooleanVar(value=False)
         self.category_name = tk.StringVar()
         self.category_filter = tk.StringVar()
+        self.old_category_filter = tk.StringVar()
         self.price_operator = tk.StringVar(value="=")
         self.min_price = tk.StringVar()
         self.max_price = tk.StringVar()
@@ -65,6 +66,7 @@ class ProductInitializationApp:
         self.pos_name = tk.StringVar()
         self.pos_validation = tk.StringVar()
         self.audit_text = tk.StringVar()
+        self.inline_category_combo: ttk.Combobox | None = None
 
         self._build()
         self._render()
@@ -142,7 +144,7 @@ class ProductInitializationApp:
 
         tools = ttk.Frame(body)
         tools.grid(row=0, column=0, sticky="ew", pady=(0, 8))
-        tools.columnconfigure(8, weight=1)
+        tools.columnconfigure(10, weight=1)
         ttk.Label(tools, text="New category").grid(row=0, column=0, sticky="w")
         self.category_entry = ttk.Entry(tools, textvariable=self.category_name, width=22)
         self.category_entry.grid(row=0, column=1, padx=(6, 8), sticky="w")
@@ -154,7 +156,20 @@ class ProductInitializationApp:
         ttk.Entry(tools, textvariable=self.category_filter, width=22).grid(
             row=1, column=1, padx=(6, 8), sticky="w", pady=(8, 0)
         )
-        ttk.Label(tools, text="Price filter").grid(row=1, column=2, sticky="w", pady=(8, 0))
+        ttk.Label(tools, text="Old category filter").grid(
+            row=1, column=2, sticky="w", pady=(8, 0)
+        )
+        self.old_category_combo = ttk.Combobox(
+            tools,
+            textvariable=self.old_category_filter,
+            width=18,
+        )
+        self.old_category_combo.grid(
+            row=1, column=3, padx=(6, 8), sticky="w", pady=(8, 0)
+        )
+        self.old_category_combo.bind("<Return>", lambda _event: self._refresh_category_rows())
+        self.old_category_combo.bind("<<ComboboxSelected>>", lambda _event: self._refresh_category_rows())
+        ttk.Label(tools, text="Price filter").grid(row=1, column=4, sticky="w", pady=(8, 0))
         self.price_operator_combo = ttk.Combobox(
             tools,
             textvariable=self.price_operator,
@@ -162,21 +177,21 @@ class ProductInitializationApp:
             state="readonly",
             width=8,
         )
-        self.price_operator_combo.grid(row=1, column=3, padx=(6, 4), sticky="w", pady=(8, 0))
+        self.price_operator_combo.grid(row=1, column=5, padx=(6, 4), sticky="w", pady=(8, 0))
         self.price_operator_combo.bind("<<ComboboxSelected>>", lambda _event: self._price_operator_changed())
         self.price_value_entry = ttk.Entry(tools, textvariable=self.min_price, width=10)
-        self.price_value_entry.grid(row=1, column=4, padx=(0, 4), sticky="w", pady=(8, 0))
-        ttk.Label(tools, text="Upper bound").grid(row=1, column=5, sticky="w", pady=(8, 0))
+        self.price_value_entry.grid(row=1, column=6, padx=(0, 4), sticky="w", pady=(8, 0))
+        ttk.Label(tools, text="Upper bound").grid(row=1, column=7, sticky="w", pady=(8, 0))
         self.price_upper_entry = ttk.Entry(tools, textvariable=self.max_price, width=10)
-        self.price_upper_entry.grid(row=1, column=6, padx=(6, 8), sticky="w", pady=(8, 0))
+        self.price_upper_entry.grid(row=1, column=8, padx=(6, 8), sticky="w", pady=(8, 0))
         ttk.Button(tools, text="Apply filter", command=self._refresh_category_rows).grid(
-            row=1, column=7, sticky="w", pady=(8, 0)
+            row=1, column=9, sticky="w", pady=(8, 0)
         )
 
         self.category_tree = self._tree(
             body,
-            ("selected", "name", "price", "barcode", "category", "status"),
-            ("Select", "Item Name", "Price", "Barcode", "Category", "Status"),
+            ("selected", "name", "price", "barcode", "old_category", "category", "status"),
+            ("Select", "Item Name", "Price", "Barcode", "Old Category", "Category", "Status"),
         )
         self.category_tree.grid(row=1, column=0, sticky="nsew")
         self._tree_widget(self.category_tree).bind("<Button-1>", self._category_tree_click)
@@ -452,12 +467,62 @@ class ProductInitializationApp:
 
     def _category_tree_double_click(self, event: tk.Event) -> str | None:
         tree = self._tree_widget(self.category_tree)
+        row_id = tree.identify_row(event.y)
+        if row_id and tree.identify_column(event.x) == "#6":
+            tree.selection_set(row_id)
+            self._show_inline_category_dropdown(row_id, event.x, event.y)
+            return "break"
         row_id = tree.identify_row(event.y) or self._selected_iid(tree)
         if row_id:
             tree.selection_set(row_id)
             self._toggle_category_row(row_id)
             return "break"
         return None
+
+    def _show_inline_category_dropdown(self, row_id: str, x: int, y: int) -> None:
+        session = self.controller.state.session
+        if session is None or not session.category_names:
+            return
+        self._close_inline_category_dropdown()
+        tree = self._tree_widget(self.category_tree)
+        bbox = tree.bbox(row_id, "#6")
+        if not bbox:
+            return
+        cell_x, cell_y, width, height = bbox
+        value = tk.StringVar(value=self._row(row_id).category if self._row(row_id) else "")
+        combo = ttk.Combobox(
+            tree,
+            textvariable=value,
+            values=session.category_names,
+            state="readonly",
+            width=max(14, width // 8),
+        )
+        combo.place(x=cell_x, y=cell_y, width=width, height=height)
+        combo.focus_set()
+        combo.bind(
+            "<<ComboboxSelected>>",
+            lambda _event: self._apply_inline_category(row_id, value.get()),
+        )
+        combo.bind("<Escape>", lambda _event: self._close_inline_category_dropdown())
+        combo.bind("<FocusOut>", lambda _event: self._close_inline_category_dropdown())
+        self.inline_category_combo = combo
+        combo.event_generate("<Button-1>", x=x, y=y)
+
+    def _apply_inline_category(self, row_id: str, category: str) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        next_session = assign_category(session, {row_id}, category)
+        if next_session != session:
+            self._push_category_undo()
+            self.controller.set_session(next_session)
+        self._close_inline_category_dropdown()
+        self._render()
+
+    def _close_inline_category_dropdown(self) -> None:
+        if self.inline_category_combo is not None:
+            self.inline_category_combo.destroy()
+            self.inline_category_combo = None
 
     def _select_all_category_rows(self) -> None:
         tree = self._tree_widget(self.category_tree)
@@ -695,10 +760,12 @@ class ProductInitializationApp:
         rows = filter_rows(
             session,
             keyword=self.category_filter.get(),
+            old_category=self.old_category_filter.get(),
             price_operator=self.price_operator.get(),  # type: ignore[arg-type]
             price_value=self.min_price.get(),
             price_upper=self.max_price.get(),
         )
+        self.old_category_combo.configure(values=self._old_category_values(session))
         self.category_combo.configure(values=session.category_names)
         for row in rows:
             tree.insert(
@@ -710,6 +777,7 @@ class ProductInitializationApp:
                     row.item_name,
                     row.price,
                     row.barcode,
+                    row.old_category,
                     row.category,
                     row.status,
                 ),
@@ -736,6 +804,11 @@ class ProductInitializationApp:
                     row.review_reason,
                 ),
             )
+
+    @staticmethod
+    def _old_category_values(session) -> tuple[str, ...]:
+        values = sorted({row.old_category for row in session.active_rows if row.old_category})
+        return ("", *values)
 
     def _populate_pos_rows(self) -> None:
         session = self.controller.state.session

@@ -43,6 +43,23 @@ def test_category_assignment_filters_and_marks_rows() -> None:
     assert session.rows[1].status == "needs_edit"
 
 
+def test_old_category_is_preserved_and_filterable() -> None:
+    session = _session(
+        [
+            _row("row-1", "Chicken Sandwich", "6.50", "ABC", old_category="Entrees"),
+            _row("row-2", "Apple Juice", "1.25", "DEF", old_category="Beverages"),
+        ]
+    )
+
+    session = assign_category(session, {"row-1"}, "Sandwiches")
+
+    assert session.rows[0].old_category == "Entrees"
+    assert session.rows[0].category == "Sandwiches"
+    assert [
+        row.row_id for row in filter_rows(session, old_category="bev")
+    ] == ["row-2"]
+
+
 def test_category_price_filter_supports_exact_comparison_and_range() -> None:
     session = _session(
         [
@@ -136,7 +153,15 @@ def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:
     source_template, recipe, odin = _source_files(tmp_path)
     session = _session(
         [
-            _row("row-1", "Apple Juice", "1.25", "ABC", category="Beverages", pos_name="AppleJuice"),
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "ABC",
+                category="Beverages",
+                old_category="Drinks",
+                pos_name="AppleJuice",
+            ),
             _row("row-2", "Deleted Chips", "1.00", "", status="deleted"),
         ],
         categories=("Beverages",),
@@ -163,6 +188,10 @@ def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:
     with result.summary.output_paths.deleted_audit.open(encoding="utf-8-sig", newline="") as file:
         deleted = list(csv.DictReader(file))
     assert deleted[0]["ItemName"] == "Deleted Chips"
+
+    with result.summary.output_paths.category_audit.open(encoding="utf-8-sig", newline="") as file:
+        audit_rows = list(csv.DictReader(file))
+    assert audit_rows[0]["OldCategory"] == "Drinks"
 
 
 def test_venue_profile_saves_categories_and_pos_preferences(tmp_path: Path) -> None:
@@ -196,6 +225,7 @@ def _row(
     barcode: str,
     *,
     category: str = "",
+    old_category: str = "",
     pos_name: str = "",
     status: str = "active",
 ) -> SessionRow:
@@ -207,8 +237,9 @@ def _row(
             item_name=name,
             price=price,
             barcode=barcode,
-            category=category,
+            category=old_category or category,
         ),
+        old_category=old_category or category,
         category=category,
         pos_name=pos_name,
         status=status,  # type: ignore[arg-type]
