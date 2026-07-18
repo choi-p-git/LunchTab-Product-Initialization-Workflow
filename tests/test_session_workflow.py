@@ -351,6 +351,29 @@ def test_pos_generation_does_not_overwrite_manual_overrides() -> None:
     assert suggest_pos_names(session, "row-1")[0] != "Manual Name"
 
 
+def test_pos_generation_preserves_reviewed_names_after_barcode_merge() -> None:
+    session = _session(
+        [
+            _row("row-1", "Bacon, Egg, and Cheese Bagel", "5.25", "ABC", category="Breakfast"),
+            _row("row-2", "Burrito Egg and Cheese Bagel", "5.25", "DEF", category="Breakfast"),
+            _row("row-3", "Duplicate Barcode Source", "5.25", "GHI", category="Breakfast"),
+        ],
+        categories=("Breakfast",),
+    )
+
+    session = run_pos_generation(session)
+    original_row_2_pos_name = next(row for row in session.rows if row.row_id == "row-2").pos_name
+    session = replace_pos_name(session, "row-1", "BEC Bagel")
+    assert session.can_leave_pos_review
+
+    session = merge_rows(session, "row-2", {"row-3"})
+    session = run_pos_generation(session)
+
+    row_2 = next(row for row in session.rows if row.row_id == "row-2")
+    assert row_2.pos_name == original_row_2_pos_name
+    assert session.can_leave_pos_review
+
+
 def test_pos_rows_can_filter_to_review_reason() -> None:
     session = _session(
         [

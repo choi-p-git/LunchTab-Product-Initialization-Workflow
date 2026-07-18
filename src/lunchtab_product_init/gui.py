@@ -833,7 +833,6 @@ class ProductInitializationApp:
 
         target_by_label = {self._merge_row_label(row): row.row_id for row in rows}
         target_label = tk.StringVar(value=next(iter(target_by_label)))
-        preview_text = tk.StringVar()
 
         header = ttk.Frame(dialog, padding=12)
         header.grid(row=0, column=0, sticky="ew")
@@ -851,10 +850,23 @@ class ProductInitializationApp:
         body = ttk.Frame(dialog, padding=(12, 0, 12, 12))
         body.grid(row=1, column=0, sticky="nsew")
         body.columnconfigure(0, weight=1)
+        body.rowconfigure(1, weight=1)
         ttk.Label(body, text="Merge preview").grid(row=0, column=0, sticky="w")
-        preview = tk.Text(body, height=12, width=92, wrap="word")
-        preview.grid(row=1, column=0, sticky="nsew", pady=(6, 0))
-        preview.configure(state="disabled")
+        preview_frame = self._tree(
+            body,
+            columns=("role", "row_id", "item_name", "price", "barcode", "category", "action"),
+            labels=("Role", "Row", "Name", "Price", "Barcode", "Category", "Merge Action"),
+        )
+        preview_frame.grid(row=1, column=0, sticky="nsew", pady=(6, 0))
+        preview_tree = self._tree_widget(preview_frame)
+        preview_tree.configure(height=10, selectmode="browse")
+        preview_tree.column("role", width=110, minwidth=90)
+        preview_tree.column("row_id", width=90, minwidth=70)
+        preview_tree.column("item_name", width=220, minwidth=140)
+        preview_tree.column("price", width=80, minwidth=70, anchor="e")
+        preview_tree.column("barcode", width=210, minwidth=130)
+        preview_tree.column("category", width=140, minwidth=100)
+        preview_tree.column("action", width=230, minwidth=160)
 
         actions = ttk.Frame(dialog, padding=(12, 0, 12, 12))
         actions.grid(row=2, column=0, sticky="ew")
@@ -862,11 +874,9 @@ class ProductInitializationApp:
 
         def refresh_preview(*_args) -> None:
             target_id = target_by_label[target_label.get()]
-            preview_text.set(self._merge_preview_text(rows, target_id))
-            preview.configure(state="normal")
-            preview.delete("1.0", tk.END)
-            preview.insert("1.0", preview_text.get())
-            preview.configure(state="disabled")
+            self._clear(preview_tree)
+            for index, values in enumerate(self._merge_preview_rows(rows, target_id)):
+                preview_tree.insert("", "end", iid=f"preview-{index}", values=values)
 
         def confirm() -> None:
             target_id = target_by_label[target_label.get()]
@@ -891,7 +901,7 @@ class ProductInitializationApp:
         ttk.Button(actions, text="Cancel", command=dialog.destroy).grid(row=0, column=2, sticky="e", padx=(8, 0))
         target_combo.bind("<<ComboboxSelected>>", refresh_preview)
         refresh_preview()
-        size_and_center(dialog, 780, 420)
+        size_and_center(dialog, 980, 480)
         target_combo.focus_set()
 
     @staticmethod
@@ -899,30 +909,46 @@ class ProductInitializationApp:
         return f"{row.row_id} - {row.item_name or '(missing name)'}"
 
     @staticmethod
-    def _merge_preview_text(rows, target_row_id: str) -> str:
+    def _merge_preview_rows(rows, target_row_id: str) -> tuple[tuple[str, str, str, str, str, str, str], ...]:
         target = next(row for row in rows if row.row_id == target_row_id)
         sources = [row for row in rows if row.row_id != target_row_id]
         source_barcodes = [barcode for row in sources for barcode in parse_barcodes(row.barcode)]
         merged_barcode = format_barcodes((*parse_barcodes(target.barcode), *source_barcodes))
-        deleted = ", ".join(row.row_id for row in sources)
-        source_barcode_text = ", ".join(source_barcodes) or "(none)"
-        return "\n".join(
-            [
-                f"Target row: {target.row_id}",
-                f"Target item: {target.item_name}",
-                f"Target price: {target.price or '(missing)'}",
-                f"Target category: {target.category or '(missing)'}",
-                "",
-                f"Current target barcode(s): {target.barcode or '(none)'}",
-                f"Source barcode(s) to transfer: {source_barcode_text}",
-                f"Result barcode field: {merged_barcode or '(none)'}",
-                "",
-                f"Rows to delete from import after merge: {deleted}",
-                "",
-                "Merge method: transfer source barcode values to target row, separated by commas. "
-                "Name, price, and category stay on the selected target row.",
-            ]
+        preview_rows = [
+            (
+                "Target",
+                target.row_id,
+                target.item_name or "(missing)",
+                target.price or "(missing)",
+                target.barcode or "(none)",
+                target.category or "(missing)",
+                "Keep row; update barcode field",
+            )
+        ]
+        preview_rows.extend(
+            (
+                "Source",
+                row.row_id,
+                row.item_name or "(missing)",
+                row.price or "(missing)",
+                row.barcode or "(none)",
+                row.category or "(missing)",
+                f"Transfer barcode; delete into {target_row_id}",
+            )
+            for row in sources
         )
+        preview_rows.append(
+            (
+                "Result",
+                target.row_id,
+                target.item_name or "(missing)",
+                target.price or "(missing)",
+                merged_barcode or "(none)",
+                target.category or "(missing)",
+                "Final target row after merge",
+            )
+        )
+        return tuple(preview_rows)
 
     def _save_edit(self) -> None:
         session = self.controller.state.session

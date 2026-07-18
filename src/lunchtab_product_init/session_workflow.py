@@ -381,7 +381,7 @@ def run_pos_generation(session: ImportSession) -> ImportSession:
         if row.status == "deleted":
             generated.append(row)
             continue
-        if row.pos_overridden and row.pos_name:
+        if row.pos_name:
             generated.append(row)
             final_names.append(row.pos_name)
             continue
