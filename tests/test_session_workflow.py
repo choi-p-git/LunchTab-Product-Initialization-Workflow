@@ -124,6 +124,30 @@ def test_duplicate_barcode_validation_splits_comma_separated_values() -> None:
     ] == ["row-1", "row-2"]
 
 
+def test_deleting_duplicate_barcode_row_refreshes_surviving_rows() -> None:
+    session = _session(
+        [
+            _row("row-1", "Primary Item", "1.00", "111,222", category="Snacks"),
+            _row("row-2", "Duplicate Item", "2.00", "222", category="Snacks"),
+        ]
+    )
+    session = save_edit(
+        session,
+        "row-1",
+        item_name="Primary Item",
+        price="1.00",
+        barcode="111,222",
+        category="Snacks",
+    )
+    assert "duplicate barcode" in session.rows[0].review_reason
+
+    session = delete_rows(session, {"row-2"})
+
+    row_1 = next(row for row in session.rows if row.row_id == "row-1")
+    assert row_1.status == "edit_complete"
+    assert "duplicate barcode" not in row_1.review_reason
+
+
 def test_category_filter_can_select_rows_without_barcode() -> None:
     session = _session(
         [
@@ -392,6 +416,26 @@ def test_pos_rows_can_filter_to_review_reason() -> None:
     assert [
         row.row_id for row in filter_pos_rows(session, "duplicate")
     ] == ["row-1", "row-2"]
+
+
+def test_deleting_duplicate_pos_row_refreshes_surviving_rows() -> None:
+    session = _session(
+        [
+            _row("row-1", "Drink A", "1.00", "A", category="Beverages"),
+            _row("row-2", "Drink B", "1.00", "B", category="Beverages"),
+        ]
+    )
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "Duplicate")
+    session = replace_pos_name(session, "row-2", "Duplicate")
+    assert not session.can_export
+
+    session = delete_rows(session, {"row-2"})
+
+    row_1 = next(row for row in session.rows if row.row_id == "row-1")
+    assert row_1.status == "pos_ready"
+    assert "duplicate POS name" not in row_1.review_reason
+    assert session.can_export
 
 
 def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:

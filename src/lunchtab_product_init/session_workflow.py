@@ -144,7 +144,7 @@ class ImportSession:
 
     @property
     def can_export(self) -> bool:
-        return all(validate_export_ready(row) == [] for row in self.active_rows)
+        return validate_session_export_ready(self) == []
 
 
 @dataclass(frozen=True)
@@ -270,15 +270,44 @@ def mark_for_edit(session: ImportSession, row_ids: set[str], reason: str = "oper
 
 
 def delete_rows(session: ImportSession, row_ids: set[str], reason: str = "operator deleted") -> ImportSession:
-    return replace(
-        session,
-        rows=tuple(
-            replace(row, status="deleted", deleted_reason=reason)
-            if row.row_id in row_ids
-            else row
-            for row in session.rows
-        ),
+    return _refresh_after_delete(
+        replace(
+            session,
+            rows=tuple(
+                replace(row, status="deleted", deleted_reason=reason)
+                if row.row_id in row_ids
+                else row
+                for row in session.rows
+            ),
+        )
     )
+
+
+def _refresh_after_delete(session: ImportSession) -> ImportSession:
+    rows = []
+    barcode_duplicates = duplicate_barcodes(row.barcode for row in session.active_rows)
+    pos_started = any(row.pos_name for row in session.active_rows)
+    for row in session.rows:
+        if row.status == "deleted":
+            rows.append(row)
+            continue
+        edit_reasons = _core_review_reasons(row.candidate, barcode_duplicates)
+        if not row.category:
+            edit_reasons.append("missing category")
+        pos_reasons = validate_pos_name(row.pos_name, row.row_id, session.rows) if pos_started else []
+        reasons = sorted(set((*edit_reasons, *pos_reasons)))
+        if edit_reasons:
+            status: RowStatus = "needs_edit"
+        elif pos_started:
+            status = "pos_needs_review" if pos_reasons else "pos_ready"
+        elif _is_unedited_operator_review(row):
+            status = row.status
+        elif row.status == "active":
+            status = "active"
+        else:
+            status = "edit_complete"
+        rows.append(replace(row, status=status, review_reason="; ".join(reasons)))
+    return replace(session, rows=tuple(rows))
 
 
 def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[str]) -> ImportSession:
@@ -665,6 +694,21 @@ def validate_export_ready(row: SessionRow) -> list[str]:
     if len(row.pos_name) > MAX_POS_NAME_LENGTH:
         reasons.append("POS name is longer than 15 characters")
     return sorted(set(reasons))
+
+
+def validate_session_export_ready(session: ImportSession) -> list[str]:
+    barcode_duplicates = duplicate_barcodes(row.barcode for row in session.active_rows)
+    pos_duplicates = duplicate_values(row.pos_name for row in session.active_rows if row.pos_name)
+    errors = []
+    for row in session.active_rows:
+        reasons = validate_export_ready(row)
+        if any(barcode.casefold() in barcode_duplicates for barcode in parse_barcodes(row.barcode)):
+            reasons.append("duplicate barcode")
+        if row.pos_name in pos_duplicates:
+            reasons.append("duplicate POS name")
+        if reasons:
+            errors.append(f"{row.row_id}: {', '.join(sorted(set(reasons)))}")
+    return errors
 
 
 def _session_row(index: int, candidate: ProductCandidate, barcode_duplicates: set[str]) -> SessionRow:
