@@ -5,26 +5,27 @@ import queue
 import threading
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, simpledialog, ttk
+from tkinter import filedialog, messagebox, ttk
 from typing import Callable
 
-from lunchtab_product_init.categories import (
-    format_restriction_policies,
-    infer_categories,
-    load_category_profile,
-    save_category_profile,
-)
 from lunchtab_product_init.desktop import friendly_error, open_path
 from lunchtab_product_init.gui_controller import AppController, AppPhase
-from lunchtab_product_init.models import (
-    BuildInputs,
-    CategoryCatalogEntry,
-    CategoryProfile,
-    CategoryRule,
-    ProductCandidate,
+from lunchtab_product_init.session_workflow import (
+    assign_category,
+    delete_rows,
+    export_session,
+    filter_rows,
+    mark_for_edit,
+    next_edit_row,
+    no_barcode_rows,
+    parse_sources,
+    replace_pos_name,
+    run_pos_generation,
+    save_edit,
+    save_venue_profile,
+    suggest_pos_names,
 )
-from lunchtab_product_init.ui_helpers import ScrollableFrame, size_and_center
-from lunchtab_product_init.workflow import build_product_import
+from lunchtab_product_init.ui_helpers import size_and_center
 
 APP_TITLE = "Lunchtab Product Initialization"
 
@@ -34,173 +35,296 @@ class ProductInitializationApp:
         self.root = root
         self.controller = AppController()
         self.events: queue.Queue[tuple[str, object]] = queue.Queue()
+        self.category_selection: set[str] = set()
+        self.edit_selection: set[str] = set()
+        self.edit_no_barcode_only = False
+        self.current_edit_row_id: str | None = None
+        self.current_pos_row_id: str | None = None
 
         root.title(APP_TITLE)
-        size_and_center(root, 900, 680)
+        size_and_center(root, 1120, 760)
 
         self.product_template_text = tk.StringVar()
         self.recipe_list_text = tk.StringVar()
         self.odin_inventory_text = tk.StringVar()
-        self.category_profile_text = tk.StringVar(value="Built-in current venue starter profile")
-        self.is_orderable = tk.BooleanVar(value=self.controller.state.is_orderable)
         self.output_text = tk.StringVar(value=str(self.controller.state.output_root))
         self.status_text = tk.StringVar(value=self.controller.state.message)
-        self.details_text = tk.StringVar(value="")
+        self.is_orderable = tk.BooleanVar(value=False)
+        self.category_name = tk.StringVar()
+        self.category_filter = tk.StringVar()
+        self.min_price = tk.StringVar()
+        self.max_price = tk.StringVar()
+        self.selected_category = tk.StringVar()
+        self.edit_name = tk.StringVar()
+        self.edit_price = tk.StringVar()
+        self.edit_barcode = tk.StringVar()
+        self.edit_category = tk.StringVar()
+        self.pos_name = tk.StringVar()
+        self.pos_validation = tk.StringVar()
+        self.audit_text = tk.StringVar()
 
         self._build()
         self._render()
         root.after(100, self._poll_events)
 
     def _build(self) -> None:
-        scroller = ScrollableFrame(self.root, padding=22)
-        scroller.pack(fill="both", expand=True)
-        outer = scroller.content
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(1, weight=1)
 
-        ttk.Label(outer, text=APP_TITLE, font=("Segoe UI", 18, "bold")).pack(anchor="w")
-        ttk.Label(
-            outer,
-            text="Build an audited product import CSV from Lunchtab, recipe-list, and Odin exports.",
-        ).pack(anchor="w", pady=(3, 20))
+        header = ttk.Frame(self.root, padding=(16, 14, 16, 8))
+        header.grid(row=0, column=0, sticky="ew")
+        header.columnconfigure(0, weight=1)
+        ttk.Label(header, text=APP_TITLE, font=("Segoe UI", 17, "bold")).grid(
+            row=0, column=0, sticky="w"
+        )
+        ttk.Label(header, textvariable=self.status_text).grid(row=1, column=0, sticky="w", pady=(4, 0))
 
-        files = ttk.LabelFrame(outer, text="Source files", padding=14)
-        files.pack(fill="x")
-        files.columnconfigure(1, weight=1)
-        self._file_row(
-            files, 0, "ProductData template", self.product_template_text, self._choose_template
-        )
-        self._file_row(files, 1, "Recipe list", self.recipe_list_text, self._choose_recipe)
-        self._file_row(files, 2, "Odin inventory", self.odin_inventory_text, self._choose_odin)
-        self._file_row(
-            files, 3, "Category profile", self.category_profile_text, self._choose_profile
-        )
-        ttk.Button(files, text="Manage...", command=self._manage_profile).grid(
-            row=3, column=3, pady=5
-        )
-        self._file_row(files, 4, "Save results in", self.output_text, self._choose_output)
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 8))
+        self.tabs: dict[str, ttk.Frame] = {}
+        for key, label in (
+            ("parse", "1 Parse Sources"),
+            ("categories", "2 Categories"),
+            ("edit", "3 Edit Review"),
+            ("pos", "4 POS Names"),
+            ("final", "5 Final Review"),
+            ("complete", "6 Export Complete"),
+        ):
+            frame = ttk.Frame(self.notebook, padding=12)
+            frame.columnconfigure(0, weight=1)
+            frame.rowconfigure(0, weight=1)
+            self.tabs[key] = frame
+            self.notebook.add(frame, text=label)
 
-        config_pages = ttk.Notebook(outer)
-        config_pages.pack(fill="x", pady=(14, 0))
-        process_config = ttk.Frame(config_pages, padding=14)
-        config_pages.add(process_config, text="Process Config")
+        self._build_parse_tab()
+        self._build_categories_tab()
+        self._build_edit_tab()
+        self._build_pos_tab()
+        self._build_final_tab()
+        self._build_complete_tab()
+
+        footer = ttk.Frame(self.root, padding=(16, 0, 16, 14))
+        footer.grid(row=2, column=0, sticky="ew")
+        footer.columnconfigure(0, weight=1)
+        self.progress = ttk.Progressbar(footer, mode="indeterminate")
+        self.progress.grid(row=0, column=0, sticky="ew", padx=(0, 12))
+
+    def _build_parse_tab(self) -> None:
+        parent = self.tabs["parse"]
+        form = ttk.LabelFrame(parent, text="Source files", padding=14)
+        form.grid(row=0, column=0, sticky="new")
+        form.columnconfigure(1, weight=1)
+        self._file_row(form, 0, "ProductData template", self.product_template_text, self._choose_template)
+        self._file_row(form, 1, "Recipe list", self.recipe_list_text, self._choose_recipe)
+        self._file_row(form, 2, "Odin inventory", self.odin_inventory_text, self._choose_odin)
+        self._file_row(form, 3, "Save results in", self.output_text, self._choose_output)
         ttk.Checkbutton(
-            process_config,
+            form,
             text="Set target CSV IsOrderable to true",
             variable=self.is_orderable,
             command=self._set_is_orderable,
-        ).grid(row=0, column=0, sticky="w")
-        ttk.Label(
-            process_config,
-            text="Default is false. This writes the ProductData IsOrderable column for every accepted row.",
-            foreground="#555555",
-        ).grid(row=1, column=0, sticky="w", pady=(6, 0))
-
-        actions = ttk.Frame(outer)
-        actions.pack(fill="x", pady=14)
-        self.build_button = ttk.Button(
-            actions, text="Build product import", command=self._start_build
-        )
-        self.build_button.grid(row=0, column=0, sticky="ew")
+        ).grid(row=4, column=0, columnspan=3, sticky="w", pady=(10, 0))
+        actions = ttk.Frame(parent)
+        actions.grid(row=1, column=0, sticky="ew", pady=(12, 0))
         actions.columnconfigure(0, weight=1)
-        self.progress = ttk.Progressbar(actions, mode="indeterminate", length=180)
-        self.progress.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        self.parse_button = ttk.Button(actions, text="Parse sources", command=self._start_parse)
+        self.parse_button.grid(row=0, column=0, sticky="ew")
 
-        results = ttk.LabelFrame(outer, text="Status and results", padding=14)
-        results.pack(fill="both", expand=True)
-        ttk.Label(results, textvariable=self.status_text, font=("Segoe UI", 11, "bold")).pack(
-            anchor="w"
+    def _build_categories_tab(self) -> None:
+        parent = self.tabs["categories"]
+        body = ttk.Frame(parent)
+        body.grid(row=0, column=0, sticky="nsew")
+        body.columnconfigure(0, weight=1)
+        body.rowconfigure(1, weight=1)
+
+        tools = ttk.Frame(body)
+        tools.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        tools.columnconfigure(7, weight=1)
+        ttk.Label(tools, text="Category").grid(row=0, column=0, sticky="w")
+        ttk.Entry(tools, textvariable=self.category_name, width=20).grid(row=0, column=1, padx=6)
+        ttk.Button(tools, text="Add", command=self._add_category).grid(row=0, column=2)
+        ttk.Label(tools, text="Filter").grid(row=0, column=3, padx=(14, 0))
+        ttk.Entry(tools, textvariable=self.category_filter, width=18).grid(row=0, column=4, padx=6)
+        ttk.Entry(tools, textvariable=self.min_price, width=8).grid(row=0, column=5, padx=(0, 4))
+        ttk.Entry(tools, textvariable=self.max_price, width=8).grid(row=0, column=6, padx=(0, 8))
+        ttk.Button(tools, text="Apply filter", command=self._refresh_category_rows).grid(row=0, column=7, sticky="w")
+
+        self.category_tree = self._tree(
+            body,
+            ("selected", "name", "price", "barcode", "category", "status"),
+            ("Sel", "Item Name", "Price", "Barcode", "Category", "Status"),
         )
-        ttk.Label(results, textvariable=self.details_text, justify="left", wraplength=700).pack(
-            anchor="w", pady=(10, 14)
+        self.category_tree.grid(row=1, column=0, sticky="nsew")
+        self.category_tree.bind("<Double-1>", lambda _event: self._toggle_category_selection())
+
+        actions = ttk.Frame(body)
+        actions.grid(row=2, column=0, sticky="ew", pady=(8, 0))
+        ttk.Button(actions, text="Toggle selected row", command=self._toggle_category_selection).pack(side="left")
+        ttk.Button(actions, text="Select all shown", command=self._select_all_category_rows).pack(side="left", padx=(8, 0))
+        self.category_combo = ttk.Combobox(actions, textvariable=self.selected_category, state="readonly", width=24)
+        self.category_combo.pack(side="left", padx=8)
+        ttk.Button(actions, text="Assign category", command=self._assign_category).pack(side="left")
+        ttk.Button(actions, text="Mark for edit", command=self._mark_category_for_edit).pack(side="left", padx=8)
+        ttk.Button(actions, text="Delete rows", command=self._delete_category_rows).pack(side="left")
+        self.save_profile_button = ttk.Button(actions, text="Save venue profile...", command=self._save_profile)
+        self.save_profile_button.pack(side="right")
+        self.to_edit_button = ttk.Button(actions, text="Next: Edit review", command=self._go_to_edit)
+        self.to_edit_button.pack(side="right", padx=8)
+
+    def _build_edit_tab(self) -> None:
+        parent = self.tabs["edit"]
+        parent.rowconfigure(0, weight=1)
+        parent.columnconfigure(0, weight=1)
+        split = ttk.PanedWindow(parent, orient="horizontal")
+        split.grid(row=0, column=0, sticky="nsew")
+
+        left = ttk.Frame(split, padding=(0, 0, 8, 0))
+        left.columnconfigure(0, weight=1)
+        left.rowconfigure(1, weight=1)
+        split.add(left, weight=2)
+        tools = ttk.Frame(left)
+        tools.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        ttk.Button(tools, text="No barcode", command=self._show_no_barcode_rows).pack(side="left")
+        ttk.Button(tools, text="All review rows", command=self._show_all_edit_rows).pack(side="left", padx=(6, 0))
+        ttk.Button(tools, text="Select all shown", command=self._select_all_edit_rows).pack(side="left", padx=6)
+        ttk.Button(tools, text="Toggle selected row", command=self._toggle_edit_selection).pack(side="left")
+        ttk.Button(tools, text="Delete selected", command=self._delete_edit_rows).pack(side="left")
+        self.edit_tree = self._tree(
+            left,
+            ("selected", "name", "price", "barcode", "category", "reason"),
+            ("Sel", "Item Name", "Price", "Barcode", "Category", "Reason"),
         )
-        result_actions = ttk.Frame(results)
-        result_actions.pack(fill="x")
-        self.open_folder_button = ttk.Button(
-            result_actions, text="Open results folder", command=lambda: self._open_result("folder")
-        )
-        self.open_final_button = ttk.Button(
-            result_actions, text="Open import CSV", command=lambda: self._open_result("final")
-        )
-        self.open_review_button = ttk.Button(
-            result_actions, text="Open manual review", command=lambda: self._open_result("review")
-        )
-        self.open_audit_button = ttk.Button(
-            result_actions, text="Open naming audit", command=lambda: self._open_result("naming")
-        )
-        self.open_category_audit_button = ttk.Button(
-            result_actions,
-            text="Open category audit",
-            command=lambda: self._open_result("category"),
-        )
-        self.open_zero_stock_button = ttk.Button(
-            result_actions,
-            text="Open zero-stock review",
-            command=lambda: self._open_result("zero_stock"),
-        )
-        for index, button in enumerate(
-            [
-                self.open_folder_button,
-                self.open_final_button,
-                self.open_review_button,
-                self.open_audit_button,
-                self.open_category_audit_button,
-                self.open_zero_stock_button,
-            ]
-        ):
-            button.grid(
-                row=index // 2,
-                column=index % 2,
-                sticky="ew",
-                padx=(0 if index % 2 == 0 else 8, 0),
-                pady=(0 if index < 2 else 8, 0),
+        self.edit_tree.grid(row=1, column=0, sticky="nsew")
+        self.edit_tree.bind("<Double-1>", lambda _event: self._load_selected_edit_row())
+
+        form = ttk.LabelFrame(split, text="Row edit", padding=12)
+        form.columnconfigure(1, weight=1)
+        split.add(form, weight=1)
+        for row, (label, variable) in enumerate(
+            (
+                ("Name", self.edit_name),
+                ("Price", self.edit_price),
+                ("Barcode", self.edit_barcode),
+                ("Category", self.edit_category),
             )
-        result_actions.columnconfigure(0, weight=1)
-        result_actions.columnconfigure(1, weight=1)
+        ):
+            ttk.Label(form, text=label).grid(row=row, column=0, sticky="w", pady=4)
+            ttk.Entry(form, textvariable=variable).grid(row=row, column=1, sticky="ew", pady=4)
+        self.save_edit_button = ttk.Button(form, text="Save row edit", command=self._save_edit)
+        self.save_edit_button.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(10, 0))
+        ttk.Button(form, text="Delete current row", command=self._delete_current_edit_row).grid(
+            row=5, column=0, columnspan=2, sticky="ew", pady=(8, 0)
+        )
+        self.to_pos_button = ttk.Button(form, text="Next: POS names", command=self._go_to_pos)
+        self.to_pos_button.grid(row=6, column=0, columnspan=2, sticky="ew", pady=(16, 0))
 
-        ttk.Label(
-            outer,
-            text="Source files are never changed. Low-confidence rows are written to manual review.",
-            foreground="#555555",
-        ).pack(anchor="w", pady=(14, 0))
+    def _build_pos_tab(self) -> None:
+        parent = self.tabs["pos"]
+        parent.rowconfigure(0, weight=1)
+        parent.columnconfigure(0, weight=1)
+        split = ttk.PanedWindow(parent, orient="horizontal")
+        split.grid(row=0, column=0, sticky="nsew")
+        left = ttk.Frame(split, padding=(0, 0, 8, 0))
+        left.columnconfigure(0, weight=1)
+        left.rowconfigure(0, weight=1)
+        split.add(left, weight=2)
+        self.pos_tree = self._tree(
+            left,
+            ("name", "pos", "status", "reason"),
+            ("Item Name", "BaseProductPosName", "Status", "Reason"),
+        )
+        self.pos_tree.grid(row=0, column=0, sticky="nsew")
+        self.pos_tree.bind("<Double-1>", lambda _event: self._load_selected_pos_row())
+
+        editor = ttk.LabelFrame(split, text="POS-name steering", padding=12)
+        editor.columnconfigure(0, weight=1)
+        split.add(editor, weight=1)
+        ttk.Entry(editor, textvariable=self.pos_name).grid(row=0, column=0, sticky="ew")
+        ttk.Label(editor, textvariable=self.pos_validation, foreground="#8a1f11").grid(
+            row=1, column=0, sticky="w", pady=(6, 0)
+        )
+        self.replace_pos_button = ttk.Button(editor, text="Replace", command=self._replace_pos)
+        self.replace_pos_button.grid(row=2, column=0, sticky="ew", pady=(8, 0))
+        ttk.Label(editor, text="Suggestions").grid(row=3, column=0, sticky="w", pady=(14, 4))
+        self.suggestion_frame = ttk.Frame(editor)
+        self.suggestion_frame.grid(row=4, column=0, sticky="ew")
+        self.to_final_button = ttk.Button(editor, text="Next: Final review", command=self._go_to_final)
+        self.to_final_button.grid(row=5, column=0, sticky="ew", pady=(20, 0))
+
+    def _build_final_tab(self) -> None:
+        parent = self.tabs["final"]
+        parent.rowconfigure(0, weight=1)
+        parent.columnconfigure(0, weight=1)
+        self.final_tree = self._tree(
+            parent,
+            ("name", "pos", "price", "barcode", "category"),
+            ("BaseProductName", "BaseProductPosName", "Price", "Barcode", "ProductCategories"),
+        )
+        self.final_tree.grid(row=0, column=0, sticky="nsew")
+        bottom = ttk.Frame(parent)
+        bottom.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        bottom.columnconfigure(0, weight=1)
+        ttk.Label(bottom, textvariable=self.audit_text, justify="left").grid(row=0, column=0, sticky="w")
+        self.export_button = ttk.Button(bottom, text="Confirm and export", command=self._start_export)
+        self.export_button.grid(row=0, column=1, sticky="e")
+
+    def _build_complete_tab(self) -> None:
+        parent = self.tabs["complete"]
+        panel = ttk.LabelFrame(parent, text="Export destinations", padding=14)
+        panel.grid(row=0, column=0, sticky="new")
+        panel.columnconfigure(0, weight=1)
+        self.open_buttons = {
+            "folder": ttk.Button(panel, text="Open results folder", command=lambda: self._open_result("folder")),
+            "final": ttk.Button(panel, text="Open import CSV", command=lambda: self._open_result("final")),
+            "category": ttk.Button(panel, text="Open category audit", command=lambda: self._open_result("category")),
+            "naming": ttk.Button(panel, text="Open POS-name audit", command=lambda: self._open_result("naming")),
+            "deleted": ttk.Button(panel, text="Open deleted-row audit", command=lambda: self._open_result("deleted")),
+            "summary": ttk.Button(panel, text="Open run summary", command=lambda: self._open_result("summary")),
+        }
+        for index, button in enumerate(self.open_buttons.values()):
+            button.grid(row=index // 2, column=index % 2, sticky="ew", padx=6, pady=5)
+            panel.columnconfigure(index % 2, weight=1)
 
     @staticmethod
-    def _file_row(
-        parent: ttk.LabelFrame,
-        row: int,
-        label: str,
-        variable: tk.StringVar,
-        command: Callable[[], None],
-    ) -> None:
-        ttk.Label(parent, text=label, width=20).grid(row=row, column=0, sticky="w", pady=5)
-        ttk.Entry(parent, textvariable=variable, state="readonly").grid(
-            row=row, column=1, sticky="ew", padx=8, pady=5
-        )
+    def _file_row(parent, row: int, label: str, variable: tk.StringVar, command: Callable[[], None]) -> None:
+        ttk.Label(parent, text=label, width=22).grid(row=row, column=0, sticky="w", pady=5)
+        ttk.Entry(parent, textvariable=variable, state="readonly").grid(row=row, column=1, sticky="ew", padx=8, pady=5)
         ttk.Button(parent, text="Browse...", command=command).grid(row=row, column=2, pady=5)
 
+    @staticmethod
+    def _tree(parent, columns: tuple[str, ...], labels: tuple[str, ...]) -> ttk.Treeview:
+        frame = ttk.Frame(parent)
+        frame.columnconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=1)
+        tree = ttk.Treeview(frame, columns=columns, show="headings", height=14)
+        for column, label in zip(columns, labels, strict=True):
+            tree.heading(column, text=label)
+            tree.column(column, width=90 if column in {"selected", "price", "status"} else 170)
+        y = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        x = ttk.Scrollbar(frame, orient="horizontal", command=tree.xview)
+        tree.configure(yscrollcommand=y.set, xscrollcommand=x.set)
+        tree.grid(row=0, column=0, sticky="nsew")
+        y.grid(row=0, column=1, sticky="ns")
+        x.grid(row=1, column=0, sticky="ew")
+        return frame
+
+    def _tree_widget(self, frame: ttk.Frame) -> ttk.Treeview:
+        return next(child for child in frame.winfo_children() if isinstance(child, ttk.Treeview))
+
     def _choose_template(self) -> None:
-        selected = filedialog.askopenfilename(
-            title="Select ProductData template", filetypes=[("CSV files", "*.csv")]
-        )
-        if selected:
-            self.product_template_text.set(selected)
-            self.controller.select_product_template(Path(selected))
-            self._render()
+        self._choose_file("Select ProductData template", [("CSV files", "*.csv")], self.product_template_text, self.controller.select_product_template)
 
     def _choose_recipe(self) -> None:
-        selected = filedialog.askopenfilename(
-            title="Select recipe list", filetypes=[("CSV files", "*.csv")]
-        )
-        if selected:
-            self.recipe_list_text.set(selected)
-            self.controller.select_recipe_list(Path(selected))
-            self._render()
+        self._choose_file("Select recipe list", [("CSV files", "*.csv")], self.recipe_list_text, self.controller.select_recipe_list)
 
     def _choose_odin(self) -> None:
-        selected = filedialog.askopenfilename(
-            title="Select Odin inventory workbook", filetypes=[("Excel workbooks", "*.xlsx")]
-        )
+        self._choose_file("Select Odin inventory workbook", [("Excel workbooks", "*.xlsx")], self.odin_inventory_text, self.controller.select_odin_inventory)
+
+    def _choose_file(self, title: str, filetypes, variable: tk.StringVar, setter) -> None:
+        selected = filedialog.askopenfilename(title=title, filetypes=filetypes)
         if selected:
-            self.odin_inventory_text.set(selected)
-            self.controller.select_odin_inventory(Path(selected))
+            variable.set(selected)
+            setter(Path(selected))
             self._render()
 
     def _choose_output(self) -> None:
@@ -214,47 +338,20 @@ class ProductInitializationApp:
         self.controller.set_is_orderable(bool(self.is_orderable.get()))
         self._render()
 
-    def _choose_profile(self) -> None:
-        selected = filedialog.askopenfilename(
-            title="Select category profile",
-            filetypes=[("JSON files", "*.json")],
-        )
-        if selected:
-            try:
-                load_category_profile(Path(selected))
-            except Exception as error:
-                messagebox.showerror(APP_TITLE, friendly_error(error))
-                return
-            self.category_profile_text.set(selected)
-            self.controller.select_category_profile(Path(selected))
-            self._render()
-
-    def _manage_profile(self) -> None:
-        current_path = self.controller.state.category_profile_path
-        try:
-            profile = load_category_profile(current_path)
-        except Exception as error:
-            messagebox.showerror(APP_TITLE, friendly_error(error))
-            return
-        manager = CategoryProfileManager(self.root, profile)
-        self.root.wait_window(manager)
-        if manager.saved_path is not None:
-            self.category_profile_text.set(str(manager.saved_path))
-            self.controller.select_category_profile(manager.saved_path)
-            self._render()
-
-    def _start_build(self) -> None:
-        state = self.controller.begin_build()
+    def _start_parse(self) -> None:
+        self.controller.begin_parse()
+        inputs = self.controller.build_inputs()
+        self._run_worker("parsed", lambda: parse_sources(inputs))
         self._render()
-        inputs = BuildInputs(
-            product_template_path=state.product_template_path,  # type: ignore[arg-type]
-            recipe_list_path=state.recipe_list_path,  # type: ignore[arg-type]
-            odin_inventory_path=state.odin_inventory_path,  # type: ignore[arg-type]
-            output_root=state.output_root,
-            category_profile_path=state.category_profile_path,
-            is_orderable=state.is_orderable,
-        )
-        self._run_worker("built", lambda: build_product_import(inputs))
+
+    def _start_export(self) -> None:
+        state = self.controller.begin_export()
+        inputs = self.controller.build_inputs()
+        session = state.session
+        if session is None:
+            raise RuntimeError("Parse source files before exporting.")
+        self._run_worker("exported", lambda: export_session(session, inputs, is_orderable=state.is_orderable))
+        self._render()
 
     def _run_worker(self, event_name: str, operation: Callable[[], object]) -> None:
         def work() -> None:
@@ -269,27 +366,198 @@ class ProductInitializationApp:
         try:
             while True:
                 name, payload = self.events.get_nowait()
-                if name == "built":
-                    self.controller.build_succeeded(payload)  # type: ignore[arg-type]
+                if name == "parsed":
+                    self.controller.parse_succeeded(payload)  # type: ignore[arg-type]
+                elif name == "exported":
+                    self.controller.export_succeeded(payload)  # type: ignore[arg-type]
                 else:
-                    self.controller.failed(friendly_error(payload))
-                    messagebox.showerror(APP_TITLE, friendly_error(payload))
+                    message = friendly_error(payload)
+                    self.controller.failed(message)
+                    messagebox.showerror(APP_TITLE, message)
                 self._render()
         except queue.Empty:
             pass
-        self.root.after(100, self._poll_events)
+        if self.root.winfo_exists():
+            self.root.after(100, self._poll_events)
+
+    def _add_category(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        from lunchtab_product_init.session_workflow import add_category
+
+        self.controller.set_session(add_category(session, self.category_name.get()))
+        self.category_name.set("")
+        self._render()
+
+    def _refresh_category_rows(self) -> None:
+        self._populate_category_rows()
+
+    def _toggle_category_selection(self) -> None:
+        tree = self._tree_widget(self.category_tree)
+        row_id = self._selected_iid(tree)
+        if not row_id:
+            return
+        if row_id in self.category_selection:
+            self.category_selection.remove(row_id)
+        else:
+            self.category_selection.add(row_id)
+        self._populate_category_rows()
+
+    def _select_all_category_rows(self) -> None:
+        tree = self._tree_widget(self.category_tree)
+        self.category_selection.update(tree.get_children(""))
+        self._populate_category_rows()
+
+    def _assign_category(self) -> None:
+        session = self.controller.state.session
+        if session is None or not self.category_selection:
+            return
+        category = self.selected_category.get() or self.category_name.get()
+        self.controller.set_session(assign_category(session, set(self.category_selection), category))
+        self.category_selection.clear()
+        self._render()
+
+    def _mark_category_for_edit(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        self.controller.set_session(mark_for_edit(session, set(self.category_selection)))
+        self.category_selection.clear()
+        self._render()
+
+    def _delete_category_rows(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        self.controller.set_session(delete_rows(session, set(self.category_selection)))
+        self.category_selection.clear()
+        self._render()
+
+    def _go_to_edit(self) -> None:
+        self.controller.go_to_edit_review()
+        self._load_next_edit_row()
+        self._render()
+
+    def _show_no_barcode_rows(self) -> None:
+        self.edit_no_barcode_only = True
+        self.edit_selection.clear()
+        self._populate_edit_rows()
+
+    def _show_all_edit_rows(self) -> None:
+        self.edit_no_barcode_only = False
+        self._populate_edit_rows()
+
+    def _select_all_edit_rows(self) -> None:
+        tree = self._tree_widget(self.edit_tree)
+        self.edit_selection.update(tree.get_children(""))
+        self._populate_edit_rows()
+
+    def _toggle_edit_selection(self) -> None:
+        row_id = self._selected_iid(self._tree_widget(self.edit_tree))
+        if not row_id:
+            return
+        if row_id in self.edit_selection:
+            self.edit_selection.remove(row_id)
+        else:
+            self.edit_selection.add(row_id)
+        self._populate_edit_rows()
+
+    def _load_selected_edit_row(self) -> None:
+        row_id = self._selected_iid(self._tree_widget(self.edit_tree))
+        if row_id:
+            self._load_edit_row(row_id)
+
+    def _delete_edit_rows(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        self.controller.set_session(delete_rows(session, set(self.edit_selection), "edit review deletion"))
+        self.edit_selection.clear()
+        self._load_next_edit_row()
+        self._render()
+
+    def _delete_current_edit_row(self) -> None:
+        if self.current_edit_row_id:
+            self.edit_selection = {self.current_edit_row_id}
+            self._delete_edit_rows()
+
+    def _save_edit(self) -> None:
+        session = self.controller.state.session
+        if session is None or self.current_edit_row_id is None:
+            return
+        self.controller.set_session(
+            save_edit(
+                session,
+                self.current_edit_row_id,
+                item_name=self.edit_name.get(),
+                price=self.edit_price.get(),
+                barcode=self.edit_barcode.get(),
+                category=self.edit_category.get(),
+            )
+        )
+        self._load_next_edit_row()
+        self._render()
+
+    def _go_to_pos(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        self.controller.set_session(run_pos_generation(session))
+        self.controller.go_to_pos_review()
+        self._render()
+
+    def _load_selected_pos_row(self) -> None:
+        row_id = self._selected_iid(self._tree_widget(self.pos_tree))
+        if row_id:
+            self.current_pos_row_id = row_id
+            row = self._row(row_id)
+            self.pos_name.set(row.pos_name if row else "")
+            self._refresh_suggestions()
+            self._render()
+
+    def _replace_pos(self) -> None:
+        session = self.controller.state.session
+        if session is None or self.current_pos_row_id is None:
+            return
+        self.controller.set_session(replace_pos_name(session, self.current_pos_row_id, self.pos_name.get()))
+        self._refresh_suggestions()
+        self._render()
+
+    def _go_to_final(self) -> None:
+        self.controller.go_to_final_review()
+        self._render()
+
+    def _save_profile(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        selected = filedialog.asksaveasfilename(
+            title="Save venue profile",
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json")],
+        )
+        if not selected:
+            return
+        try:
+            save_venue_profile(session, Path(selected))
+        except Exception as error:
+            messagebox.showerror(APP_TITLE, friendly_error(error))
+            return
+        messagebox.showinfo(APP_TITLE, f"Venue profile saved to {selected}")
 
     def _open_result(self, target: str) -> None:
         result = self.controller.state.result
         if result is None:
             return
+        paths = result.summary.output_paths
         targets = {
             "folder": result.run_dir,
-            "final": result.summary.output_paths.final_import,
-            "review": result.summary.output_paths.manual_review,
-            "zero_stock": result.summary.output_paths.zero_stock_review,
-            "naming": result.summary.output_paths.naming_audit,
-            "category": result.summary.output_paths.category_audit,
+            "final": paths.final_import,
+            "category": paths.category_audit,
+            "naming": paths.naming_audit,
+            "deleted": paths.deleted_audit,
+            "summary": paths.summary,
         }
         try:
             open_path(targets[target])
@@ -298,318 +566,161 @@ class ProductInitializationApp:
 
     def _render(self) -> None:
         state = self.controller.state
-        busy = state.phase == AppPhase.PROCESSING
-        self.build_button.configure(state="normal" if state.can_build else "disabled")
+        busy = state.phase in {AppPhase.PARSING, AppPhase.EXPORTING}
         if busy:
             self.progress.start(10)
         else:
             self.progress.stop()
         self.status_text.set(state.message)
-        if state.result:
-            summary = state.result.summary
-            self.details_text.set(
-                f"Candidate rows: {summary.candidate_rows}\n"
-                f"Auto-accepted rows: {summary.accepted_rows}\n"
-                f"Manual-review rows: {summary.manual_review_rows}\n"
-                f"Duplicate barcodes: {summary.duplicate_barcodes}\n"
-                f"Duplicate generated POS names: {summary.duplicate_pos_names}\n\n"
-                f"Category-review rows: {summary.category_review_rows}\n"
-                f"Zero-stock Odin review rows: {summary.zero_stock_review_rows}\n"
-                f"\n"
-                f"Saved to: {state.result.run_dir}"
-            )
-        else:
-            self.details_text.set("")
-        result_state = "normal" if state.result else "disabled"
-        self.open_folder_button.configure(state=result_state)
-        self.open_final_button.configure(state=result_state)
-        self.open_review_button.configure(state=result_state)
-        self.open_audit_button.configure(state=result_state)
-        self.open_category_audit_button.configure(state=result_state)
-        self.open_zero_stock_button.configure(state=result_state)
+        self.parse_button.configure(state="normal" if state.can_parse and not busy else "disabled")
+        self.to_edit_button.configure(state="normal" if state.can_leave_categories else "disabled")
+        self.to_pos_button.configure(state="normal" if state.can_leave_edit_review else "disabled")
+        self.to_final_button.configure(state="normal" if state.can_leave_pos_review else "disabled")
+        self.export_button.configure(state="normal" if state.can_export else "disabled")
+        self.replace_pos_button.configure(state="normal" if self.current_pos_row_id else "disabled")
+        if state.phase == AppPhase.CATEGORIZING:
+            self.notebook.select(self.tabs["categories"])
+        elif state.phase == AppPhase.EDIT_REVIEW:
+            self.notebook.select(self.tabs["edit"])
+        elif state.phase == AppPhase.POS_REVIEW:
+            self.notebook.select(self.tabs["pos"])
+        elif state.phase == AppPhase.FINAL_REVIEW:
+            self.notebook.select(self.tabs["final"])
+        elif state.phase == AppPhase.COMPLETE:
+            self.notebook.select(self.tabs["complete"])
+        self._populate_category_rows()
+        self._populate_edit_rows()
+        self._populate_pos_rows()
+        self._populate_final_rows()
 
-
-class CategoryProfileManager(tk.Toplevel):
-    def __init__(self, parent: tk.Tk, profile: CategoryProfile) -> None:
-        super().__init__(parent)
-        self.profile = profile
-        self.saved_path: Path | None = None
-        self.title("Category Profile")
-        self.transient(parent)
-        self.geometry("860x620")
-        self.minsize(760, 520)
-        self._build()
-        self._refresh()
-
-    def _build(self) -> None:
-        outer = ttk.Frame(self, padding=16)
-        outer.pack(fill="both", expand=True)
-        outer.columnconfigure(0, weight=1)
-        outer.rowconfigure(1, weight=1)
-        ttk.Label(outer, text=self.profile.name, font=("Segoe UI", 14, "bold")).grid(
-            row=0, column=0, sticky="w", pady=(0, 10)
+    def _populate_category_rows(self) -> None:
+        session = self.controller.state.session
+        tree = self._tree_widget(self.category_tree)
+        self._clear(tree)
+        if session is None:
+            return
+        rows = filter_rows(
+            session,
+            keyword=self.category_filter.get(),
+            min_price=self.min_price.get(),
+            max_price=self.max_price.get(),
         )
-        notebook = ttk.Notebook(outer)
-        notebook.grid(row=1, column=0, sticky="nsew")
-        catalog_tab = ttk.Frame(notebook, padding=10)
-        rules_tab = ttk.Frame(notebook, padding=10)
-        test_tab = ttk.Frame(notebook, padding=10)
-        notebook.add(catalog_tab, text="Categories")
-        notebook.add(rules_tab, text="Rules")
-        notebook.add(test_tab, text="Test")
-        self._build_catalog_tab(catalog_tab)
-        self._build_rules_tab(rules_tab)
-        self._build_test_tab(test_tab)
-        actions = ttk.Frame(outer)
-        actions.grid(row=2, column=0, sticky="ew", pady=(12, 0))
-        ttk.Button(actions, text="Export...", command=self._export).pack(side="right")
-        ttk.Button(actions, text="Close", command=self.destroy).pack(side="right", padx=(0, 8))
-
-    def _build_catalog_tab(self, parent: ttk.Frame) -> None:
-        parent.columnconfigure(0, weight=1)
-        parent.rowconfigure(0, weight=1)
-        columns = ("name", "role", "policy", "enabled", "notes")
-        self.catalog_tree = ttk.Treeview(parent, columns=columns, show="headings", height=12)
-        labels = ("Name", "Role", "Spending Policy", "Enabled", "Notes")
-        for column, label in zip(columns, labels, strict=True):
-            self.catalog_tree.heading(column, text=label)
-            self.catalog_tree.column(column, width=130 if column != "notes" else 260)
-        self.catalog_tree.grid(row=0, column=0, sticky="nsew")
-        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=self.catalog_tree.yview)
-        scrollbar.grid(row=0, column=1, sticky="ns")
-        self.catalog_tree.configure(yscrollcommand=scrollbar.set)
-        ttk.Button(parent, text="Add category", command=self._add_category).grid(
-            row=1, column=0, sticky="w", pady=(8, 0)
-        )
-
-    def _build_rules_tab(self, parent: ttk.Frame) -> None:
-        parent.columnconfigure(0, weight=1)
-        parent.rowconfigure(0, weight=1)
-        columns = ("id", "type", "pattern", "categories", "confidence", "priority", "enabled")
-        self.rules_tree = ttk.Treeview(parent, columns=columns, show="headings", height=12)
-        labels = ("Rule ID", "Type", "Pattern", "Categories", "Confidence", "Priority", "Enabled")
-        for column, label in zip(columns, labels, strict=True):
-            self.rules_tree.heading(column, text=label)
-            self.rules_tree.column(column, width=130 if column != "categories" else 230)
-        self.rules_tree.grid(row=0, column=0, sticky="nsew")
-        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=self.rules_tree.yview)
-        scrollbar.grid(row=0, column=1, sticky="ns")
-        self.rules_tree.configure(yscrollcommand=scrollbar.set)
-        ttk.Button(parent, text="Add rule", command=self._add_rule).grid(
-            row=1, column=0, sticky="w", pady=(8, 0)
-        )
-
-    def _build_test_tab(self, parent: ttk.Frame) -> None:
-        parent.columnconfigure(1, weight=1)
-        self.test_name = tk.StringVar()
-        self.test_source_category = tk.StringVar()
-        self.test_barcode = tk.StringVar()
-        self.test_result = tk.StringVar()
-        rows = (
-            ("Item name", self.test_name),
-            ("Source category", self.test_source_category),
-            ("Barcode", self.test_barcode),
-        )
-        for row, (label, variable) in enumerate(rows):
-            ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w", pady=4)
-            ttk.Entry(parent, textvariable=variable).grid(row=row, column=1, sticky="ew", pady=4)
-        ttk.Button(parent, text="Test rules", command=self._test_rules).grid(
-            row=3, column=0, sticky="w", pady=(8, 0)
-        )
-        ttk.Label(parent, textvariable=self.test_result, justify="left", wraplength=700).grid(
-            row=4, column=0, columnspan=2, sticky="w", pady=(12, 0)
-        )
-
-    def _refresh(self) -> None:
-        for row in self.catalog_tree.get_children():
-            self.catalog_tree.delete(row)
-        for entry in self.profile.catalog:
-            self.catalog_tree.insert(
+        self.category_combo.configure(values=session.category_names)
+        for row in rows:
+            tree.insert(
                 "",
                 "end",
-                values=(entry.name, entry.role, entry.spending_policy, entry.enabled, entry.notes),
-            )
-        for row in self.rules_tree.get_children():
-            self.rules_tree.delete(row)
-        for rule in sorted(self.profile.rules, key=lambda item: (item.priority, item.rule_id)):
-            self.rules_tree.insert(
-                "",
-                "end",
+                iid=row.row_id,
                 values=(
-                    rule.rule_id,
-                    rule.rule_type,
-                    rule.pattern,
-                    ";".join(rule.categories),
-                    rule.confidence,
-                    rule.priority,
-                    rule.enabled,
+                    "X" if row.row_id in self.category_selection else "",
+                    row.item_name,
+                    row.price,
+                    row.barcode,
+                    row.category,
+                    row.status,
                 ),
             )
 
-    def _add_category(self) -> None:
-        dialog = CategoryEntryDialog(self)
-        self.wait_window(dialog)
-        if dialog.entry is None:
+    def _populate_edit_rows(self) -> None:
+        session = self.controller.state.session
+        tree = self._tree_widget(self.edit_tree)
+        self._clear(tree)
+        if session is None:
             return
-        self.profile = CategoryProfile(
-            self.profile.schema_version,
-            self.profile.name,
-            (*self.profile.catalog, dialog.entry),
-            self.profile.rules,
-        )
-        self._refresh()
-
-    def _add_rule(self) -> None:
-        rule_id = simpledialog.askstring("Add rule", "Rule ID", parent=self)
-        if not rule_id:
-            return
-        rule_type = simpledialog.askstring(
-            "Add rule",
-            "Rule type: barcode, item_name, source_category, phrase, or token",
-            parent=self,
-        )
-        if rule_type not in {"barcode", "item_name", "source_category", "phrase", "token"}:
-            messagebox.showerror(APP_TITLE, "Invalid rule type.")
-            return
-        pattern = simpledialog.askstring("Add rule", "Pattern", parent=self)
-        categories = simpledialog.askstring(
-            "Add rule",
-            "Output Lunchtab categories separated by semicolons",
-            parent=self,
-        )
-        confidence = simpledialog.askinteger(
-            "Add rule", "Confidence 0-100", parent=self, initialvalue=90
-        )
-        priority = simpledialog.askinteger("Add rule", "Priority", parent=self, initialvalue=300)
-        if not pattern or not categories or confidence is None or priority is None:
-            return
-        rule = CategoryRule(
-            rule_id=rule_id.strip(),
-            rule_type=rule_type,
-            pattern=pattern.strip(),
-            categories=tuple(
-                category.strip() for category in categories.split(";") if category.strip()
-            ),
-            confidence=confidence,
-            priority=priority,
-        )
-        self.profile = CategoryProfile(
-            self.profile.schema_version,
-            self.profile.name,
-            self.profile.catalog,
-            (*self.profile.rules, rule),
-        )
-        self._refresh()
-
-    def _test_rules(self) -> None:
-        candidate = ProductCandidate(
-            source="test",
-            source_key="test",
-            item_name=self.test_name.get(),
-            price="",
-            barcode=self.test_barcode.get(),
-            category=self.test_source_category.get(),
-        )
-        try:
-            result = infer_categories(candidate, self.profile)
-        except Exception as error:
-            messagebox.showerror(APP_TITLE, friendly_error(error))
-            return
-        self.test_result.set(
-            "Categories: "
-            + "; ".join(result.categories)
-            + "\n"
-            + f"Restriction policy: {format_restriction_policies(result.restriction_policies) or 'None'}\n"
-            + f"Status: {result.status}\n"
-            + f"Confidence: {result.confidence} ({result.confidence_band})\n"
-            + f"Matched rules: {' | '.join(result.matched_rules) or 'None'}\n"
-            + f"Reason: {result.reason or 'Ready'}"
-        )
-
-    def _export(self) -> None:
-        selected = filedialog.asksaveasfilename(
-            title="Export category profile",
-            defaultextension=".json",
-            filetypes=[("JSON files", "*.json")],
-        )
-        if not selected:
-            return
-        try:
-            save_category_profile(self.profile, Path(selected))
-        except Exception as error:
-            messagebox.showerror(APP_TITLE, friendly_error(error))
-            return
-        self.saved_path = Path(selected)
-        messagebox.showinfo(APP_TITLE, f"Category profile saved to {selected}")
-
-
-class CategoryEntryDialog(tk.Toplevel):
-    def __init__(self, parent: tk.Toplevel) -> None:
-        super().__init__(parent)
-        self.entry: CategoryCatalogEntry | None = None
-        self.title("Add Category")
-        self.transient(parent)
-        self.grab_set()
-        self.resizable(False, False)
-        self.name = tk.StringVar()
-        self.role = tk.StringVar(value="food")
-        self.policy = tk.StringVar(value="none")
-        self.notes = tk.StringVar()
-        self._build()
-        self.bind("<Return>", lambda _event: self._save())
-        self.bind("<Escape>", lambda _event: self.destroy())
-        self.name_entry.focus_set()
-
-    def _build(self) -> None:
-        outer = ttk.Frame(self, padding=16)
-        outer.pack(fill="both", expand=True)
-        outer.columnconfigure(1, weight=1)
-        ttk.Label(outer, text="Category name").grid(row=0, column=0, sticky="w", pady=5)
-        self.name_entry = ttk.Entry(outer, textvariable=self.name, width=34)
-        self.name_entry.grid(row=0, column=1, sticky="ew", pady=5)
-
-        ttk.Label(outer, text="Role").grid(row=1, column=0, sticky="w", pady=5)
-        role_group = ttk.Frame(outer)
-        role_group.grid(row=1, column=1, sticky="w", pady=5)
-        for value, label in (("food", "Food"), ("hybrid", "Hybrid")):
-            ttk.Radiobutton(role_group, text=label, value=value, variable=self.role).pack(
-                side="left"
+        rows = no_barcode_rows(session) if self.edit_no_barcode_only else session.edit_queue
+        for row in rows:
+            tree.insert(
+                "",
+                "end",
+                iid=row.row_id,
+                values=(
+                    "X" if row.row_id in self.edit_selection else "",
+                    row.item_name,
+                    row.price,
+                    row.barcode,
+                    row.category,
+                    row.review_reason,
+                ),
             )
 
-        ttk.Label(outer, text="Spending policy").grid(row=2, column=0, sticky="w", pady=5)
-        policy_group = ttk.Frame(outer)
-        policy_group.grid(row=2, column=1, sticky="w", pady=5)
-        for value, label in (
-            ("none", "None"),
-            ("non_exempt", "Non-exempt"),
-            ("exempt", "Exempt"),
-        ):
-            ttk.Radiobutton(policy_group, text=label, value=value, variable=self.policy).pack(
-                side="left"
-            )
-
-        ttk.Label(outer, text="Notes").grid(row=3, column=0, sticky="w", pady=5)
-        ttk.Entry(outer, textvariable=self.notes, width=34).grid(
-            row=3, column=1, sticky="ew", pady=5
-        )
-
-        actions = ttk.Frame(outer)
-        actions.grid(row=4, column=0, columnspan=2, sticky="e", pady=(12, 0))
-        ttk.Button(actions, text="Cancel", command=self.destroy).pack(side="right")
-        ttk.Button(actions, text="Add", command=self._save).pack(side="right", padx=(0, 8))
-
-    def _save(self) -> None:
-        name = " ".join(self.name.get().split())
-        if not name:
-            messagebox.showerror(APP_TITLE, "Category name is required.", parent=self)
+    def _populate_pos_rows(self) -> None:
+        session = self.controller.state.session
+        tree = self._tree_widget(self.pos_tree)
+        self._clear(tree)
+        if session is None:
             return
-        self.entry = CategoryCatalogEntry(
-            name=name,
-            role=self.role.get(),  # type: ignore[arg-type]
-            spending_policy=self.policy.get(),  # type: ignore[arg-type]
-            notes=self.notes.get().strip(),
+        for row in session.active_rows:
+            tree.insert("", "end", iid=row.row_id, values=(row.item_name, row.pos_name, row.status, row.review_reason))
+        if self.current_pos_row_id:
+            row = self._row(self.current_pos_row_id)
+            self.pos_validation.set(row.review_reason if row else "")
+
+    def _populate_final_rows(self) -> None:
+        session = self.controller.state.session
+        tree = self._tree_widget(self.final_tree)
+        self._clear(tree)
+        if session is None:
+            self.audit_text.set("")
+            return
+        for row in session.active_rows:
+            tree.insert("", "end", iid=row.row_id, values=(row.item_name, row.pos_name, row.price, row.barcode, row.category))
+        self.audit_text.set(
+            f"Parsed rows: {len(session.rows)}    Deleted rows: {len(session.deleted_rows)}    "
+            f"Active rows: {len(session.active_rows)}    Categories: {len(session.category_names)}    "
+            f"POS overrides: {sum(1 for row in session.rows if row.pos_overridden)}    "
+            f"IsOrderable: {'true' if self.controller.state.is_orderable else 'false'}"
         )
-        self.destroy()
+
+    def _load_next_edit_row(self) -> None:
+        session = self.controller.state.session
+        row = next_edit_row(session) if session else None
+        if row is None:
+            self.current_edit_row_id = None
+            self.edit_name.set("")
+            self.edit_price.set("")
+            self.edit_barcode.set("")
+            self.edit_category.set("")
+            return
+        self._load_edit_row(row.row_id)
+
+    def _load_edit_row(self, row_id: str) -> None:
+        row = self._row(row_id)
+        if row is None:
+            return
+        self.current_edit_row_id = row_id
+        self.edit_name.set(row.item_name)
+        self.edit_price.set(row.price)
+        self.edit_barcode.set(row.barcode)
+        self.edit_category.set(row.category)
+
+    def _refresh_suggestions(self) -> None:
+        for child in self.suggestion_frame.winfo_children():
+            child.destroy()
+        session = self.controller.state.session
+        if session is None or self.current_pos_row_id is None:
+            return
+        for suggestion in suggest_pos_names(session, self.current_pos_row_id):
+            ttk.Button(
+                self.suggestion_frame,
+                text=suggestion,
+                command=lambda value=suggestion: self.pos_name.set(value),
+            ).pack(fill="x", pady=2)
+
+    def _row(self, row_id: str):
+        session = self.controller.state.session
+        if session is None:
+            return None
+        return next((row for row in session.rows if row.row_id == row_id), None)
+
+    @staticmethod
+    def _clear(tree: ttk.Treeview) -> None:
+        for item in tree.get_children(""):
+            tree.delete(item)
+
+    @staticmethod
+    def _selected_iid(tree: ttk.Treeview) -> str | None:
+        selected = tree.selection()
+        return str(selected[0]) if selected else None
 
 
 def build_parser() -> argparse.ArgumentParser:

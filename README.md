@@ -6,9 +6,9 @@ This Windows desktop utility builds an audited Lunchtab product import CSV from:
 - the corporate menu-builder `recipeList...csv` export;
 - the Odin `Cafeteria Inventory Stock and Prices Report...xlsx` export.
 
-The application never edits selected source files. Each build writes a timestamped run folder under
-`Processed Data/` containing the final import CSV, manual-review CSV, accepted-row audit, rejected-row
-audit, naming audit, category audit, run manifest, and run summary.
+The application never edits selected source files. Each export writes a timestamped run folder
+containing the final import CSV, category audit, POS-name audit, session audit, deleted-row audit,
+run manifest, and run summary.
 
 ## Development
 
@@ -33,25 +33,27 @@ uv run lunchtab-pos-name --smoke-test
 2. Select the recipe-list CSV exported from Menu Builder -> Recipe List.
 3. Select the Odin cafeteria inventory workbook.
 4. Choose an output folder, or keep the default `Documents\Lunchtab Product Initialization`.
-5. Build the working set.
-6. Select or manage the venue category profile.
-7. Set process configuration, including whether final rows should be orderable.
-8. Review low-confidence rows in the GUI and edit product/category/POS-name values as needed.
-9. Export the finalized Lunchtab CSV and upload it through the Lunchtab administrator portal.
+5. Parse the source files to build the working set.
+6. Add valid Lunchtab category names, filter rows by keyword or price, assign categories, delete
+   rows that should not be imported, or mark rows for edit review.
+7. Review queued rows in the edit tab. Use the no-barcode filter and select-all action for fast
+   deletion of unneeded no-barcode rows, or edit name, price, barcode, and category.
+8. Review generated `BaseProductPosName` values, replace invalid or unwanted names, and use the
+   suggestions generated from the base algorithm plus session preference learning.
+9. Review the final upload data and audit counts, then export the finalized Lunchtab CSV.
+10. Open the final import, audits, summary, or output folder from the export-complete tab.
 
 ## Current Automation Rules
 
-Rows can be auto-accepted when they have a usable item name, valid price, barcode, category, and a
-unique `BaseProductPosName` of 15 characters or fewer. Rows are routed to manual review when the
-workflow detects missing required values, duplicate barcodes, duplicate generated POS names, or names
-that cannot be confidently abbreviated.
+Rows now move through a guided session before export. Rows with a usable item name and price enter
+category assignment; missing or duplicate barcode issues are flagged for edit review before export.
+Final export is blocked until every non-deleted row has a usable item name, valid price, barcode,
+category, and unique `BaseProductPosName` of 15 characters or fewer.
 
-Product categories are assigned through a venue category profile. The target CSV's
-`ProductCategories` column contains only category names that the operator created directly in
-Lunchtab, such as `Packaged Snacks;`. Restriction policy is stored as profile metadata for operator
-visibility, audits, and matching logic; it is not written as its own product category. The built-in
-starter profile treats packaged snack categories as non-exempt and prepared/plated/trayed snack
-categories as exempt from the current insufficient-funds restriction scenario.
+Product categories are assigned in the category tab from operator-entered Lunchtab category names.
+The target CSV's `ProductCategories` column contains only category names that the operator created
+directly in Lunchtab, such as `Packaged Snacks;`. Restriction policy is not part of the guided
+category-assignment flow.
 
 Odin and recipe-list rows are both treated as valid product sources. They do not need to match each
 other to be eligible for transfer. Odin rows with `Stock` equal to `0` are treated as likely legacy
@@ -67,15 +69,13 @@ or non-food rows and are routed to review instead of the final import.
 
 ## Output Files
 
-Each run folder contains:
+Each guided export folder contains:
 
 - `Lunchtab Product Import.csv` - final upload-ready import file;
-- `Manual Review Products.csv` - rows requiring operator review before import;
-- `Zero Stock Odin Review.csv` - Odin-backed rows with `Stock` equal to `0`;
-- `Accepted Product Audit.csv` - high-confidence rows accepted by automation;
-- `Rejected Product Audit.csv` - rows excluded from final output;
-- `BaseProductPosName Audit.csv` - generated name evidence and validation status;
-- `Product Category Audit.csv` - inferred category evidence, confidence, and matched rules;
+- `Product Category Audit.csv` - row-level category assignment status;
+- `BaseProductPosName Audit.csv` - generated or overridden POS-name status;
+- `Session Review Audit.csv` - row-level source, edit, deletion, category, and POS-name decisions;
+- `Deleted Product Audit.csv` - rows excluded from the final import by the operator;
 - `run-manifest.json` - source and artifact hashes, timestamps, and counts;
 - `run-summary.md` - human-readable build summary.
 
