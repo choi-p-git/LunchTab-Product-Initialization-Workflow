@@ -11,6 +11,7 @@ from typing import Callable
 from lunchtab_product_init.desktop import friendly_error, open_path
 from lunchtab_product_init.gui_controller import AppController, AppPhase
 from lunchtab_product_init.session_workflow import (
+    ImportSession,
     assign_category,
     delete_rows,
     export_session,
@@ -36,6 +37,7 @@ class ProductInitializationApp:
         self.controller = AppController()
         self.events: queue.Queue[tuple[str, object]] = queue.Queue()
         self.category_selection: set[str] = set()
+        self.category_undo_stack: list[ImportSession] = []
         self.edit_selection: set[str] = set()
         self.edit_no_barcode_only = False
         self.current_edit_row_id: str | None = None
@@ -52,6 +54,7 @@ class ProductInitializationApp:
         self.is_orderable = tk.BooleanVar(value=False)
         self.category_name = tk.StringVar()
         self.category_filter = tk.StringVar()
+        self.price_operator = tk.StringVar(value="=")
         self.min_price = tk.StringVar()
         self.max_price = tk.StringVar()
         self.selected_category = tk.StringVar()
@@ -139,28 +142,50 @@ class ProductInitializationApp:
 
         tools = ttk.Frame(body)
         tools.grid(row=0, column=0, sticky="ew", pady=(0, 8))
-        tools.columnconfigure(7, weight=1)
-        ttk.Label(tools, text="Category").grid(row=0, column=0, sticky="w")
-        ttk.Entry(tools, textvariable=self.category_name, width=20).grid(row=0, column=1, padx=6)
-        ttk.Button(tools, text="Add", command=self._add_category).grid(row=0, column=2)
-        ttk.Label(tools, text="Filter").grid(row=0, column=3, padx=(14, 0))
-        ttk.Entry(tools, textvariable=self.category_filter, width=18).grid(row=0, column=4, padx=6)
-        ttk.Entry(tools, textvariable=self.min_price, width=8).grid(row=0, column=5, padx=(0, 4))
-        ttk.Entry(tools, textvariable=self.max_price, width=8).grid(row=0, column=6, padx=(0, 8))
-        ttk.Button(tools, text="Apply filter", command=self._refresh_category_rows).grid(row=0, column=7, sticky="w")
+        tools.columnconfigure(8, weight=1)
+        ttk.Label(tools, text="New category").grid(row=0, column=0, sticky="w")
+        self.category_entry = ttk.Entry(tools, textvariable=self.category_name, width=22)
+        self.category_entry.grid(row=0, column=1, padx=(6, 8), sticky="w")
+        self.category_entry.bind("<Return>", lambda _event: (self._add_category(), "break")[1])
+        ttk.Button(tools, text="Add", command=self._add_category).grid(row=0, column=2, sticky="w")
+        ttk.Button(tools, text="Undo", command=self._undo_category_action).grid(row=0, column=3, padx=(10, 0))
+
+        ttk.Label(tools, text="Keyword filter").grid(row=1, column=0, sticky="w", pady=(8, 0))
+        ttk.Entry(tools, textvariable=self.category_filter, width=22).grid(
+            row=1, column=1, padx=(6, 8), sticky="w", pady=(8, 0)
+        )
+        ttk.Label(tools, text="Price filter").grid(row=1, column=2, sticky="w", pady=(8, 0))
+        self.price_operator_combo = ttk.Combobox(
+            tools,
+            textvariable=self.price_operator,
+            values=("=", "<", ">", "<=", ">=", "range"),
+            state="readonly",
+            width=8,
+        )
+        self.price_operator_combo.grid(row=1, column=3, padx=(6, 4), sticky="w", pady=(8, 0))
+        self.price_operator_combo.bind("<<ComboboxSelected>>", lambda _event: self._price_operator_changed())
+        self.price_value_entry = ttk.Entry(tools, textvariable=self.min_price, width=10)
+        self.price_value_entry.grid(row=1, column=4, padx=(0, 4), sticky="w", pady=(8, 0))
+        ttk.Label(tools, text="Upper bound").grid(row=1, column=5, sticky="w", pady=(8, 0))
+        self.price_upper_entry = ttk.Entry(tools, textvariable=self.max_price, width=10)
+        self.price_upper_entry.grid(row=1, column=6, padx=(6, 8), sticky="w", pady=(8, 0))
+        ttk.Button(tools, text="Apply filter", command=self._refresh_category_rows).grid(
+            row=1, column=7, sticky="w", pady=(8, 0)
+        )
 
         self.category_tree = self._tree(
             body,
             ("selected", "name", "price", "barcode", "category", "status"),
-            ("Sel", "Item Name", "Price", "Barcode", "Category", "Status"),
+            ("Select", "Item Name", "Price", "Barcode", "Category", "Status"),
         )
         self.category_tree.grid(row=1, column=0, sticky="nsew")
-        self.category_tree.bind("<Double-1>", lambda _event: self._toggle_category_selection())
+        self._tree_widget(self.category_tree).bind("<Button-1>", self._category_tree_click)
+        self._tree_widget(self.category_tree).bind("<Double-1>", self._category_tree_double_click)
 
         actions = ttk.Frame(body)
         actions.grid(row=2, column=0, sticky="ew", pady=(8, 0))
-        ttk.Button(actions, text="Toggle selected row", command=self._toggle_category_selection).pack(side="left")
-        ttk.Button(actions, text="Select all shown", command=self._select_all_category_rows).pack(side="left", padx=(8, 0))
+        ttk.Button(actions, text="Select all shown", command=self._select_all_category_rows).pack(side="left")
+        ttk.Button(actions, text="Deselect all shown", command=self._deselect_all_category_rows).pack(side="left", padx=(8, 0))
         self.category_combo = ttk.Combobox(actions, textvariable=self.selected_category, state="readonly", width=24)
         self.category_combo.pack(side="left", padx=8)
         ttk.Button(actions, text="Assign category", command=self._assign_category).pack(side="left")
@@ -170,6 +195,7 @@ class ProductInitializationApp:
         self.save_profile_button.pack(side="right")
         self.to_edit_button = ttk.Button(actions, text="Next: Edit review", command=self._go_to_edit)
         self.to_edit_button.pack(side="right", padx=8)
+        self._price_operator_changed()
 
     def _build_edit_tab(self) -> None:
         parent = self.tabs["edit"]
@@ -386,8 +412,12 @@ class ProductInitializationApp:
             return
         from lunchtab_product_init.session_workflow import add_category
 
-        self.controller.set_session(add_category(session, self.category_name.get()))
+        next_session = add_category(session, self.category_name.get())
+        if next_session != session:
+            self._push_category_undo()
+            self.controller.set_session(next_session)
         self.category_name.set("")
+        self.category_entry.focus_set()
         self._render()
 
     def _refresh_category_rows(self) -> None:
@@ -398,15 +428,45 @@ class ProductInitializationApp:
         row_id = self._selected_iid(tree)
         if not row_id:
             return
+        self._toggle_category_row(row_id)
+
+    def _toggle_category_row(self, row_id: str) -> None:
         if row_id in self.category_selection:
             self.category_selection.remove(row_id)
         else:
             self.category_selection.add(row_id)
         self._populate_category_rows()
 
+    def _category_tree_click(self, event: tk.Event) -> str | None:
+        tree = self._tree_widget(self.category_tree)
+        if tree.identify("region", event.x, event.y) != "cell":
+            return None
+        if tree.identify_column(event.x) != "#1":
+            return None
+        row_id = tree.identify_row(event.y)
+        if row_id:
+            tree.selection_set(row_id)
+            self._toggle_category_row(row_id)
+            return "break"
+        return None
+
+    def _category_tree_double_click(self, event: tk.Event) -> str | None:
+        tree = self._tree_widget(self.category_tree)
+        row_id = tree.identify_row(event.y) or self._selected_iid(tree)
+        if row_id:
+            tree.selection_set(row_id)
+            self._toggle_category_row(row_id)
+            return "break"
+        return None
+
     def _select_all_category_rows(self) -> None:
         tree = self._tree_widget(self.category_tree)
         self.category_selection.update(tree.get_children(""))
+        self._populate_category_rows()
+
+    def _deselect_all_category_rows(self) -> None:
+        tree = self._tree_widget(self.category_tree)
+        self.category_selection.difference_update(tree.get_children(""))
         self._populate_category_rows()
 
     def _assign_category(self) -> None:
@@ -414,25 +474,54 @@ class ProductInitializationApp:
         if session is None or not self.category_selection:
             return
         category = self.selected_category.get() or self.category_name.get()
-        self.controller.set_session(assign_category(session, set(self.category_selection), category))
-        self.category_selection.clear()
-        self._render()
+        next_session = assign_category(session, set(self.category_selection), category)
+        if next_session != session:
+            self._push_category_undo()
+            self.controller.set_session(next_session)
+            self.category_selection.clear()
+            self._render()
 
     def _mark_category_for_edit(self) -> None:
         session = self.controller.state.session
         if session is None:
             return
-        self.controller.set_session(mark_for_edit(session, set(self.category_selection)))
-        self.category_selection.clear()
-        self._render()
+        next_session = mark_for_edit(session, set(self.category_selection))
+        if next_session != session:
+            self._push_category_undo()
+            self.controller.set_session(next_session)
+            self.category_selection.clear()
+            self._render()
 
     def _delete_category_rows(self) -> None:
         session = self.controller.state.session
         if session is None:
             return
-        self.controller.set_session(delete_rows(session, set(self.category_selection)))
+        next_session = delete_rows(session, set(self.category_selection))
+        if next_session != session:
+            self._push_category_undo()
+            self.controller.set_session(next_session)
+            self.category_selection.clear()
+            self._render()
+
+    def _push_category_undo(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        self.category_undo_stack.append(session)
+
+    def _undo_category_action(self) -> None:
+        if not self.category_undo_stack:
+            return
+        self.controller.set_session(self.category_undo_stack.pop())
         self.category_selection.clear()
         self._render()
+
+    def _price_operator_changed(self) -> None:
+        range_enabled = self.price_operator.get() == "range"
+        self.price_upper_entry.configure(state="normal" if range_enabled else "disabled")
+        if not range_enabled:
+            self.max_price.set("")
+        self._populate_category_rows()
 
     def _go_to_edit(self) -> None:
         self.controller.go_to_edit_review()
@@ -602,8 +691,9 @@ class ProductInitializationApp:
         rows = filter_rows(
             session,
             keyword=self.category_filter.get(),
-            min_price=self.min_price.get(),
-            max_price=self.max_price.get(),
+            price_operator=self.price_operator.get(),  # type: ignore[arg-type]
+            price_value=self.min_price.get(),
+            price_upper=self.max_price.get(),
         )
         self.category_combo.configure(values=session.category_names)
         for row in rows:
@@ -612,7 +702,7 @@ class ProductInitializationApp:
                 "end",
                 iid=row.row_id,
                 values=(
-                    "X" if row.row_id in self.category_selection else "",
+                    "[x]" if row.row_id in self.category_selection else "[ ]",
                     row.item_name,
                     row.price,
                     row.barcode,

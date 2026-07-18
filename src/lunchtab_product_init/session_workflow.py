@@ -37,6 +37,7 @@ RowStatus = Literal[
     "pos_needs_review",
     "export_ready",
 ]
+PriceFilterOperator = Literal["=", "<", ">", "<=", ">=", "range", "any"]
 
 DELETED_AUDIT_NAME = "Deleted Product Audit.csv"
 SESSION_AUDIT_NAME = "Session Review Audit.csv"
@@ -167,22 +168,28 @@ def filter_rows(
     session: ImportSession,
     *,
     keyword: str = "",
+    price_operator: PriceFilterOperator = "any",
+    price_value: str = "",
+    price_upper: str = "",
     min_price: str = "",
     max_price: str = "",
     include_deleted: bool = False,
 ) -> tuple[SessionRow, ...]:
     keyword_norm = normalize_text(keyword)
-    minimum = _decimal_or_none(min_price)
-    maximum = _decimal_or_none(max_price)
+    price_operator = _normalize_price_operator(price_operator)
+    if min_price or max_price:
+        price_operator = "range"
+        price_value = min_price
+        price_upper = max_price
+    target_price = _decimal_or_none(price_value)
+    upper_price = _decimal_or_none(price_upper)
     rows = session.rows if include_deleted else session.active_rows
     filtered = []
     for row in rows:
         if keyword_norm and keyword_norm not in normalize_text(row.item_name):
             continue
         price = _decimal_or_none(row.price)
-        if minimum is not None and (price is None or price < minimum):
-            continue
-        if maximum is not None and (price is None or price > maximum):
+        if not _price_matches(price, price_operator, target_price, upper_price):
             continue
         filtered.append(row)
     return tuple(filtered)
@@ -708,6 +715,39 @@ def _decimal_or_none(value: str):
         return Decimal(str(value or "").strip())
     except InvalidOperation:
         return None
+
+
+def _normalize_price_operator(value: str) -> PriceFilterOperator:
+    normalized = str(value or "").strip().casefold()
+    if normalized in {"", "any"}:
+        return "any"
+    if normalized in {"=", "exact", "exact match"}:
+        return "="
+    if normalized in {"<", ">", "<=", ">=", "range"}:
+        return normalized  # type: ignore[return-value]
+    return "any"
+
+
+def _price_matches(price, operator: PriceFilterOperator, target, upper) -> bool:
+    if operator == "any" or target is None:
+        return True
+    if price is None:
+        return False
+    if operator == "=":
+        return price == target
+    if operator == "<":
+        return price < target
+    if operator == ">":
+        return price > target
+    if operator == "<=":
+        return price <= target
+    if operator == ">=":
+        return price >= target
+    if operator == "range":
+        if price < target:
+            return False
+        return upper is None or price <= upper
+    return True
 
 
 def _clean_text(value: str) -> str:

@@ -32,7 +32,7 @@ def test_category_assignment_filters_and_marks_rows() -> None:
         ]
     )
 
-    filtered = filter_rows(session, keyword="chicken", min_price="5", max_price="7")
+    filtered = filter_rows(session, keyword="chicken", price_operator="range", price_value="5", price_upper="7")
     assert [row.row_id for row in filtered] == ["row-1"]
 
     session = assign_category(session, {"row-1"}, "Sandwiches")
@@ -41,6 +41,29 @@ def test_category_assignment_filters_and_marks_rows() -> None:
     assert session.category_names == ("Sandwiches",)
     assert session.rows[0].category == "Sandwiches"
     assert session.rows[1].status == "needs_edit"
+
+
+def test_category_price_filter_supports_exact_comparison_and_range() -> None:
+    session = _session(
+        [
+            _row("row-1", "Small Drink", "1.25", "ABC"),
+            _row("row-2", "Large Drink", "2.00", "DEF"),
+            _row("row-3", "Combo Meal", "6.50", "GHI"),
+        ]
+    )
+
+    assert [row.row_id for row in filter_rows(session, price_operator="=", price_value="2.00")] == ["row-2"]
+    assert [row.row_id for row in filter_rows(session, price_operator="<", price_value="2.00")] == ["row-1"]
+    assert [row.row_id for row in filter_rows(session, price_operator=">=", price_value="2.00")] == ["row-2", "row-3"]
+    assert [
+        row.row_id
+        for row in filter_rows(
+            session,
+            price_operator="range",
+            price_value="1.25",
+            price_upper="2.00",
+        )
+    ] == ["row-1", "row-2"]
 
 
 def test_edit_review_no_barcode_filter_select_delete_and_save_next() -> None:
