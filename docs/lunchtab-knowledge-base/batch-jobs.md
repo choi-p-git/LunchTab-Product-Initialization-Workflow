@@ -1,0 +1,13 @@
+# Batch Jobs
+
+- Source PDF: `Batch Jobs _ Lunchtab Admin Help Center.pdf`
+- Page count: 2
+- Extracted at: 2026-07-18T16:56:29
+
+## Page 1
+
+Batch jobs are automated tasks triggered by a schedule, in response to certain events, or invoked manually by an administrator. These jobs are used to synchronize data between Lunchtab and your SIS and perform other background operations across the service like sending notiﬁcations to users. The Batch Jobs view allows administrators to conﬁgure the behavior and schedule of these jobs. If your Sales Business Type accepts orders from menus, Lunchtab will send reminders to users who have not yet placed an order for the upcoming week. Order reminders are enabled on a per-menu basis, reminders will only be sent for menus that have the setting enabled. The actions for this job allow you to pause the scheduled sending of order reminders, or conﬁgure the weekly schedule. The job can also be triggered manually, any relevant notiﬁcations will be sent immedi- ately regardless of the conﬁgured schedule. The Consumer Data Load job is responsible for synchronizing data between your SIS and Lunchtab. User data is synchronized from your chosen SIS on a daily basis. The actions for this job allow you to pause the scheduled synchronization fo data, or conﬁgure the daily schedule. This job can also be conﬁgured from the main SIS Integration view. The Monthly Statement job sends monthly notiﬁcations to users detailing the current Sales Business Type Order Reminders Consumer Data Load Monthly Statement Batch Jobs
+
+## Page 2
+
+balance on their account. This job is initially paused by default, to enable the sending of monthly statements, se- lect Unpause from the actions menu. Using the Conﬁgure action, you can conﬁgure the day of the month and time that the monthly statements are sent. For schools with families that use accumulating balances, the Reset Accumulating Balances job will reset their account balance to zero either on a monthly basis or when manually triggered from the actions menu. This job is initially paused from running on a scheduled basis, to enable the monthly re- set of accumulating balances, select Unpause from the actions menu. It is also possible to conﬁgure the day of the month that the balance reset is performed using the Conﬁgure action. If you have enabled a SIS integration, the fetch proﬁle photos job can fetch any proﬁle images available in the SIS and assign them to users. This job is run on a manual basis. Press Run Now in the actions menu to immediately trigger the import process. This job can also be initiated from the main SIS Integration view. Reset Accumulating Balances Fetch Proﬁle Photos Copyright © 2026 Lunchtab Inc.

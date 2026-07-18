@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 from lunchtab_product_init.gui_controller import AppController, AppPhase
@@ -34,6 +35,37 @@ def test_controller_parse_and_step_transitions() -> None:
     assert controller.go_to_edit_review().phase == AppPhase.EDIT_REVIEW
     assert controller.go_to_pos_review().phase == AppPhase.POS_REVIEW
     assert controller.go_to_final_review().phase == AppPhase.FINAL_REVIEW
+
+
+def test_controller_session_update_can_rewind_from_final_review() -> None:
+    controller = AppController()
+    session = ImportSession(headers=list(LUNCHTAB_TEMPLATE_HEADERS), rows=())
+    controller.parse_succeeded(session)
+    controller.go_to_edit_review()
+    controller.go_to_pos_review()
+    controller.go_to_final_review()
+    controller.state = replace(controller.state, result=object())  # type: ignore[arg-type]
+
+    state = controller.set_session(
+        session,
+        phase=AppPhase.EDIT_REVIEW,
+        message="Edit changes made. Continue through POS names before final review.",
+    )
+
+    assert state.phase == AppPhase.EDIT_REVIEW
+    assert state.result is None
+    assert "POS names" in state.message
+
+
+def test_controller_session_update_preserves_phase_by_default() -> None:
+    controller = AppController()
+    session = ImportSession(headers=list(LUNCHTAB_TEMPLATE_HEADERS), rows=())
+    controller.parse_succeeded(session)
+    controller.go_to_pos_review()
+
+    state = controller.set_session(session)
+
+    assert state.phase == AppPhase.POS_REVIEW
 
 
 def test_controller_requires_all_files_before_parse() -> None:

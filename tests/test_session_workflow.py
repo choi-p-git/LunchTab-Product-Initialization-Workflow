@@ -17,8 +17,10 @@ from lunchtab_product_init.session_workflow import (
     learn_pos_preferences,
     load_venue_profile,
     mark_for_edit,
+    merge_rows,
     next_edit_row,
     no_barcode_rows,
+    parse_barcodes,
     replace_pos_name,
     run_pos_generation,
     save_edit,
@@ -44,6 +46,10 @@ def test_category_assignment_filters_and_marks_rows() -> None:
     assert session.category_names == ("Sandwiches",)
     assert session.rows[0].category == "Sandwiches"
     assert session.rows[1].status == "needs_edit"
+
+
+def test_parse_barcodes_splits_trims_and_dedupes() -> None:
+    assert parse_barcodes(" ABC, DEF ,ABC,, ghi ") == ("ABC", "DEF", "ghi")
 
 
 def test_category_names_are_sorted_ascending() -> None:
@@ -93,6 +99,29 @@ def test_category_filter_can_select_sagemb_or_vendor_barcodes() -> None:
     assert [
         row.row_id for row in filter_rows(session, barcode_filter="Vendor")
     ] == ["row-2", "row-3"]
+
+
+def test_duplicate_barcode_validation_splits_comma_separated_values() -> None:
+    session = _session(
+        [
+            _row("row-1", "Primary Item", "1.00", "111,222", category="Snacks"),
+            _row("row-2", "Duplicate Item", "2.00", "222", category="Snacks"),
+            _row("row-3", "Clean Item", "3.00", "333,444", category="Snacks"),
+        ]
+    )
+
+    session = save_edit(
+        session,
+        "row-1",
+        item_name="Primary Item",
+        price="1.00",
+        barcode="111,222",
+        category="Snacks",
+    )
+
+    assert [
+        row.row_id for row in session.rows if "duplicate barcode" in row.review_reason
+    ] == ["row-1", "row-2"]
 
 
 def test_category_filter_can_select_rows_without_barcode() -> None:
@@ -193,6 +222,27 @@ def test_edit_review_no_barcode_filter_select_delete_and_save_next() -> None:
     assert next_edit_row(session) is None
 
 
+def test_merge_rows_transfers_barcodes_deletes_sources_and_revalidates() -> None:
+    session = _session(
+        [
+            _row("row-1", "Target Item", "1.00", "111", category="Snacks", status="needs_edit"),
+            _row("row-2", "Source Item", "1.00", "222,333", category="Snacks", status="needs_edit"),
+            _row("row-3", "Other Item", "1.00", "444", category="Snacks"),
+        ]
+    )
+
+    session = merge_rows(session, "row-1", {"row-2"})
+    target = next(row for row in session.rows if row.row_id == "row-1")
+    source = next(row for row in session.rows if row.row_id == "row-2")
+
+    assert target.barcode == "111,222,333"
+    assert target.status == "edit_complete"
+    assert target.edited
+    assert source.status == "deleted"
+    assert source.deleted_reason == "merged into row-1"
+    assert "barcode transferred to row-1" in source.review_reason
+
+
 def test_saving_one_edit_row_does_not_complete_other_operator_review_rows() -> None:
     session = _session(
         [
@@ -260,6 +310,27 @@ def test_pos_preferences_allow_context_specific_token_shortening() -> None:
 
     assert suggest_pos_names(session, "row-1")[0] == "Chick Cae Sal"
     assert suggest_pos_names(session, "row-2")[0] == "SW Chk Cobb Cae"
+
+
+def test_pos_preferences_learn_breakfast_sandwich_acronym_pattern() -> None:
+    session = _session(
+        [
+            _row("row-1", "Bacon, Egg, and Cheese Bagel", "5.25", "ABC", category="Breakfast"),
+            _row(
+                "row-2",
+                "Sausage Egg and Cheese English Muffin",
+                "5.25",
+                "DEF",
+                category="Breakfast",
+            ),
+        ],
+        categories=("Breakfast",),
+    )
+
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "BEC Bagel")
+
+    assert suggest_pos_names(session, "row-2")[0] == "SEC Muff"
 
 
 def test_pos_generation_does_not_overwrite_manual_overrides() -> None:
@@ -363,6 +434,34 @@ def test_venue_profile_saves_categories_and_pos_preferences(tmp_path: Path) -> N
     assert seeded.category_names == ("Salads",)
     assert seeded.pos_preferences.abbreviations["chicken"] == "Chick"
     assert seeded.pos_preferences.abbreviation_options["chicken"][0].value == "Chick"
+
+
+def test_venue_profile_saves_breakfast_acronym_rules(tmp_path: Path) -> None:
+    session = _session(
+        [
+            _row("row-1", "Bacon, Egg, and Cheese Bagel", "5.25", "ABC", category="Breakfast"),
+            _row(
+                "row-2",
+                "Sausage Egg and Cheese English Muffin",
+                "5.25",
+                "DEF",
+                category="Breakfast",
+            ),
+        ],
+        categories=("Breakfast",),
+    )
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "BEC Bagel")
+
+    path = tmp_path / "venue-profile.json"
+    save_venue_profile(session, path)
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["pos_name_acronym_rules"][0]["suffix_tokens"] == ["egg", "cheese"]
+
+    profile = load_venue_profile(path)
+    seeded = apply_venue_profile(_session([session.rows[1]]), profile)
+    assert suggest_pos_names(seeded, "row-2")[0] == "SEC Muff"
 
 
 def _session(

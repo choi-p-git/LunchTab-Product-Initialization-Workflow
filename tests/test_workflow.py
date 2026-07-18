@@ -5,8 +5,8 @@ from pathlib import Path
 
 from openpyxl import Workbook
 
-from lunchtab_product_init.models import BuildInputs
-from lunchtab_product_init.workflow import build_product_import
+from lunchtab_product_init.models import BuildInputs, CategoryResult, ProductCandidate
+from lunchtab_product_init.workflow import build_product_import, classify_candidates
 
 
 def write_csv(path: Path, rows: list[dict[str, str]], fieldnames: list[str]) -> None:
@@ -144,6 +144,33 @@ def test_odin_only_item_can_be_accepted_when_complete(tmp_path: Path) -> None:
         )
     )
     assert result.summary.accepted_rows == 1
+
+
+def test_classify_candidates_detects_duplicate_barcode_inside_comma_list() -> None:
+    candidates = [
+        ProductCandidate("recipe", "one", "Apple Juice", "1.25", "111,222", "Beverages"),
+        ProductCandidate("recipe", "two", "Orange Juice", "1.25", "222", "Beverages"),
+        ProductCandidate("recipe", "three", "Grape Juice", "1.25", "333", "Beverages"),
+    ]
+    categories = {
+        candidate.source_key: CategoryResult(
+            categories=("Beverages",),
+            restriction_policies=(),
+            status="ok",
+            confidence=100,
+            confidence_band="manual",
+            reason="operator assigned",
+            matched_rules=(),
+            source_evidence=(),
+        )
+        for candidate in candidates
+    }
+
+    accepted, review, _names = classify_candidates(candidates, categories)
+
+    assert [candidate.source_key for candidate in accepted] == ["three"]
+    assert [candidate.source_key for candidate in review] == ["one", "two"]
+    assert all("duplicate barcode" in candidate.review_reason for candidate in review)
 
 
 def _build_basic_files(tmp_path: Path, *, stock: str) -> tuple[Path, Path, Path]:

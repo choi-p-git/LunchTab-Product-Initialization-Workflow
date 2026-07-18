@@ -18,6 +18,23 @@ uv run lunchtab-product-init
 uv run lunchtab-pos-name
 ```
 
+## Local Lunchtab Knowledge Base
+
+The source PDFs in `Lunch Tab Knowledge Base/` are local operator reference material and remain
+ignored. Agent-usable Markdown extracts are kept in `docs/lunchtab-knowledge-base/`.
+
+Before changing Lunchtab import behavior, search the extracted knowledge base first:
+
+```powershell
+rg -n -i "barcode|ProductCategories|BaseProductPosName|ProductData" docs\lunchtab-knowledge-base
+```
+
+Refresh the extracts after source PDFs change:
+
+```powershell
+uv run python scripts\extract_lunchtab_kb.py
+```
+
 Focused checks:
 
 ```powershell

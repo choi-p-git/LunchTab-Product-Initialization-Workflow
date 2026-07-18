@@ -10,6 +10,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from lunchtab_product_init.barcodes import duplicate_barcodes, parse_barcodes
 from lunchtab_product_init.categories import (
     format_product_categories,
     format_restriction_policies,
@@ -189,7 +190,7 @@ def classify_candidates(
     candidates: list[ProductCandidate],
     categories: dict[str, CategoryResult],
 ) -> tuple[list[ProductCandidate], list[ProductCandidate], dict[str, PosNameResult]]:
-    barcode_duplicates = duplicate_values([candidate.barcode for candidate in candidates])
+    barcode_duplicates = duplicate_barcodes(candidate.barcode for candidate in candidates)
     generated: dict[str, PosNameResult] = {}
     pos_values: list[str] = []
     for candidate in candidates:
@@ -202,13 +203,14 @@ def classify_candidates(
     review: list[ProductCandidate] = []
     for candidate in candidates:
         reasons = []
+        barcodes = parse_barcodes(candidate.barcode)
         if not candidate.item_name:
             reasons.append("missing item name")
         if not candidate.price:
             reasons.append("missing or invalid price")
-        if not candidate.barcode:
+        if not barcodes:
             reasons.append("missing barcode")
-        if candidate.barcode in barcode_duplicates:
+        if any(barcode.casefold() in barcode_duplicates for barcode in barcodes):
             reasons.append("duplicate barcode")
         category_result = categories[candidate.source_key]
         if category_result.status != "ok":
@@ -444,7 +446,11 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
         ),
     )
 
-    barcode_counts = Counter(candidate.barcode for candidate in candidates if candidate.barcode)
+    barcode_counts = Counter(
+        barcode.casefold()
+        for candidate in candidates
+        for barcode in parse_barcodes(candidate.barcode)
+    )
     pos_counts = Counter(
         names[candidate.source_key].value
         for candidate in candidates

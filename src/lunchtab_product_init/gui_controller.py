@@ -120,8 +120,19 @@ class AppController:
         )
         return self.state
 
-    def set_session(self, session: ImportSession) -> AppState:
-        self.state = replace(self.state, session=session, result=None)
+    def set_session(
+        self,
+        session: ImportSession,
+        *,
+        phase: AppPhase | None = None,
+        message: str | None = None,
+    ) -> AppState:
+        values = {"session": session, "result": None}
+        if phase is not None:
+            values["phase"] = phase
+        if message is not None:
+            values["message"] = message
+        self.state = replace(self.state, **values)
         return self.state
 
     def go_to_edit_review(self) -> AppState:

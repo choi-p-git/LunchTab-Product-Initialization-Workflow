@@ -19,10 +19,13 @@ from lunchtab_product_init.session_workflow import (
     export_session,
     filter_rows,
     filter_pos_rows,
+    format_barcodes,
     load_venue_profile,
     mark_for_edit,
+    merge_rows,
     next_edit_row,
     no_barcode_rows,
+    parse_barcodes,
     parse_sources,
     replace_pos_name,
     run_pos_generation,
@@ -48,6 +51,7 @@ class ProductInitializationApp:
         self.edit_no_barcode_only = False
         self.current_edit_row_id: str | None = None
         self.current_pos_row_id: str | None = None
+        self._suppress_pos_selection_event = False
 
         root.title(APP_TITLE)
         size_and_center(root, 1120, 760)
@@ -278,6 +282,7 @@ class ProductInitializationApp:
         ttk.Button(tools, text="Select all shown", command=self._select_all_edit_rows).pack(side="left", padx=6)
         ttk.Button(tools, text="Toggle selected row", command=self._toggle_edit_selection).pack(side="left")
         ttk.Button(tools, text="Delete selected", command=self._delete_edit_rows).pack(side="left")
+        ttk.Button(tools, text="Merge selected...", command=self._open_merge_rows_dialog).pack(side="left", padx=(6, 0))
         ttk.Button(tools, text="Undo", command=self._undo_edit_action).pack(side="left", padx=(6, 0))
         self.edit_tree = self._tree(
             left,
@@ -373,8 +378,14 @@ class ProductInitializationApp:
         bottom.grid(row=1, column=0, sticky="ew", pady=(8, 0))
         bottom.columnconfigure(0, weight=1)
         ttk.Label(bottom, textvariable=self.audit_text, justify="left").grid(row=0, column=0, sticky="w")
+        self.final_save_profile_button = ttk.Button(
+            bottom,
+            text="Save venue profile...",
+            command=self._save_profile,
+        )
+        self.final_save_profile_button.grid(row=0, column=1, sticky="e", padx=(8, 0))
         self.export_button = ttk.Button(bottom, text="Confirm and export", command=self._start_export)
-        self.export_button.grid(row=0, column=1, sticky="e")
+        self.export_button.grid(row=0, column=2, sticky="e", padx=(8, 0))
 
     def _build_complete_tab(self) -> None:
         parent = self.tabs["complete"]
@@ -520,7 +531,7 @@ class ProductInitializationApp:
         next_session = add_category(session, self.category_name.get())
         if next_session != session:
             self._push_category_undo()
-            self.controller.set_session(next_session)
+            self._set_category_session(next_session)
         self.category_name.set("")
         self.category_entry.focus_set()
         self._render()
@@ -620,7 +631,7 @@ class ProductInitializationApp:
         next_session = assign_category(session, {row_id}, category)
         if next_session != session:
             self._push_category_undo()
-            self.controller.set_session(next_session)
+            self._set_category_session(next_session)
         self._close_inline_category_dropdown()
         self._render()
 
@@ -659,7 +670,7 @@ class ProductInitializationApp:
         next_session = assign_category(session, row_ids, category)
         if next_session != session:
             self._push_category_undo()
-            self.controller.set_session(next_session)
+            self._set_category_session(next_session)
             self.category_selection.clear()
             self._render()
 
@@ -671,7 +682,7 @@ class ProductInitializationApp:
         next_session = mark_for_edit(session, row_ids)
         if next_session != session:
             self._push_category_undo()
-            self.controller.set_session(next_session)
+            self._set_category_session(next_session)
             self.category_selection.clear()
             self._render()
 
@@ -690,7 +701,7 @@ class ProductInitializationApp:
         next_session = delete_rows(session, row_ids)
         if next_session != session:
             self._push_category_undo()
-            self.controller.set_session(next_session)
+            self._set_category_session(next_session)
             self.category_selection.clear()
             self._render()
 
@@ -703,9 +714,16 @@ class ProductInitializationApp:
     def _undo_category_action(self) -> None:
         if not self.category_undo_stack:
             return
-        self.controller.set_session(self.category_undo_stack.pop())
+        self._set_category_session(self.category_undo_stack.pop())
         self.category_selection.clear()
         self._render()
+
+    def _set_category_session(self, session: ImportSession) -> None:
+        self.controller.set_session(
+            session,
+            phase=AppPhase.CATEGORIZING,
+            message="Category changes made. Continue through edit review and POS names before final review.",
+        )
 
     def _price_operator_changed(self) -> None:
         range_enabled = self.price_operator.get() == "range"
@@ -777,7 +795,7 @@ class ProductInitializationApp:
         if next_session == session:
             return
         self._push_edit_undo()
-        self.controller.set_session(next_session)
+        self._set_edit_session(next_session)
         self.edit_selection.clear()
         self._load_next_edit_row()
         self._render()
@@ -786,6 +804,125 @@ class ProductInitializationApp:
         if self.current_edit_row_id:
             self.edit_selection = {self.current_edit_row_id}
             self._delete_edit_rows()
+
+    def _selected_edit_action_row_ids(self) -> set[str]:
+        if self.edit_selection:
+            return set(self.edit_selection)
+        tree = self._tree_widget(self.edit_tree)
+        return {str(row_id) for row_id in tree.selection()}
+
+    def _open_merge_rows_dialog(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        row_ids = self._selected_edit_action_row_ids()
+        if len(row_ids) < 2:
+            messagebox.showwarning(APP_TITLE, "Select at least two rows to merge.")
+            return
+        rows = [row for row in session.rows if row.row_id in row_ids and row.status != "deleted"]
+        if len(rows) < 2:
+            messagebox.showwarning(APP_TITLE, "Select at least two active rows to merge.")
+            return
+
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Merge edit-review rows")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        dialog.columnconfigure(0, weight=1)
+        dialog.rowconfigure(1, weight=1)
+
+        target_by_label = {self._merge_row_label(row): row.row_id for row in rows}
+        target_label = tk.StringVar(value=next(iter(target_by_label)))
+        preview_text = tk.StringVar()
+
+        header = ttk.Frame(dialog, padding=12)
+        header.grid(row=0, column=0, sticky="ew")
+        header.columnconfigure(1, weight=1)
+        ttk.Label(header, text="Merge into").grid(row=0, column=0, sticky="w")
+        target_combo = ttk.Combobox(
+            header,
+            textvariable=target_label,
+            values=tuple(target_by_label),
+            state="readonly",
+            width=56,
+        )
+        target_combo.grid(row=0, column=1, sticky="ew", padx=(8, 0))
+
+        body = ttk.Frame(dialog, padding=(12, 0, 12, 12))
+        body.grid(row=1, column=0, sticky="nsew")
+        body.columnconfigure(0, weight=1)
+        ttk.Label(body, text="Merge preview").grid(row=0, column=0, sticky="w")
+        preview = tk.Text(body, height=12, width=92, wrap="word")
+        preview.grid(row=1, column=0, sticky="nsew", pady=(6, 0))
+        preview.configure(state="disabled")
+
+        actions = ttk.Frame(dialog, padding=(12, 0, 12, 12))
+        actions.grid(row=2, column=0, sticky="ew")
+        actions.columnconfigure(0, weight=1)
+
+        def refresh_preview(*_args) -> None:
+            target_id = target_by_label[target_label.get()]
+            preview_text.set(self._merge_preview_text(rows, target_id))
+            preview.configure(state="normal")
+            preview.delete("1.0", tk.END)
+            preview.insert("1.0", preview_text.get())
+            preview.configure(state="disabled")
+
+        def confirm() -> None:
+            target_id = target_by_label[target_label.get()]
+            source_ids = {row.row_id for row in rows if row.row_id != target_id}
+            try:
+                next_session = merge_rows(session, target_id, source_ids)
+            except Exception as error:
+                messagebox.showerror(APP_TITLE, friendly_error(error), parent=dialog)
+                return
+            self._push_edit_undo()
+            self._set_edit_session(next_session)
+            self.edit_selection.clear()
+            self.current_edit_row_id = target_id
+            dialog.destroy()
+            if self._row(target_id) is not None:
+                self._load_edit_row(target_id)
+            else:
+                self._load_next_edit_row()
+            self._render()
+
+        ttk.Button(actions, text="Confirm merge", command=confirm).grid(row=0, column=1, sticky="e")
+        ttk.Button(actions, text="Cancel", command=dialog.destroy).grid(row=0, column=2, sticky="e", padx=(8, 0))
+        target_combo.bind("<<ComboboxSelected>>", refresh_preview)
+        refresh_preview()
+        size_and_center(dialog, 780, 420)
+        target_combo.focus_set()
+
+    @staticmethod
+    def _merge_row_label(row) -> str:
+        return f"{row.row_id} - {row.item_name or '(missing name)'}"
+
+    @staticmethod
+    def _merge_preview_text(rows, target_row_id: str) -> str:
+        target = next(row for row in rows if row.row_id == target_row_id)
+        sources = [row for row in rows if row.row_id != target_row_id]
+        source_barcodes = [barcode for row in sources for barcode in parse_barcodes(row.barcode)]
+        merged_barcode = format_barcodes((*parse_barcodes(target.barcode), *source_barcodes))
+        deleted = ", ".join(row.row_id for row in sources)
+        source_barcode_text = ", ".join(source_barcodes) or "(none)"
+        return "\n".join(
+            [
+                f"Target row: {target.row_id}",
+                f"Target item: {target.item_name}",
+                f"Target price: {target.price or '(missing)'}",
+                f"Target category: {target.category or '(missing)'}",
+                "",
+                f"Current target barcode(s): {target.barcode or '(none)'}",
+                f"Source barcode(s) to transfer: {source_barcode_text}",
+                f"Result barcode field: {merged_barcode or '(none)'}",
+                "",
+                f"Rows to delete from import after merge: {deleted}",
+                "",
+                "Merge method: transfer source barcode values to target row, separated by commas. "
+                "Name, price, and category stay on the selected target row.",
+            ]
+        )
 
     def _save_edit(self) -> None:
         session = self.controller.state.session
@@ -807,7 +944,7 @@ class ProductInitializationApp:
         if next_session == session:
             return
         self._push_edit_undo()
-        self.controller.set_session(next_session)
+        self._set_edit_session(next_session)
         self._load_next_edit_row()
         self._render()
 
@@ -821,13 +958,20 @@ class ProductInitializationApp:
         if not self.edit_undo_stack:
             return
         previous_row_id = self.current_edit_row_id
-        self.controller.set_session(self.edit_undo_stack.pop())
+        self._set_edit_session(self.edit_undo_stack.pop())
         self.edit_selection.clear()
         if previous_row_id and self._row(previous_row_id) is not None:
             self._load_edit_row(previous_row_id)
         else:
             self._load_next_edit_row()
         self._render()
+
+    def _set_edit_session(self, session: ImportSession) -> None:
+        self.controller.set_session(
+            session,
+            phase=AppPhase.EDIT_REVIEW,
+            message="Edit changes made. Continue through POS names before final review.",
+        )
 
     def _edit_form_changed(self) -> bool:
         if self.current_edit_row_id is None:
@@ -880,12 +1024,18 @@ class ProductInitializationApp:
         session = self.controller.state.session
         if session is None:
             return
-        self.controller.set_session(run_pos_generation(session))
+        self.controller.set_session(
+            run_pos_generation(session),
+            phase=AppPhase.POS_REVIEW,
+            message="Review and approve BaseProductPosName values.",
+        )
         self.controller.go_to_pos_review()
         self._load_first_pos_row()
         self._render()
 
     def _load_selected_pos_row(self) -> None:
+        if self._suppress_pos_selection_event:
+            return
         row_id = self._selected_iid(self._tree_widget(self.pos_tree))
         if row_id:
             self._load_pos_row(row_id)
@@ -895,8 +1045,7 @@ class ProductInitializationApp:
         row_id = tree.identify_row(event.y)
         if not row_id:
             return None
-        tree.selection_set(row_id)
-        tree.focus(row_id)
+        self._select_pos_tree_row(row_id)
         self._load_pos_row(row_id)
         return "break"
 
@@ -917,14 +1066,16 @@ class ProductInitializationApp:
             return
         self._load_pos_row(row.row_id)
 
-    def _load_pos_row(self, row_id: str) -> None:
+    def _load_pos_row(self, row_id: str, *, focus_entry: bool = True) -> None:
         self.current_pos_row_id = row_id
         row = self._row(row_id)
         self.pos_name.set(row.pos_name if row else "")
         self._refresh_suggestions()
         self._update_pos_action_state()
+        if focus_entry:
+            self._focus_pos_entry(select_all=True)
 
-    def _replace_pos(self) -> None:
+    def _replace_pos(self, *, advance: bool = False) -> None:
         session = self.controller.state.session
         if session is None or self.current_pos_row_id is None:
             return
@@ -933,14 +1084,84 @@ class ProductInitializationApp:
             self.pos_validation.set("; ".join(errors))
             self._update_pos_action_state()
             return
-        self.controller.set_session(replace_pos_name(session, self.current_pos_row_id, self.pos_name.get()))
-        self._refresh_suggestions()
+        current_row_id = self.current_pos_row_id
+        displayed_before = self._displayed_pos_row_ids()
+        self.controller.set_session(
+            replace_pos_name(session, self.current_pos_row_id, self.pos_name.get()),
+            phase=AppPhase.POS_REVIEW,
+            message="Review and approve BaseProductPosName values.",
+        )
         self._render()
+        if advance:
+            self._load_next_displayed_pos_row(current_row_id, displayed_before)
+        else:
+            self._refresh_suggestions()
+            self._focus_pos_entry(select_all=True)
 
     def _pos_entry_return(self, _event: tk.Event) -> str:
         if str(self.replace_pos_button.cget("state")) != "disabled":
-            self._replace_pos()
+            self._replace_pos(advance=True)
         return "break"
+
+    def _focus_pos_entry(self, *, select_all: bool = False) -> None:
+        def focus() -> None:
+            if not self.pos_entry.winfo_exists():
+                return
+            self.pos_entry.focus_set()
+            if select_all:
+                self.pos_entry.selection_range(0, tk.END)
+                self.pos_entry.icursor(tk.END)
+
+        self.pos_entry.after_idle(focus)
+
+    def _select_pos_tree_row(self, row_id: str) -> None:
+        tree = self._tree_widget(self.pos_tree)
+        self._suppress_pos_selection_event = True
+        try:
+            current_selection = tree.selection()
+            if current_selection:
+                tree.selection_remove(current_selection)
+            tree.selection_set(row_id)
+            tree.focus(row_id)
+            tree.see(row_id)
+        finally:
+            self._suppress_pos_selection_event = False
+
+    def _displayed_pos_row_ids(self) -> list[str]:
+        tree = self._tree_widget(self.pos_tree)
+        return [str(row_id) for row_id in tree.get_children("")]
+
+    def _load_next_displayed_pos_row(
+        self,
+        previous_row_id: str,
+        previous_displayed_row_ids: list[str],
+    ) -> None:
+        displayed = self._displayed_pos_row_ids()
+        if not displayed:
+            self.current_pos_row_id = None
+            self.pos_name.set("")
+            self.pos_validation.set("")
+            self._refresh_suggestions()
+            return
+        if previous_row_id in displayed:
+            start_index = displayed.index(previous_row_id) + 1
+            next_row_id = displayed[start_index] if start_index < len(displayed) else displayed[-1]
+        else:
+            old_index = (
+                previous_displayed_row_ids.index(previous_row_id)
+                if previous_row_id in previous_displayed_row_ids
+                else -1
+            )
+            next_row_id = next(
+                (
+                    row_id
+                    for row_id in previous_displayed_row_ids[old_index + 1 :]
+                    if row_id in displayed
+                ),
+                displayed[min(max(old_index, 0), len(displayed) - 1)],
+            )
+        self._select_pos_tree_row(next_row_id)
+        self._load_pos_row(next_row_id)
 
     def _go_to_final(self) -> None:
         self.controller.go_to_final_review()
@@ -1135,9 +1356,7 @@ class ProductInitializationApp:
         if self.current_pos_row_id:
             row = self._row(self.current_pos_row_id)
             if row is not None and tree.exists(self.current_pos_row_id):
-                tree.selection_set(self.current_pos_row_id)
-                tree.focus(self.current_pos_row_id)
-                tree.see(self.current_pos_row_id)
+                self._select_pos_tree_row(self.current_pos_row_id)
         self._update_pos_action_state()
 
     def _populate_final_rows(self) -> None:
