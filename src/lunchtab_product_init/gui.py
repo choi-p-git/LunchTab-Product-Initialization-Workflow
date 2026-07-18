@@ -158,7 +158,7 @@ class ProductInitializationApp:
         self.price_operator_combo = ttk.Combobox(
             tools,
             textvariable=self.price_operator,
-            values=("=", "<", ">", "<=", ">=", "range"),
+            values=("=", "<", ">", "<=", ">=", "range", "No price"),
             state="readonly",
             width=8,
         )
@@ -518,9 +518,13 @@ class ProductInitializationApp:
 
     def _price_operator_changed(self) -> None:
         range_enabled = self.price_operator.get() == "range"
-        self.price_upper_entry.configure(state="normal" if range_enabled else "disabled")
+        no_price = self.price_operator.get() == "No price"
+        self.price_value_entry.configure(state="disabled" if no_price else "normal")
+        self.price_upper_entry.configure(state="normal" if range_enabled and not no_price else "disabled")
         if not range_enabled:
             self.max_price.set("")
+        if no_price:
+            self.min_price.set("")
         self._populate_category_rows()
 
     def _go_to_edit(self) -> None:

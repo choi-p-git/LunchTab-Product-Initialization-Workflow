@@ -66,6 +66,21 @@ def test_category_price_filter_supports_exact_comparison_and_range() -> None:
     ] == ["row-1", "row-2"]
 
 
+def test_category_price_filter_can_show_rows_without_price() -> None:
+    session = _session(
+        [
+            _row("row-1", "Blank Price", "", "ABC"),
+            _row("row-2", "Invalid Price", "N/A", "DEF"),
+            _row("row-3", "Priced Item", "2.00", "GHI"),
+        ]
+    )
+
+    assert [
+        row.row_id
+        for row in filter_rows(session, price_operator="no_price")
+    ] == ["row-1", "row-2"]
+
+
 def test_edit_review_no_barcode_filter_select_delete_and_save_next() -> None:
     session = _session(
         [

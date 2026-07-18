@@ -37,7 +37,7 @@ RowStatus = Literal[
     "pos_needs_review",
     "export_ready",
 ]
-PriceFilterOperator = Literal["=", "<", ">", "<=", ">=", "range", "any"]
+PriceFilterOperator = Literal["=", "<", ">", "<=", ">=", "range", "no_price", "any"]
 
 DELETED_AUDIT_NAME = "Deleted Product Audit.csv"
 SESSION_AUDIT_NAME = "Session Review Audit.csv"
@@ -723,12 +723,16 @@ def _normalize_price_operator(value: str) -> PriceFilterOperator:
         return "any"
     if normalized in {"=", "exact", "exact match"}:
         return "="
+    if normalized in {"no price", "no_price", "missing price", "without price"}:
+        return "no_price"
     if normalized in {"<", ">", "<=", ">=", "range"}:
         return normalized  # type: ignore[return-value]
     return "any"
 
 
 def _price_matches(price, operator: PriceFilterOperator, target, upper) -> bool:
+    if operator == "no_price":
+        return price is None
     if operator == "any" or target is None:
         return True
     if price is None:
