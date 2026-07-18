@@ -12,10 +12,14 @@ from lunchtab_product_init.desktop import friendly_error, open_path
 from lunchtab_product_init.gui_controller import AppController, AppPhase
 from lunchtab_product_init.session_workflow import (
     ImportSession,
+    VenueProfile,
     assign_category,
+    apply_venue_profile,
     delete_rows,
     export_session,
     filter_rows,
+    filter_pos_rows,
+    load_venue_profile,
     mark_for_edit,
     next_edit_row,
     no_barcode_rows,
@@ -25,6 +29,7 @@ from lunchtab_product_init.session_workflow import (
     save_edit,
     save_venue_profile,
     suggest_pos_names,
+    validate_pos_name,
 )
 from lunchtab_product_init.ui_helpers import size_and_center
 
@@ -38,6 +43,7 @@ class ProductInitializationApp:
         self.events: queue.Queue[tuple[str, object]] = queue.Queue()
         self.category_selection: set[str] = set()
         self.category_undo_stack: list[ImportSession] = []
+        self.edit_undo_stack: list[ImportSession] = []
         self.edit_selection: set[str] = set()
         self.edit_no_barcode_only = False
         self.current_edit_row_id: str | None = None
@@ -49,12 +55,15 @@ class ProductInitializationApp:
         self.product_template_text = tk.StringVar()
         self.recipe_list_text = tk.StringVar()
         self.odin_inventory_text = tk.StringVar()
+        self.venue_profile_text = tk.StringVar()
         self.output_text = tk.StringVar(value=str(self.controller.state.output_root))
         self.status_text = tk.StringVar(value=self.controller.state.message)
         self.is_orderable = tk.BooleanVar(value=False)
         self.category_name = tk.StringVar()
         self.category_filter = tk.StringVar()
         self.old_category_filter = tk.StringVar()
+        self.barcode_filter = tk.StringVar(value="Any")
+        self.category_assignment_filter = tk.StringVar(value="Any")
         self.price_operator = tk.StringVar(value="=")
         self.min_price = tk.StringVar()
         self.max_price = tk.StringVar()
@@ -64,9 +73,15 @@ class ProductInitializationApp:
         self.edit_barcode = tk.StringVar()
         self.edit_category = tk.StringVar()
         self.pos_name = tk.StringVar()
+        self.pos_reason_filter = tk.StringVar(value="Any")
         self.pos_validation = tk.StringVar()
         self.audit_text = tk.StringVar()
         self.inline_category_combo: ttk.Combobox | None = None
+        self.venue_profile: VenueProfile | None = None
+
+        for variable in (self.edit_name, self.edit_price, self.edit_barcode, self.edit_category):
+            variable.trace_add("write", lambda *_args: self._update_edit_action_state())
+        self.pos_name.trace_add("write", lambda *_args: self._update_pos_action_state())
 
         self._build()
         self._render()
@@ -122,13 +137,14 @@ class ProductInitializationApp:
         self._file_row(form, 0, "ProductData template", self.product_template_text, self._choose_template)
         self._file_row(form, 1, "Recipe list", self.recipe_list_text, self._choose_recipe)
         self._file_row(form, 2, "Odin inventory", self.odin_inventory_text, self._choose_odin)
-        self._file_row(form, 3, "Save results in", self.output_text, self._choose_output)
+        self._file_row(form, 3, "Venue profile", self.venue_profile_text, self._choose_venue_profile)
+        self._file_row(form, 4, "Save results in", self.output_text, self._choose_output)
         ttk.Checkbutton(
             form,
             text="Set target CSV IsOrderable to true",
             variable=self.is_orderable,
             command=self._set_is_orderable,
-        ).grid(row=4, column=0, columnspan=3, sticky="w", pady=(10, 0))
+        ).grid(row=5, column=0, columnspan=3, sticky="w", pady=(10, 0))
         actions = ttk.Frame(parent)
         actions.grid(row=1, column=0, sticky="ew", pady=(12, 0))
         actions.columnconfigure(0, weight=1)
@@ -187,6 +203,34 @@ class ProductInitializationApp:
         ttk.Button(tools, text="Apply filter", command=self._refresh_category_rows).grid(
             row=1, column=9, sticky="w", pady=(8, 0)
         )
+        ttk.Label(tools, text="Barcode filter").grid(row=2, column=0, sticky="w", pady=(8, 0))
+        self.barcode_filter_combo = ttk.Combobox(
+            tools,
+            textvariable=self.barcode_filter,
+            values=("Any", "No barcode", "SAGEMB", "Vendor"),
+            state="readonly",
+            width=12,
+        )
+        self.barcode_filter_combo.grid(
+            row=2, column=1, padx=(6, 8), sticky="w", pady=(8, 0)
+        )
+        self.barcode_filter_combo.bind(
+            "<<ComboboxSelected>>", lambda _event: self._refresh_category_rows()
+        )
+        ttk.Label(tools, text="Category filter").grid(row=2, column=2, sticky="w", pady=(8, 0))
+        self.category_assignment_filter_combo = ttk.Combobox(
+            tools,
+            textvariable=self.category_assignment_filter,
+            values=("Any", "No category", "Has category"),
+            state="readonly",
+            width=14,
+        )
+        self.category_assignment_filter_combo.grid(
+            row=2, column=3, padx=(6, 8), sticky="w", pady=(8, 0)
+        )
+        self.category_assignment_filter_combo.bind(
+            "<<ComboboxSelected>>", lambda _event: self._refresh_category_rows()
+        )
 
         self.category_tree = self._tree(
             body,
@@ -194,12 +238,16 @@ class ProductInitializationApp:
             ("Select", "Item Name", "Price", "Barcode", "Old Category", "Category", "Status"),
         )
         self.category_tree.grid(row=1, column=0, sticky="nsew")
-        self._tree_widget(self.category_tree).bind("<Button-1>", self._category_tree_click)
-        self._tree_widget(self.category_tree).bind("<Double-1>", self._category_tree_double_click)
+        category_tree = self._tree_widget(self.category_tree)
+        category_tree.bind("<Button-1>", self._category_tree_click)
+        category_tree.bind("<Double-1>", self._category_tree_double_click)
+        category_tree.bind("<Delete>", self._category_tree_delete_key)
+        category_tree.bind("<<TreeviewSelect>>", lambda _event: self._category_highlight_changed())
 
         actions = ttk.Frame(body)
         actions.grid(row=2, column=0, sticky="ew", pady=(8, 0))
         ttk.Button(actions, text="Select all shown", command=self._select_all_category_rows).pack(side="left")
+        ttk.Button(actions, text="Select highlighted", command=self._select_highlighted_category_rows).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="Deselect all shown", command=self._deselect_all_category_rows).pack(side="left", padx=(8, 0))
         self.category_combo = ttk.Combobox(actions, textvariable=self.selected_category, state="readonly", width=24)
         self.category_combo.pack(side="left", padx=8)
@@ -230,13 +278,16 @@ class ProductInitializationApp:
         ttk.Button(tools, text="Select all shown", command=self._select_all_edit_rows).pack(side="left", padx=6)
         ttk.Button(tools, text="Toggle selected row", command=self._toggle_edit_selection).pack(side="left")
         ttk.Button(tools, text="Delete selected", command=self._delete_edit_rows).pack(side="left")
+        ttk.Button(tools, text="Undo", command=self._undo_edit_action).pack(side="left", padx=(6, 0))
         self.edit_tree = self._tree(
             left,
             ("selected", "name", "price", "barcode", "category", "reason"),
             ("Sel", "Item Name", "Price", "Barcode", "Category", "Reason"),
         )
         self.edit_tree.grid(row=1, column=0, sticky="nsew")
-        self.edit_tree.bind("<Double-1>", lambda _event: self._load_selected_edit_row())
+        edit_tree = self._tree_widget(self.edit_tree)
+        edit_tree.bind("<<TreeviewSelect>>", lambda _event: self._edit_highlight_changed())
+        edit_tree.bind("<Double-1>", self._edit_tree_double_click)
 
         form = ttk.LabelFrame(split, text="Row edit", padding=12)
         form.columnconfigure(1, weight=1)
@@ -267,20 +318,36 @@ class ProductInitializationApp:
         split.grid(row=0, column=0, sticky="nsew")
         left = ttk.Frame(split, padding=(0, 0, 8, 0))
         left.columnconfigure(0, weight=1)
-        left.rowconfigure(0, weight=1)
+        left.rowconfigure(1, weight=1)
         split.add(left, weight=2)
+        filters = ttk.Frame(left)
+        filters.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        ttk.Label(filters, text="Reason filter").pack(side="left")
+        self.pos_reason_combo = ttk.Combobox(
+            filters,
+            textvariable=self.pos_reason_filter,
+            values=("Any", "Needs review"),
+            state="readonly",
+            width=24,
+        )
+        self.pos_reason_combo.pack(side="left", padx=(6, 0))
+        self.pos_reason_combo.bind("<<ComboboxSelected>>", lambda _event: self._populate_pos_rows())
         self.pos_tree = self._tree(
             left,
             ("name", "pos", "status", "reason"),
             ("Item Name", "BaseProductPosName", "Status", "Reason"),
         )
-        self.pos_tree.grid(row=0, column=0, sticky="nsew")
-        self.pos_tree.bind("<Double-1>", lambda _event: self._load_selected_pos_row())
+        self.pos_tree.grid(row=1, column=0, sticky="nsew")
+        pos_tree = self._tree_widget(self.pos_tree)
+        pos_tree.bind("<<TreeviewSelect>>", lambda _event: self._load_selected_pos_row())
+        pos_tree.bind("<Double-1>", self._pos_tree_double_click)
 
         editor = ttk.LabelFrame(split, text="POS-name steering", padding=12)
         editor.columnconfigure(0, weight=1)
         split.add(editor, weight=1)
-        ttk.Entry(editor, textvariable=self.pos_name).grid(row=0, column=0, sticky="ew")
+        self.pos_entry = ttk.Entry(editor, textvariable=self.pos_name)
+        self.pos_entry.grid(row=0, column=0, sticky="ew")
+        self.pos_entry.bind("<Return>", self._pos_entry_return)
         ttk.Label(editor, textvariable=self.pos_validation, foreground="#8a1f11").grid(
             row=1, column=0, sticky="w", pady=(6, 0)
         )
@@ -337,7 +404,7 @@ class ProductInitializationApp:
         frame = ttk.Frame(parent)
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(0, weight=1)
-        tree = ttk.Treeview(frame, columns=columns, show="headings", height=14)
+        tree = ttk.Treeview(frame, columns=columns, show="headings", height=14, selectmode="extended")
         for column, label in zip(columns, labels, strict=True):
             tree.heading(column, text=label)
             tree.column(column, width=90 if column in {"selected", "price", "status"} else 170)
@@ -361,6 +428,21 @@ class ProductInitializationApp:
     def _choose_odin(self) -> None:
         self._choose_file("Select Odin inventory workbook", [("Excel workbooks", "*.xlsx")], self.odin_inventory_text, self.controller.select_odin_inventory)
 
+    def _choose_venue_profile(self) -> None:
+        selected = filedialog.askopenfilename(
+            title="Load venue profile",
+            filetypes=[("JSON files", "*.json")],
+        )
+        if not selected:
+            return
+        try:
+            self.venue_profile = load_venue_profile(Path(selected))
+        except Exception as error:
+            messagebox.showerror(APP_TITLE, friendly_error(error))
+            return
+        self.venue_profile_text.set(selected)
+        self._render()
+
     def _choose_file(self, title: str, filetypes, variable: tk.StringVar, setter) -> None:
         selected = filedialog.askopenfilename(title=title, filetypes=filetypes)
         if selected:
@@ -382,7 +464,15 @@ class ProductInitializationApp:
     def _start_parse(self) -> None:
         self.controller.begin_parse()
         inputs = self.controller.build_inputs()
-        self._run_worker("parsed", lambda: parse_sources(inputs))
+        venue_profile = self.venue_profile
+
+        def parse_with_profile() -> ImportSession:
+            session = parse_sources(inputs)
+            if venue_profile is None:
+                return session
+            return apply_venue_profile(session, venue_profile)
+
+        self._run_worker("parsed", parse_with_profile)
         self._render()
 
     def _start_export(self) -> None:
@@ -470,7 +560,7 @@ class ProductInitializationApp:
         row_id = tree.identify_row(event.y)
         if row_id and tree.identify_column(event.x) == "#6":
             tree.selection_set(row_id)
-            self._show_inline_category_dropdown(row_id, event.x, event.y)
+            self._show_inline_category_dropdown(row_id, focus=True, open_menu=True)
             return "break"
         row_id = tree.identify_row(event.y) or self._selected_iid(tree)
         if row_id:
@@ -479,7 +569,20 @@ class ProductInitializationApp:
             return "break"
         return None
 
-    def _show_inline_category_dropdown(self, row_id: str, x: int, y: int) -> None:
+    def _category_tree_delete_key(self, _event: tk.Event) -> str:
+        self._delete_category_rows()
+        return "break"
+
+    def _category_highlight_changed(self) -> None:
+        tree = self._tree_widget(self.category_tree)
+        highlighted = tree.selection()
+        self._close_inline_category_dropdown()
+        if len(highlighted) == 1:
+            self._show_inline_category_dropdown(str(highlighted[0]))
+
+    def _show_inline_category_dropdown(
+        self, row_id: str, *, focus: bool = False, open_menu: bool = False
+    ) -> None:
         session = self.controller.state.session
         if session is None or not session.category_names:
             return
@@ -498,7 +601,6 @@ class ProductInitializationApp:
             width=max(14, width // 8),
         )
         combo.place(x=cell_x, y=cell_y, width=width, height=height)
-        combo.focus_set()
         combo.bind(
             "<<ComboboxSelected>>",
             lambda _event: self._apply_inline_category(row_id, value.get()),
@@ -506,7 +608,10 @@ class ProductInitializationApp:
         combo.bind("<Escape>", lambda _event: self._close_inline_category_dropdown())
         combo.bind("<FocusOut>", lambda _event: self._close_inline_category_dropdown())
         self.inline_category_combo = combo
-        combo.event_generate("<Button-1>", x=x, y=y)
+        if focus or open_menu:
+            combo.focus_set()
+        if open_menu:
+            combo.after(50, lambda: combo.event_generate("<Down>"))
 
     def _apply_inline_category(self, row_id: str, category: str) -> None:
         session = self.controller.state.session
@@ -529,17 +634,29 @@ class ProductInitializationApp:
         self.category_selection.update(tree.get_children(""))
         self._populate_category_rows()
 
+    def _select_highlighted_category_rows(self) -> None:
+        tree = self._tree_widget(self.category_tree)
+        self.category_selection.update(str(row_id) for row_id in tree.selection())
+        self._populate_category_rows()
+
     def _deselect_all_category_rows(self) -> None:
         tree = self._tree_widget(self.category_tree)
         self.category_selection.difference_update(tree.get_children(""))
         self._populate_category_rows()
 
+    def _category_action_row_ids(self) -> tuple[set[str], bool]:
+        if self.category_selection:
+            return set(self.category_selection), False
+        tree = self._tree_widget(self.category_tree)
+        return {str(row_id) for row_id in tree.selection()}, True
+
     def _assign_category(self) -> None:
         session = self.controller.state.session
-        if session is None or not self.category_selection:
+        row_ids, _using_highlighted = self._category_action_row_ids()
+        if session is None or not row_ids:
             return
         category = self.selected_category.get() or self.category_name.get()
-        next_session = assign_category(session, set(self.category_selection), category)
+        next_session = assign_category(session, row_ids, category)
         if next_session != session:
             self._push_category_undo()
             self.controller.set_session(next_session)
@@ -548,9 +665,10 @@ class ProductInitializationApp:
 
     def _mark_category_for_edit(self) -> None:
         session = self.controller.state.session
-        if session is None:
+        row_ids, _using_highlighted = self._category_action_row_ids()
+        if session is None or not row_ids:
             return
-        next_session = mark_for_edit(session, set(self.category_selection))
+        next_session = mark_for_edit(session, row_ids)
         if next_session != session:
             self._push_category_undo()
             self.controller.set_session(next_session)
@@ -559,9 +677,17 @@ class ProductInitializationApp:
 
     def _delete_category_rows(self) -> None:
         session = self.controller.state.session
-        if session is None:
+        row_ids, using_highlighted = self._category_action_row_ids()
+        if session is None or not row_ids:
             return
-        next_session = delete_rows(session, set(self.category_selection))
+        if using_highlighted and row_ids:
+            count = len(row_ids)
+            if not messagebox.askyesno(
+                APP_TITLE,
+                f"Delete {count} highlighted row{'s' if count != 1 else ''} from this import?",
+            ):
+                return
+        next_session = delete_rows(session, row_ids)
         if next_session != session:
             self._push_category_undo()
             self.controller.set_session(next_session)
@@ -594,6 +720,7 @@ class ProductInitializationApp:
 
     def _go_to_edit(self) -> None:
         self.controller.go_to_edit_review()
+        self.edit_undo_stack.clear()
         self._load_next_edit_row()
         self._render()
 
@@ -626,11 +753,31 @@ class ProductInitializationApp:
         if row_id:
             self._load_edit_row(row_id)
 
+    def _edit_highlight_changed(self) -> None:
+        tree = self._tree_widget(self.edit_tree)
+        highlighted = tree.selection()
+        if len(highlighted) == 1:
+            self._load_edit_row(str(highlighted[0]))
+
+    def _edit_tree_double_click(self, event: tk.Event) -> str | None:
+        tree = self._tree_widget(self.edit_tree)
+        row_id = tree.identify_row(event.y)
+        if not row_id:
+            return None
+        tree.selection_set(row_id)
+        tree.focus(row_id)
+        self._load_edit_row(row_id)
+        return "break"
+
     def _delete_edit_rows(self) -> None:
         session = self.controller.state.session
-        if session is None:
+        if session is None or not self.edit_selection:
             return
-        self.controller.set_session(delete_rows(session, set(self.edit_selection), "edit review deletion"))
+        next_session = delete_rows(session, set(self.edit_selection), "edit review deletion")
+        if next_session == session:
+            return
+        self._push_edit_undo()
+        self.controller.set_session(next_session)
         self.edit_selection.clear()
         self._load_next_edit_row()
         self._render()
@@ -644,18 +791,90 @@ class ProductInitializationApp:
         session = self.controller.state.session
         if session is None or self.current_edit_row_id is None:
             return
-        self.controller.set_session(
-            save_edit(
-                session,
-                self.current_edit_row_id,
-                item_name=self.edit_name.get(),
-                price=self.edit_price.get(),
-                barcode=self.edit_barcode.get(),
-                category=self.edit_category.get(),
+        if not self._edit_form_changed():
+            self._update_edit_action_state()
+            return
+        next_session = self._preview_edit_save(session)
+        saved_row = self._row_from_session(next_session, self.current_edit_row_id)
+        if saved_row is None:
+            return
+        if saved_row.status != "edit_complete":
+            messagebox.showwarning(
+                APP_TITLE,
+                f"Row still needs review: {saved_row.review_reason or 'invalid edit values'}",
             )
-        )
+            return
+        if next_session == session:
+            return
+        self._push_edit_undo()
+        self.controller.set_session(next_session)
         self._load_next_edit_row()
         self._render()
+
+    def _push_edit_undo(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        self.edit_undo_stack.append(session)
+
+    def _undo_edit_action(self) -> None:
+        if not self.edit_undo_stack:
+            return
+        previous_row_id = self.current_edit_row_id
+        self.controller.set_session(self.edit_undo_stack.pop())
+        self.edit_selection.clear()
+        if previous_row_id and self._row(previous_row_id) is not None:
+            self._load_edit_row(previous_row_id)
+        else:
+            self._load_next_edit_row()
+        self._render()
+
+    def _edit_form_changed(self) -> bool:
+        if self.current_edit_row_id is None:
+            return False
+        row = self._row(self.current_edit_row_id)
+        if row is None:
+            return False
+        return (
+            self._clean_edit_text(self.edit_name.get()) != row.item_name
+            or self._clean_edit_text(self.edit_price.get()) != row.price
+            or self._clean_edit_barcode(self.edit_barcode.get()) != row.barcode
+            or self._clean_edit_text(self.edit_category.get()) != row.category
+        )
+
+    def _preview_edit_save(self, session: ImportSession) -> ImportSession:
+        if self.current_edit_row_id is None:
+            return session
+        return save_edit(
+            session,
+            self.current_edit_row_id,
+            item_name=self.edit_name.get(),
+            price=self.edit_price.get(),
+            barcode=self.edit_barcode.get(),
+            category=self.edit_category.get(),
+        )
+
+    @staticmethod
+    def _row_from_session(session: ImportSession, row_id: str):
+        return next((row for row in session.rows if row.row_id == row_id), None)
+
+    def _update_edit_action_state(self) -> None:
+        if not hasattr(self, "save_edit_button"):
+            return
+        session = self.controller.state.session
+        state = "disabled"
+        if session is not None and self.current_edit_row_id is not None:
+            if self._edit_form_changed():
+                state = "normal"
+        self.save_edit_button.configure(state=state)
+
+    @staticmethod
+    def _clean_edit_text(value: str) -> str:
+        return " ".join(str(value or "").split())
+
+    @staticmethod
+    def _clean_edit_barcode(value: str) -> str:
+        return "".join(str(value or "").split())
 
     def _go_to_pos(self) -> None:
         session = self.controller.state.session
@@ -663,24 +882,65 @@ class ProductInitializationApp:
             return
         self.controller.set_session(run_pos_generation(session))
         self.controller.go_to_pos_review()
+        self._load_first_pos_row()
         self._render()
 
     def _load_selected_pos_row(self) -> None:
         row_id = self._selected_iid(self._tree_widget(self.pos_tree))
         if row_id:
-            self.current_pos_row_id = row_id
-            row = self._row(row_id)
-            self.pos_name.set(row.pos_name if row else "")
-            self._refresh_suggestions()
-            self._render()
+            self._load_pos_row(row_id)
+
+    def _pos_tree_double_click(self, event: tk.Event) -> str | None:
+        tree = self._tree_widget(self.pos_tree)
+        row_id = tree.identify_row(event.y)
+        if not row_id:
+            return None
+        tree.selection_set(row_id)
+        tree.focus(row_id)
+        self._load_pos_row(row_id)
+        return "break"
+
+    def _load_first_pos_row(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            self.current_pos_row_id = None
+            self.pos_name.set("")
+            self.pos_validation.set("")
+            return
+        row = next((row for row in session.active_rows if row.status == "pos_needs_review"), None)
+        if row is None:
+            row = next(iter(session.active_rows), None)
+        if row is None:
+            self.current_pos_row_id = None
+            self.pos_name.set("")
+            self.pos_validation.set("")
+            return
+        self._load_pos_row(row.row_id)
+
+    def _load_pos_row(self, row_id: str) -> None:
+        self.current_pos_row_id = row_id
+        row = self._row(row_id)
+        self.pos_name.set(row.pos_name if row else "")
+        self._refresh_suggestions()
+        self._update_pos_action_state()
 
     def _replace_pos(self) -> None:
         session = self.controller.state.session
         if session is None or self.current_pos_row_id is None:
             return
+        errors = self._pos_input_errors()
+        if errors:
+            self.pos_validation.set("; ".join(errors))
+            self._update_pos_action_state()
+            return
         self.controller.set_session(replace_pos_name(session, self.current_pos_row_id, self.pos_name.get()))
         self._refresh_suggestions()
         self._render()
+
+    def _pos_entry_return(self, _event: tk.Event) -> str:
+        if str(self.replace_pos_button.cget("state")) != "disabled":
+            self._replace_pos()
+        return "break"
 
     def _go_to_final(self) -> None:
         self.controller.go_to_final_review()
@@ -733,9 +993,11 @@ class ProductInitializationApp:
         self.parse_button.configure(state="normal" if state.can_parse and not busy else "disabled")
         self.to_edit_button.configure(state="normal" if state.can_leave_categories else "disabled")
         self.to_pos_button.configure(state="normal" if state.can_leave_edit_review else "disabled")
+        self._update_edit_action_state()
         self.to_final_button.configure(state="normal" if state.can_leave_pos_review else "disabled")
         self.export_button.configure(state="normal" if state.can_export else "disabled")
-        self.replace_pos_button.configure(state="normal" if self.current_pos_row_id else "disabled")
+        self._update_pos_action_state()
+        self._sync_notebook_tab_states()
         if state.phase == AppPhase.CATEGORIZING:
             self.notebook.select(self.tabs["categories"])
         elif state.phase == AppPhase.EDIT_REVIEW:
@@ -751,6 +1013,27 @@ class ProductInitializationApp:
         self._populate_pos_rows()
         self._populate_final_rows()
 
+    def _sync_notebook_tab_states(self) -> None:
+        unlocked = self._unlocked_tab_keys()
+        for key, frame in self.tabs.items():
+            self.notebook.tab(frame, state="normal" if key in unlocked else "disabled")
+
+    def _unlocked_tab_keys(self) -> set[str]:
+        state = self.controller.state
+        unlocked = {"parse"}
+        phase_order = {
+            AppPhase.CATEGORIZING: ("categories",),
+            AppPhase.EDIT_REVIEW: ("categories", "edit"),
+            AppPhase.POS_REVIEW: ("categories", "edit", "pos"),
+            AppPhase.FINAL_REVIEW: ("categories", "edit", "pos", "final"),
+            AppPhase.EXPORTING: ("categories", "edit", "pos", "final"),
+            AppPhase.COMPLETE: ("categories", "edit", "pos", "final", "complete"),
+        }
+        unlocked.update(phase_order.get(state.phase, ()))
+        if state.result is not None:
+            unlocked.add("complete")
+        return unlocked
+
     def _populate_category_rows(self) -> None:
         session = self.controller.state.session
         tree = self._tree_widget(self.category_tree)
@@ -761,6 +1044,8 @@ class ProductInitializationApp:
             session,
             keyword=self.category_filter.get(),
             old_category=self.old_category_filter.get(),
+            barcode_filter=self._selected_barcode_filter(),
+            category_assignment=self._selected_category_assignment_filter(),
             price_operator=self.price_operator.get(),  # type: ignore[arg-type]
             price_value=self.min_price.get(),
             price_upper=self.max_price.get(),
@@ -790,7 +1075,9 @@ class ProductInitializationApp:
         if session is None:
             return
         rows = no_barcode_rows(session) if self.edit_no_barcode_only else session.edit_queue
+        shown_row_ids = []
         for row in rows:
+            shown_row_ids.append(row.row_id)
             tree.insert(
                 "",
                 "end",
@@ -804,11 +1091,37 @@ class ProductInitializationApp:
                     row.review_reason,
                 ),
             )
+        if self.current_edit_row_id in shown_row_ids:
+            tree.selection_set(self.current_edit_row_id)
+            tree.focus(self.current_edit_row_id)
+            tree.see(self.current_edit_row_id)
 
     @staticmethod
     def _old_category_values(session) -> tuple[str, ...]:
         values = sorted({row.old_category for row in session.active_rows if row.old_category})
+        if any(not row.old_category.strip() for row in session.active_rows):
+            return ("", "No category", *values)
         return ("", *values)
+
+    def _selected_barcode_filter(self) -> str:
+        value = self.barcode_filter.get()
+        return "" if value == "Any" else value
+
+    def _selected_category_assignment_filter(self) -> str:
+        value = self.category_assignment_filter.get()
+        return "" if value == "Any" else value
+
+    def _selected_pos_reason_filter(self) -> str:
+        value = self.pos_reason_filter.get()
+        return "" if value == "Any" else value
+
+    @staticmethod
+    def _pos_reason_filter_values(session: ImportSession) -> tuple[str, ...]:
+        reasons = sorted(
+            {row.review_reason for row in session.active_rows if row.review_reason},
+            key=lambda value: value.casefold(),
+        )
+        return ("Any", "Needs review", *reasons)
 
     def _populate_pos_rows(self) -> None:
         session = self.controller.state.session
@@ -816,11 +1129,16 @@ class ProductInitializationApp:
         self._clear(tree)
         if session is None:
             return
-        for row in session.active_rows:
+        self.pos_reason_combo.configure(values=self._pos_reason_filter_values(session))
+        for row in filter_pos_rows(session, self._selected_pos_reason_filter()):
             tree.insert("", "end", iid=row.row_id, values=(row.item_name, row.pos_name, row.status, row.review_reason))
         if self.current_pos_row_id:
             row = self._row(self.current_pos_row_id)
-            self.pos_validation.set(row.review_reason if row else "")
+            if row is not None and tree.exists(self.current_pos_row_id):
+                tree.selection_set(self.current_pos_row_id)
+                tree.focus(self.current_pos_row_id)
+                tree.see(self.current_pos_row_id)
+        self._update_pos_action_state()
 
     def _populate_final_rows(self) -> None:
         session = self.controller.state.session
@@ -847,6 +1165,7 @@ class ProductInitializationApp:
             self.edit_price.set("")
             self.edit_barcode.set("")
             self.edit_category.set("")
+            self._update_edit_action_state()
             return
         self._load_edit_row(row.row_id)
 
@@ -859,6 +1178,7 @@ class ProductInitializationApp:
         self.edit_price.set(row.price)
         self.edit_barcode.set(row.barcode)
         self.edit_category.set(row.category)
+        self._update_edit_action_state()
 
     def _refresh_suggestions(self) -> None:
         for child in self.suggestion_frame.winfo_children():
@@ -870,8 +1190,29 @@ class ProductInitializationApp:
             ttk.Button(
                 self.suggestion_frame,
                 text=suggestion,
-                command=lambda value=suggestion: self.pos_name.set(value),
+                command=lambda value=suggestion: self._use_pos_suggestion(value),
             ).pack(fill="x", pady=2)
+
+    def _use_pos_suggestion(self, value: str) -> None:
+        self.pos_name.set(value)
+        self._update_pos_action_state()
+
+    def _pos_input_errors(self) -> list[str]:
+        session = self.controller.state.session
+        if session is None or self.current_pos_row_id is None:
+            return ["select a row"]
+        return validate_pos_name(
+            self._clean_edit_text(self.pos_name.get()),
+            self.current_pos_row_id,
+            session.rows,
+        )
+
+    def _update_pos_action_state(self) -> None:
+        if not hasattr(self, "replace_pos_button"):
+            return
+        errors = self._pos_input_errors()
+        self.pos_validation.set("; ".join(errors))
+        self.replace_pos_button.configure(state="disabled" if errors else "normal")
 
     def _row(self, row_id: str):
         session = self.controller.state.session

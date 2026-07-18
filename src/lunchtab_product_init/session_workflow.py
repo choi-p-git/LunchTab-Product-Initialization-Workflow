@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 from collections import Counter
 from dataclasses import dataclass, field, replace
@@ -38,14 +39,37 @@ RowStatus = Literal[
     "export_ready",
 ]
 PriceFilterOperator = Literal["=", "<", ">", "<=", ">=", "range", "no_price", "any"]
+CategoryAssignmentFilter = Literal["any", "assigned", "unassigned"]
 
 DELETED_AUDIT_NAME = "Deleted Product Audit.csv"
 SESSION_AUDIT_NAME = "Session Review Audit.csv"
+POS_NAME_STOP_WORDS = {"a", "an", "and", "of", "the", "with"}
+
+
+@dataclass(frozen=True)
+class PosNameAbbreviationPreference:
+    value: str
+    count: int = 1
+    source_token_counts: tuple[int, ...] = ()
+    override_lengths: tuple[int, ...] = ()
+    examples: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
 class PosNamePreferenceProfile:
     abbreviations: dict[str, str]
+    abbreviation_options: dict[str, tuple[PosNameAbbreviationPreference, ...]] = field(
+        default_factory=dict
+    )
+    spaced_overrides: int = 0
+    compact_overrides: int = 0
+
+
+@dataclass(frozen=True)
+class VenueProfile:
+    name: str
+    category_names: tuple[str, ...]
+    pos_preferences: PosNamePreferenceProfile
 
 
 @dataclass(frozen=True)
@@ -162,7 +186,7 @@ def add_category(session: ImportSession, name: str) -> ImportSession:
     categories = list(session.category_names)
     if cleaned not in categories:
         categories.append(cleaned)
-    return replace(session, category_names=tuple(categories))
+    return replace(session, category_names=_sort_category_names(categories))
 
 
 def filter_rows(
@@ -170,6 +194,8 @@ def filter_rows(
     *,
     keyword: str = "",
     old_category: str = "",
+    barcode_filter: str = "",
+    category_assignment: CategoryAssignmentFilter | str = "any",
     price_operator: PriceFilterOperator = "any",
     price_value: str = "",
     price_upper: str = "",
@@ -179,6 +205,8 @@ def filter_rows(
 ) -> tuple[SessionRow, ...]:
     keyword_norm = normalize_text(keyword)
     old_category_norm = normalize_text(old_category)
+    barcode_norm = normalize_text(barcode_filter)
+    category_assignment = _normalize_category_assignment_filter(category_assignment)
     price_operator = _normalize_price_operator(price_operator)
     if min_price or max_price:
         price_operator = "range"
@@ -191,7 +219,13 @@ def filter_rows(
     for row in rows:
         if keyword_norm and keyword_norm not in normalize_text(row.item_name):
             continue
-        if old_category_norm and old_category_norm not in normalize_text(row.old_category):
+        if not _old_category_filter_matches(row.old_category, old_category_norm):
+            continue
+        if not _barcode_filter_matches(row.barcode, barcode_norm):
+            continue
+        if category_assignment == "assigned" and not row.category.strip():
+            continue
+        if category_assignment == "unassigned" and row.category.strip():
             continue
         price = _decimal_or_none(row.price)
         if not _price_matches(price, price_operator, target_price, upper_price):
@@ -293,6 +327,10 @@ def run_pos_generation(session: ImportSession) -> ImportSession:
         if row.status == "deleted":
             generated.append(row)
             continue
+        if row.pos_overridden and row.pos_name:
+            generated.append(row)
+            final_names.append(row.pos_name)
+            continue
         result = generate_pos_name_with_preferences(row.item_name, session.pos_preferences)
         generated.append(replace(row, pos_name=result.value))
         final_names.append(result.value)
@@ -324,14 +362,14 @@ def replace_pos_name(session: ImportSession, row_id: str, pos_name: str) -> Impo
             target = row
             break
     preferences = session.pos_preferences
-    if target is not None and cleaned:
-        preferences = learn_pos_preferences(preferences, target.item_name, cleaned)
     for row in session.rows:
         if row.row_id == row_id:
             candidate = replace(row, pos_name=cleaned, pos_overridden=True)
         else:
             candidate = row
         rows.append(candidate)
+    if target is not None and cleaned and not validate_pos_name(cleaned, row_id, tuple(rows)):
+        preferences = learn_pos_preferences(preferences, target.item_name, cleaned)
     session = replace(session, rows=tuple(rows), pos_preferences=preferences)
     return _refresh_pos_status(session)
 
@@ -357,48 +395,71 @@ def suggest_pos_names(session: ImportSession, row_id: str) -> tuple[str, ...]:
     if row is None:
         return ()
     base = generate_pos_name(row.item_name).value
-    preferred = generate_pos_name_with_preferences(row.item_name, session.pos_preferences).value
+    preferred = _preferred_pos_name_candidates(row.item_name, session.pos_preferences)
     compact = "".join(token[:4].title() for token in normalize_text(row.item_name).split())
     suggestions = []
-    for value in (preferred, base, compact[:MAX_POS_NAME_LENGTH]):
+    for value in (*preferred, base, compact[:MAX_POS_NAME_LENGTH]):
         if value and value not in suggestions:
             suggestions.append(value)
     return tuple(suggestions[:3])
 
 
-def generate_pos_name_with_preferences(item_name: str, preferences: PosNamePreferenceProfile):
-    if not preferences.abbreviations:
-        return generate_pos_name(item_name)
-    tokens = normalize_text(item_name).split()
-    preferred = " ".join(
-        preferences.abbreviations.get(token, ABBREVIATIONS.get(token, token))
-        for token in tokens
-        if token not in {"a", "an", "and", "of", "the", "with"}
+def filter_pos_rows(session: ImportSession, reason_filter: str = "") -> tuple[SessionRow, ...]:
+    normalized = normalize_text(reason_filter)
+    if normalized in {"", "any"}:
+        return session.active_rows
+    if normalized in {"needs review", "review", "requires attention", "attention"}:
+        return tuple(row for row in session.active_rows if row.status == "pos_needs_review")
+    return tuple(
+        row
+        for row in session.active_rows
+        if normalized in normalize_text(row.review_reason)
+        or normalized in normalize_text(row.status.replace("_", " "))
     )
-    if preferred:
-        candidate = "".join(_title_token(token) for token in preferred.split())
-        if len(candidate) <= MAX_POS_NAME_LENGTH:
-            base = generate_pos_name(item_name)
-            return replace(
-                base,
-                value=candidate,
-                status="ok",
-                reason="",
-                abbreviation_steps=(*base.abbreviation_steps, "preferences=" + preferred),
-            )
+
+
+def generate_pos_name_with_preferences(item_name: str, preferences: PosNamePreferenceProfile):
+    if not preferences.abbreviations and not preferences.abbreviation_options:
+        return generate_pos_name(item_name)
+    candidates = _preferred_pos_name_candidates(item_name, preferences)
+    if candidates:
+        base = generate_pos_name(item_name)
+        return replace(
+            base,
+            value=candidates[0],
+            status="ok",
+            reason="",
+            abbreviation_steps=(*base.abbreviation_steps, "preferences=" + candidates[0]),
+        )
     return generate_pos_name(item_name)
 
 
 def learn_pos_preferences(
     preferences: PosNamePreferenceProfile, item_name: str, override: str
 ) -> PosNamePreferenceProfile:
-    tokens = normalize_text(item_name).split()
+    tokens = _meaningful_pos_tokens(item_name)
     override_tokens = [token for token in override.replace("-", " ").split() if token]
     abbreviations = dict(preferences.abbreviations)
+    options = {token: tuple(values) for token, values in preferences.abbreviation_options.items()}
+    source_token_count = len(tokens)
+    override_length = len(_clean_text(override))
     for source, target in zip(tokens, override_tokens, strict=False):
         if source and target:
-            abbreviations[source] = target
-    return PosNamePreferenceProfile(abbreviations=abbreviations)
+            cleaned_target = _clean_text(target)
+            abbreviations[source] = cleaned_target
+            options[source] = _record_abbreviation_preference(
+                options.get(source, ()),
+                cleaned_target,
+                source_token_count=source_token_count,
+                override_length=override_length,
+                example=_clean_text(override),
+            )
+    return PosNamePreferenceProfile(
+        abbreviations=abbreviations,
+        abbreviation_options=options,
+        spaced_overrides=preferences.spaced_overrides + (1 if len(override_tokens) > 1 else 0),
+        compact_overrides=preferences.compact_overrides + (1 if len(override_tokens) <= 1 else 0),
+    )
 
 
 def final_rows(session: ImportSession, is_orderable: bool) -> list[dict[str, str]]:
@@ -457,9 +518,64 @@ def save_venue_profile(
         "name": name,
         "categories": list(session.category_names),
         "pos_name_preferences": session.pos_preferences.abbreviations,
+        "pos_name_preference_rules": _pos_preference_rules_payload(session.pos_preferences),
+        "pos_name_style": {
+            "spaced_overrides": session.pos_preferences.spaced_overrides,
+            "compact_overrides": session.pos_preferences.compact_overrides,
+        },
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def load_venue_profile(path: Path) -> VenueProfile:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Venue profile must be a JSON object.")
+    schema_version = payload.get("schema_version")
+    if schema_version != 2:
+        raise ValueError(f"Unsupported venue profile schema version: {schema_version!r}.")
+    categories = payload.get("categories", [])
+    preferences = payload.get("pos_name_preferences", {})
+    preference_rules = payload.get("pos_name_preference_rules", {})
+    preference_style = payload.get("pos_name_style", {})
+    if not isinstance(categories, list):
+        raise ValueError("Venue profile categories must be a list.")
+    if not isinstance(preferences, dict):
+        raise ValueError("Venue profile POS name preferences must be an object.")
+    if not isinstance(preference_rules, dict):
+        raise ValueError("Venue profile POS name preference rules must be an object.")
+    if not isinstance(preference_style, dict):
+        raise ValueError("Venue profile POS name style must be an object.")
+    abbreviations = {
+        _clean_text(str(token)).casefold(): _clean_text(str(abbreviation))
+        for token, abbreviation in preferences.items()
+        if _clean_text(str(token)) and _clean_text(str(abbreviation))
+    }
+    abbreviation_options = _load_pos_preference_rules(preference_rules)
+    if not abbreviation_options:
+        abbreviation_options = {
+            token: (PosNameAbbreviationPreference(value=abbreviation),)
+            for token, abbreviation in abbreviations.items()
+        }
+    return VenueProfile(
+        name=_clean_text(str(payload.get("name") or "Venue Product Import Profile")),
+        category_names=tuple(_dedupe_cleaned(str(category) for category in categories)),
+        pos_preferences=PosNamePreferenceProfile(
+            abbreviations=abbreviations,
+            abbreviation_options=abbreviation_options,
+            spaced_overrides=_positive_int(preference_style.get("spaced_overrides")),
+            compact_overrides=_positive_int(preference_style.get("compact_overrides")),
+        ),
+    )
+
+
+def apply_venue_profile(session: ImportSession, profile: VenueProfile) -> ImportSession:
+    return replace(
+        session,
+        category_names=tuple(_dedupe_cleaned((*profile.category_names, *session.category_names))),
+        pos_preferences=_merge_pos_preferences(session.pos_preferences, profile.pos_preferences),
+    )
 
 
 def validate_export_ready(row: SessionRow) -> list[str]:
@@ -508,9 +624,16 @@ def _refresh_barcode_review(session: ImportSession) -> ImportSession:
         reasons = _core_review_reasons(row.candidate, duplicates)
         if not row.category:
             reasons.append("missing category")
+        if not reasons and _is_unedited_operator_review(row):
+            rows.append(row)
+            continue
         status: RowStatus = "needs_edit" if reasons else "edit_complete"
         rows.append(replace(row, status=status, review_reason="; ".join(sorted(set(reasons)))))
     return replace(session, rows=tuple(rows))
+
+
+def _is_unedited_operator_review(row: SessionRow) -> bool:
+    return row.status == "needs_edit" and not row.edited and "operator review" in row.review_reason
 
 
 def _refresh_pos_status(session: ImportSession) -> ImportSession:
@@ -523,6 +646,247 @@ def _refresh_pos_status(session: ImportSession) -> ImportSession:
         status: RowStatus = "pos_ready" if not reasons else "pos_needs_review"
         rows.append(replace(row, status=status, review_reason="; ".join(reasons)))
     return replace(session, rows=tuple(rows))
+
+
+def _preferred_pos_name_candidates(
+    item_name: str, preferences: PosNamePreferenceProfile
+) -> tuple[str, ...]:
+    tokens = _meaningful_pos_tokens(item_name)
+    if not tokens:
+        return ()
+    token_choices = [_pos_token_choices(token, preferences, len(tokens)) for token in tokens]
+    scored_candidates = []
+    for choice_group in itertools.product(*token_choices):
+        values = [value for value, _score in choice_group]
+        token_score = sum(score for _value, score in choice_group)
+        for candidate, style_score in _format_pos_candidates(values, preferences):
+            scored_candidates.append((candidate, token_score + style_score + _length_score(candidate)))
+    ordered = sorted(scored_candidates, key=lambda item: (-item[1], len(item[0]), item[0].casefold()))
+    candidates = []
+    for candidate, _score in ordered:
+        if len(candidate) > MAX_POS_NAME_LENGTH or candidate in candidates:
+            continue
+        candidates.append(candidate)
+    return tuple(candidates[:8])
+
+
+def _pos_token_choices(
+    token: str, preferences: PosNamePreferenceProfile, source_token_count: int
+) -> tuple[tuple[str, int], ...]:
+    choices: list[tuple[str, int]] = []
+    for option in preferences.abbreviation_options.get(token, ()):
+        choices.append((option.value, _abbreviation_option_score(option, source_token_count)))
+    primary = preferences.abbreviations.get(token)
+    if primary:
+        choices.append((primary, 5))
+    static = ABBREVIATIONS.get(token)
+    if static:
+        choices.append((static, 15))
+    choices.append((token, 0))
+    unique: dict[str, int] = {}
+    for value, score in choices:
+        cleaned = _clean_text(value)
+        if not cleaned:
+            continue
+        key = cleaned.casefold()
+        unique[key] = max(score, unique.get(key, -999))
+    ordered = sorted(
+        ((_restore_preferred_case(key, choices), score) for key, score in unique.items()),
+        key=lambda item: (-item[1], len(item[0]), item[0].casefold()),
+    )
+    return tuple(ordered[:3])
+
+
+def _restore_preferred_case(key: str, choices: list[tuple[str, int]]) -> str:
+    for value, _score in choices:
+        if value.casefold() == key:
+            return value
+    return key
+
+
+def _abbreviation_option_score(
+    option: PosNameAbbreviationPreference, source_token_count: int
+) -> int:
+    context_penalty = 0
+    if option.source_token_counts:
+        nearest = min(abs(source_token_count - count) for count in option.source_token_counts)
+        context_penalty = nearest * 12
+    return option.count * 25 - context_penalty
+
+
+def _format_pos_candidates(
+    values: list[str], preferences: PosNamePreferenceProfile
+) -> tuple[tuple[str, int], ...]:
+    titled = [_title_token(value) for value in values if value]
+    if not titled:
+        return ()
+    spaced = " ".join(titled)
+    compact = "".join(titled)
+    spaced_score = preferences.spaced_overrides * 4
+    compact_score = preferences.compact_overrides * 4
+    if preferences.spaced_overrides >= preferences.compact_overrides:
+        return ((spaced, spaced_score), (compact, compact_score))
+    return ((compact, compact_score), (spaced, spaced_score))
+
+
+def _length_score(candidate: str) -> int:
+    if len(candidate) > MAX_POS_NAME_LENGTH:
+        return -500 - len(candidate)
+    # Prefer names that use the available POS space without hitting the limit accidentally.
+    return MAX_POS_NAME_LENGTH - abs(MAX_POS_NAME_LENGTH - len(candidate))
+
+
+def _record_abbreviation_preference(
+    options: tuple[PosNameAbbreviationPreference, ...],
+    value: str,
+    *,
+    source_token_count: int,
+    override_length: int,
+    example: str,
+) -> tuple[PosNameAbbreviationPreference, ...]:
+    rows = []
+    matched = False
+    for option in options:
+        if option.value.casefold() != value.casefold():
+            rows.append(option)
+            continue
+        matched = True
+        rows.append(
+            replace(
+                option,
+                count=option.count + 1,
+                source_token_counts=(*option.source_token_counts, source_token_count),
+                override_lengths=(*option.override_lengths, override_length),
+                examples=_append_limited(option.examples, example),
+            )
+        )
+    if not matched:
+        rows.append(
+            PosNameAbbreviationPreference(
+                value=value,
+                source_token_counts=(source_token_count,),
+                override_lengths=(override_length,),
+                examples=(example,),
+            )
+        )
+    return tuple(sorted(rows, key=lambda option: (-option.count, option.value.casefold())))
+
+
+def _append_limited(values: tuple[str, ...], value: str, limit: int = 5) -> tuple[str, ...]:
+    if not value or value in values:
+        return values
+    return (*values, value)[-limit:]
+
+
+def _meaningful_pos_tokens(item_name: str) -> list[str]:
+    return [token for token in normalize_text(item_name).split() if token not in POS_NAME_STOP_WORDS]
+
+
+def _pos_preference_rules_payload(profile: PosNamePreferenceProfile) -> dict[str, list[dict]]:
+    return {
+        token: [
+            {
+                "value": option.value,
+                "count": option.count,
+                "source_token_counts": list(option.source_token_counts),
+                "override_lengths": list(option.override_lengths),
+                "examples": list(option.examples),
+            }
+            for option in options
+        ]
+        for token, options in sorted(profile.abbreviation_options.items())
+        if options
+    }
+
+
+def _load_pos_preference_rules(payload: dict) -> dict[str, tuple[PosNameAbbreviationPreference, ...]]:
+    rules = {}
+    for raw_token, raw_options in payload.items():
+        token = normalize_text(str(raw_token))
+        if not token or not isinstance(raw_options, list):
+            continue
+        options = []
+        for raw_option in raw_options:
+            if not isinstance(raw_option, dict):
+                continue
+            value = _clean_text(str(raw_option.get("value") or ""))
+            if not value:
+                continue
+            options.append(
+                PosNameAbbreviationPreference(
+                    value=value,
+                    count=max(1, _positive_int(raw_option.get("count"))),
+                    source_token_counts=_positive_int_tuple(raw_option.get("source_token_counts")),
+                    override_lengths=_positive_int_tuple(raw_option.get("override_lengths")),
+                    examples=tuple(
+                        _clean_text(str(example))
+                        for example in raw_option.get("examples", [])
+                        if _clean_text(str(example))
+                    )[:5]
+                    if isinstance(raw_option.get("examples"), list)
+                    else (),
+                )
+            )
+        if options:
+            rules[token] = tuple(sorted(options, key=lambda option: (-option.count, option.value.casefold())))
+    return rules
+
+
+def _merge_pos_preferences(
+    left: PosNamePreferenceProfile, right: PosNamePreferenceProfile
+) -> PosNamePreferenceProfile:
+    abbreviations = {**left.abbreviations, **right.abbreviations}
+    option_tokens = set(left.abbreviation_options) | set(right.abbreviation_options)
+    options = {}
+    for token in option_tokens:
+        merged: tuple[PosNameAbbreviationPreference, ...] = ()
+        for option in (*left.abbreviation_options.get(token, ()), *right.abbreviation_options.get(token, ())):
+            merged = _merge_abbreviation_option(merged, option)
+        options[token] = merged
+    return PosNamePreferenceProfile(
+        abbreviations=abbreviations,
+        abbreviation_options=options,
+        spaced_overrides=left.spaced_overrides + right.spaced_overrides,
+        compact_overrides=left.compact_overrides + right.compact_overrides,
+    )
+
+
+def _merge_abbreviation_option(
+    options: tuple[PosNameAbbreviationPreference, ...],
+    incoming: PosNameAbbreviationPreference,
+) -> tuple[PosNameAbbreviationPreference, ...]:
+    rows = []
+    matched = False
+    for option in options:
+        if option.value.casefold() != incoming.value.casefold():
+            rows.append(option)
+            continue
+        matched = True
+        rows.append(
+            replace(
+                option,
+                count=option.count + incoming.count,
+                source_token_counts=(*option.source_token_counts, *incoming.source_token_counts),
+                override_lengths=(*option.override_lengths, *incoming.override_lengths),
+                examples=tuple(dict.fromkeys((*option.examples, *incoming.examples)))[:5],
+            )
+        )
+    if not matched:
+        rows.append(incoming)
+    return tuple(sorted(rows, key=lambda option: (-option.count, option.value.casefold())))
+
+
+def _positive_int(value) -> int:
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _positive_int_tuple(value) -> tuple[int, ...]:
+    if not isinstance(value, list):
+        return ()
+    return tuple(number for raw in value if (number := _positive_int(raw)) > 0)
 
 
 def _row_by_id(session: ImportSession, row_id: str) -> SessionRow | None:
@@ -679,6 +1043,11 @@ def _write_manifest(
         },
         "categories": list(session.category_names),
         "pos_name_preferences": session.pos_preferences.abbreviations,
+        "pos_name_preference_rules": _pos_preference_rules_payload(session.pos_preferences),
+        "pos_name_style": {
+            "spaced_overrides": session.pos_preferences.spaced_overrides,
+            "compact_overrides": session.pos_preferences.compact_overrides,
+        },
         "artifacts": {
             path.name: {"sha256": _sha256(path)} for path in artifacts if path.is_file()
         },
@@ -748,6 +1117,23 @@ def _normalize_price_operator(value: str) -> PriceFilterOperator:
     return "any"
 
 
+def _normalize_category_assignment_filter(value: str) -> CategoryAssignmentFilter:
+    normalized = normalize_text(value)
+    if normalized in {"has category", "assigned", "category assigned"}:
+        return "assigned"
+    if normalized in {"no category", "unassigned", "category unassigned", "no category assigned"}:
+        return "unassigned"
+    return "any"
+
+
+def _old_category_filter_matches(old_category: str, old_category_filter: str) -> bool:
+    if not old_category_filter:
+        return True
+    if old_category_filter in {"no category", "no old category", "null", "none"}:
+        return not old_category.strip()
+    return old_category_filter in normalize_text(old_category)
+
+
 def _price_matches(price, operator: PriceFilterOperator, target, upper) -> bool:
     if operator == "no_price":
         return price is None
@@ -772,8 +1158,34 @@ def _price_matches(price, operator: PriceFilterOperator, target, upper) -> bool:
     return True
 
 
+def _barcode_filter_matches(barcode: str, barcode_filter: str) -> bool:
+    if not barcode_filter:
+        return True
+    barcode_norm = normalize_text(barcode)
+    if barcode_filter == "no barcode":
+        return not barcode
+    if barcode_filter == "vendor":
+        return bool(barcode and "sagemb" not in barcode_norm)
+    return barcode_filter in barcode_norm
+
+
 def _clean_text(value: str) -> str:
     return " ".join(str(value or "").split())
+
+
+def _dedupe_cleaned(values) -> tuple[str, ...]:
+    cleaned_values = []
+    seen = set()
+    for value in values:
+        cleaned = _clean_text(value)
+        if cleaned and cleaned.casefold() not in seen:
+            cleaned_values.append(cleaned)
+            seen.add(cleaned.casefold())
+    return _sort_category_names(cleaned_values)
+
+
+def _sort_category_names(values) -> tuple[str, ...]:
+    return tuple(sorted(values, key=lambda value: (value.casefold(), value)))
 
 
 def _append_reason(current: str, reason: str) -> str:

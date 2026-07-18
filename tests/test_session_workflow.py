@@ -8,11 +8,14 @@ from lunchtab_product_init.models import BuildInputs, LUNCHTAB_TEMPLATE_HEADERS,
 from lunchtab_product_init.session_workflow import (
     ImportSession,
     SessionRow,
+    apply_venue_profile,
     assign_category,
     delete_rows,
     export_session,
     filter_rows,
+    filter_pos_rows,
     learn_pos_preferences,
+    load_venue_profile,
     mark_for_edit,
     next_edit_row,
     no_barcode_rows,
@@ -43,11 +46,22 @@ def test_category_assignment_filters_and_marks_rows() -> None:
     assert session.rows[1].status == "needs_edit"
 
 
+def test_category_names_are_sorted_ascending() -> None:
+    session = _session([])
+
+    session = assign_category(session, {"row-1"}, "Sandwiches")
+    session = assign_category(session, {"row-2"}, "Beverages")
+    session = assign_category(session, {"row-3"}, "Snacks")
+
+    assert session.category_names == ("Beverages", "Sandwiches", "Snacks")
+
+
 def test_old_category_is_preserved_and_filterable() -> None:
     session = _session(
         [
             _row("row-1", "Chicken Sandwich", "6.50", "ABC", old_category="Entrees"),
             _row("row-2", "Apple Juice", "1.25", "DEF", old_category="Beverages"),
+            _row("row-3", "Loose Item", "2.00", "GHI", old_category=""),
         ]
     )
 
@@ -58,6 +72,58 @@ def test_old_category_is_preserved_and_filterable() -> None:
     assert [
         row.row_id for row in filter_rows(session, old_category="bev")
     ] == ["row-2"]
+    assert [
+        row.row_id for row in filter_rows(session, old_category="No category")
+    ] == ["row-3"]
+
+
+def test_category_filter_can_select_sagemb_or_vendor_barcodes() -> None:
+    session = _session(
+        [
+            _row("row-1", "Sage Item", "1.00", "SAGEMB001"),
+            _row("row-2", "Vendor Item", "2.00", "Vendor-ABC"),
+            _row("row-3", "Numeric Item", "3.00", "12345"),
+            _row("row-4", "No Barcode Item", "4.00", ""),
+        ]
+    )
+
+    assert [
+        row.row_id for row in filter_rows(session, barcode_filter="SAGEMB")
+    ] == ["row-1"]
+    assert [
+        row.row_id for row in filter_rows(session, barcode_filter="Vendor")
+    ] == ["row-2", "row-3"]
+
+
+def test_category_filter_can_select_rows_without_barcode() -> None:
+    session = _session(
+        [
+            _row("row-1", "No Barcode Item", "1.00", ""),
+            _row("row-2", "Sage Item", "2.00", "SAGEMB001"),
+            _row("row-3", "Vendor Item", "3.00", "Vendor-ABC"),
+        ]
+    )
+
+    assert [
+        row.row_id for row in filter_rows(session, barcode_filter="No barcode")
+    ] == ["row-1"]
+
+
+def test_category_filter_can_select_assigned_or_unassigned_rows() -> None:
+    session = _session(
+        [
+            _row("row-1", "Assigned Item", "1.00", "ABC", category="Entrees"),
+            _row("row-2", "Blank Category Item", "2.00", "DEF", category=""),
+            _row("row-3", "Whitespace Category Item", "3.00", "GHI", category="   "),
+        ]
+    )
+
+    assert [
+        row.row_id for row in filter_rows(session, category_assignment="Has category")
+    ] == ["row-1"]
+    assert [
+        row.row_id for row in filter_rows(session, category_assignment="No category")
+    ] == ["row-2", "row-3"]
 
 
 def test_category_price_filter_supports_exact_comparison_and_range() -> None:
@@ -127,6 +193,36 @@ def test_edit_review_no_barcode_filter_select_delete_and_save_next() -> None:
     assert next_edit_row(session) is None
 
 
+def test_saving_one_edit_row_does_not_complete_other_operator_review_rows() -> None:
+    session = _session(
+        [
+            _row("row-1", "Missing Price", "", "ABC", category="Snacks", status="needs_edit"),
+            _row("row-2", "Missing Barcode", "2.00", "", category="Snacks", status="needs_edit"),
+            *[
+                _row(f"row-{index}", f"Review Item {index}", "1.00", f"BAR{index}", category="Snacks")
+                for index in range(3, 13)
+            ],
+        ]
+    )
+    session = mark_for_edit(session, {f"row-{index}" for index in range(3, 13)})
+
+    session = save_edit(
+        session,
+        "row-1",
+        item_name="Missing Price",
+        price="1.50",
+        barcode="ABC",
+        category="Snacks",
+    )
+
+    saved_row = next(row for row in session.rows if row.row_id == "row-1")
+    assert saved_row.status == "edit_complete"
+    assert [
+        row.row_id for row in session.rows if row.status == "needs_edit"
+    ] == ["row-2", *[f"row-{index}" for index in range(3, 13)]]
+    assert len(session.edit_queue) == 11
+
+
 def test_pos_generation_validation_override_learning_and_suggestions() -> None:
     session = _session(
         [
@@ -146,7 +242,62 @@ def test_pos_generation_validation_override_learning_and_suggestions() -> None:
     session = replace_pos_name(session, "row-2", "Chick Cae Sal")
     assert session.can_leave_pos_review
     assert session.pos_preferences.abbreviations["chicken"] == "Chick"
-    assert suggest_pos_names(session, "row-2")[0] == "ChickCaeSal"
+    assert suggest_pos_names(session, "row-2")[0] == "Chick Cae Sal"
+
+
+def test_pos_preferences_allow_context_specific_token_shortening() -> None:
+    session = _session(
+        [
+            _row("row-1", "Chicken Caesar Salad", "5.25", "ABC", category="Salads"),
+            _row("row-2", "SW Chicken Cobb Caesar", "6.25", "DEF", category="Sandwiches"),
+        ],
+        categories=("Salads", "Sandwiches"),
+    )
+
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "Chick Cae Sal")
+    session = replace_pos_name(session, "row-2", "SW Chk Cobb Cae")
+
+    assert suggest_pos_names(session, "row-1")[0] == "Chick Cae Sal"
+    assert suggest_pos_names(session, "row-2")[0] == "SW Chk Cobb Cae"
+
+
+def test_pos_generation_does_not_overwrite_manual_overrides() -> None:
+    session = _session(
+        [
+            _row("row-1", "Chicken Caesar Salad", "5.25", "ABC", category="Salads"),
+            _row("row-2", "Chicken Caesar Wrap", "6.25", "DEF", category="Wraps"),
+        ],
+        categories=("Salads", "Wraps"),
+    )
+
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "Manual Name")
+    session = replace_pos_name(session, "row-2", "Chick Cae Wrap")
+    session = run_pos_generation(session)
+
+    assert next(row for row in session.rows if row.row_id == "row-1").pos_name == "Manual Name"
+    assert suggest_pos_names(session, "row-1")[0] != "Manual Name"
+
+
+def test_pos_rows_can_filter_to_review_reason() -> None:
+    session = _session(
+        [
+            _row("row-1", "Drink A", "1.00", "A", category="Beverages"),
+            _row("row-2", "Drink B", "1.00", "B", category="Beverages"),
+            _row("row-3", "Drink C", "1.00", "C", category="Beverages"),
+        ]
+    )
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "Duplicate")
+    session = replace_pos_name(session, "row-2", "Duplicate")
+
+    assert [
+        row.row_id for row in filter_pos_rows(session, "Needs review")
+    ] == ["row-1", "row-2"]
+    assert [
+        row.row_id for row in filter_pos_rows(session, "duplicate")
+    ] == ["row-1", "row-2"]
 
 
 def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:
@@ -204,6 +355,14 @@ def test_venue_profile_saves_categories_and_pos_preferences(tmp_path: Path) -> N
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["categories"] == ["Salads"]
     assert payload["pos_name_preferences"]["chicken"] == "Chick"
+    assert payload["pos_name_preference_rules"]["chicken"][0]["value"] == "Chick"
+    assert payload["pos_name_style"]["spaced_overrides"] == 1
+
+    profile = load_venue_profile(path)
+    seeded = apply_venue_profile(_session([]), profile)
+    assert seeded.category_names == ("Salads",)
+    assert seeded.pos_preferences.abbreviations["chicken"] == "Chick"
+    assert seeded.pos_preferences.abbreviation_options["chicken"][0].value == "Chick"
 
 
 def _session(

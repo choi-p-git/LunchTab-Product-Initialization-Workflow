@@ -62,6 +62,8 @@ Lead with the outcome, then report:
 
 When files changed, suggest a Conventional Commit message unless the user asks not to:
 
+Use `commit-message-diff` before drafting the message when the user asks to update, refresh, rewrite, or prepare a commit message; when a commit follows several refinement prompts; or when `git diff --shortstat` plus `git diff --cached --shortstat` shows a cumulative diff of 500 or more changed lines.
+
 ```text
 type(scope): short description
 

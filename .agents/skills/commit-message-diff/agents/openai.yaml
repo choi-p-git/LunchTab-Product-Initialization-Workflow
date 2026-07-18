@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Message Diff"
+  short_description: "Draft commit messages from cumulative diffs"
+  default_prompt: "Use $commit-message-diff to review the cumulative worktree diff and draft an up-to-date commit message."
