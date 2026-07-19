@@ -188,6 +188,165 @@ def test_inventory_file_selection_clears_alternate_inventory_source(app, monkeyp
     assert app.controller.state.generic_inventory_path is not None
 
 
+def test_pos_reason_filter_shows_rows_requiring_attention(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Duplicate",
+                status="pos_needs_review",
+                review_reason="duplicate POS name",
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="pos_ready",
+            ),
+            _row(
+                "row-3",
+                "Grape Juice",
+                "1.50",
+                "333",
+                category="Beverages",
+                status="pos_needs_review",
+                review_reason="missing POS name",
+            ),
+        ),
+    )
+    _set_pos_session(app, session)
+    app.current_pos_row_id = None
+    app.pos_reason_filter.set("Needs review")
+    app._render()
+    app.notebook.select(app.tabs["pos"])
+    app.root.update()
+
+    tree = app._tree_widget(app.pos_tree)
+
+    assert app.pos_reason_combo.cget("values") == (
+        "Any",
+        "Needs review",
+        "duplicate POS name",
+        "missing POS name",
+    )
+    assert list(tree.get_children("")) == ["row-1", "row-3"]
+
+    app.pos_reason_filter.set("duplicate")
+    app._populate_pos_rows()
+    app.root.update()
+
+    assert list(tree.get_children("")) == ["row-1"]
+
+
+def test_pos_replace_button_advances_within_filtered_rows_and_focuses_input(app, monkeypatch) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Duplicate",
+                status="pos_needs_review",
+                review_reason="duplicate POS name",
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="pos_ready",
+            ),
+            _row(
+                "row-3",
+                "Grape Juice",
+                "1.50",
+                "333",
+                category="Beverages",
+                status="pos_needs_review",
+                review_reason="missing POS name",
+            ),
+        ),
+    )
+    focus_calls = []
+    selection_calls = []
+    monkeypatch.setattr(app.pos_entry, "focus_set", lambda: focus_calls.append("focus"))
+    monkeypatch.setattr(app.pos_entry, "selection_range", lambda start, end: selection_calls.append((start, end)))
+
+    _set_pos_session(app, session)
+    app.current_pos_row_id = None
+    app.pos_reason_filter.set("Needs review")
+    app._render()
+    app.notebook.select(app.tabs["pos"])
+    app._select_pos_tree_row("row-1")
+    app._load_pos_row("row-1")
+    app.root.update()
+
+    app.pos_name.set("AppleJuice")
+    app.replace_pos_button.invoke()
+    app.root.update()
+    app.root.update_idletasks()
+
+    tree = app._tree_widget(app.pos_tree)
+    row_1 = next(row for row in app.controller.state.session.rows if row.row_id == "row-1")
+
+    assert row_1.pos_name == "AppleJuice"
+    assert row_1.status == "pos_ready"
+    assert list(tree.get_children("")) == ["row-3"]
+    assert app.current_pos_row_id == "row-3"
+    assert tree.selection() == ("row-3",)
+    assert app.pos_name.get() == ""
+    assert focus_calls
+    assert selection_calls[-1] == (0, tk.END)
+
+
+def test_pos_entry_return_replaces_valid_name_and_returns_break(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Grape Juice",
+                "1.50",
+                "333",
+                category="Beverages",
+                status="pos_needs_review",
+                review_reason="missing POS name",
+            ),
+        ),
+    )
+    _set_pos_session(app, session)
+    app.current_pos_row_id = None
+    app.pos_reason_filter.set("Needs review")
+    app._render()
+    app.notebook.select(app.tabs["pos"])
+    app._select_pos_tree_row("row-1")
+    app._load_pos_row("row-1")
+    app.root.update()
+
+    app.pos_name.set("GrapeJuice")
+
+    assert app._pos_entry_return(_Event()) == "break"
+
+    row_1 = next(row for row in app.controller.state.session.rows if row.row_id == "row-1")
+    assert row_1.pos_name == "GrapeJuice"
+    assert row_1.status == "pos_ready"
+    assert app.current_pos_row_id is None
+    assert app.pos_name.get() == ""
+
+
 class _Event:
     pass
 
@@ -210,7 +369,24 @@ def _clear_category_filter_vars(app: ProductInitializationApp) -> None:
     app._category_filter_after_id = None
 
 
-def _row(row_id: str, name: str, price: str, barcode: str, *, category: str = "") -> SessionRow:
+def _set_pos_session(app: ProductInitializationApp, session: ImportSession) -> None:
+    app.controller = gui_module.AppController()
+    app.odin_inventory_text.set("")
+    app.generic_inventory_text.set("")
+    app.controller.set_session(session, phase=gui_module.AppPhase.POS_REVIEW)
+
+
+def _row(
+    row_id: str,
+    name: str,
+    price: str,
+    barcode: str,
+    *,
+    category: str = "",
+    pos_name: str = "",
+    status: str = "active",
+    review_reason: str = "",
+) -> SessionRow:
     return SessionRow(
         row_id=row_id,
         candidate=ProductCandidate(
@@ -223,4 +399,7 @@ def _row(row_id: str, name: str, price: str, barcode: str, *, category: str = ""
         ),
         old_category=category,
         category=category,
+        pos_name=pos_name,
+        status=status,  # type: ignore[arg-type]
+        review_reason=review_reason,
     )

@@ -134,8 +134,8 @@ assignment is limited to category names the operator enters or loads through a v
      unavailable.
    - Step 2 Delete-key behavior, inline category dropdown behavior, and keyword filter debounce
      behavior are covered through a real `ProductInitializationApp` instance.
-   - Cover Step 4 reason filter changes, Enter-to-replace, displayed-row advance, and entry focus
-     or selection state through widget-level tests.
+   - Step 4 reason filter changes, Enter-to-replace, displayed-row advance, and override-entry
+     focus or selection state are covered through widget-level tests.
 
 2. **Layout and UX Refinement**
    - Review all tabs at 1366x768 with Windows display scaling and confirm primary actions remain
