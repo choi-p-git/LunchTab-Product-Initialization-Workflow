@@ -14,6 +14,7 @@ from lunchtab_product_init.session_workflow import (
     export_session,
     filter_rows,
     filter_pos_rows,
+    final_review_metadata,
     learn_pos_preferences,
     load_venue_profile,
     mark_for_edit,
@@ -532,6 +533,54 @@ def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:
     assert audit_rows[0]["OldCategory"] == "Drinks"
 
 
+def test_final_review_metadata_summarizes_counts_and_validation() -> None:
+    session = _session(
+        [
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="AppleJuice",
+                pos_overridden=True,
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.25",
+                "111,222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="edit_complete",
+            ),
+            _row(
+                "row-3",
+                "Merged Source",
+                "1.00",
+                "333",
+                category="Snacks",
+                status="deleted",
+                deleted_reason="merged into row-2",
+            ),
+        ],
+        categories=("Beverages", "Snacks"),
+    )
+
+    metadata = final_review_metadata(session)
+
+    assert metadata.parsed_rows == 3
+    assert metadata.active_rows == 2
+    assert metadata.deleted_rows == 1
+    assert metadata.merge_rows == 1
+    assert metadata.pos_overrides == 1
+    assert metadata.duplicate_barcodes == 1
+    assert metadata.category_counts == (("Beverages", 2),)
+    assert not metadata.export_ready
+    assert "row-1: duplicate barcode" in metadata.export_errors
+    assert "row-2: duplicate barcode" in metadata.export_errors
+
+
 def test_venue_profile_saves_categories_and_pos_preferences(tmp_path: Path) -> None:
     preferences = learn_pos_preferences(_session([]).pos_preferences, "Chicken Caesar Salad", "Chick Cae Sal")
     session = _session([], categories=("Salads",), preferences=preferences)
@@ -603,6 +652,8 @@ def _row(
     pos_name: str = "",
     status: str = "active",
     review_reason: str = "",
+    deleted_reason: str = "",
+    pos_overridden: bool = False,
 ) -> SessionRow:
     return SessionRow(
         row_id=row_id,
@@ -619,6 +670,8 @@ def _row(
         pos_name=pos_name,
         status=status,  # type: ignore[arg-type]
         review_reason=review_reason,
+        deleted_reason=deleted_reason,
+        pos_overridden=pos_overridden,
     )
 
 

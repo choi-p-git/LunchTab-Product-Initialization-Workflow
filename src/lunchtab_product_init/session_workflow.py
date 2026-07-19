@@ -178,6 +178,24 @@ class SessionExportResult:
     summary: SessionBuildSummary
 
 
+@dataclass(frozen=True)
+class FinalReviewMetadata:
+    parsed_rows: int
+    active_rows: int
+    deleted_rows: int
+    edited_rows: int
+    merge_rows: int
+    pos_overrides: int
+    duplicate_barcodes: int
+    duplicate_pos_names: int
+    category_counts: tuple[tuple[str, int], ...]
+    export_errors: tuple[str, ...]
+
+    @property
+    def export_ready(self) -> bool:
+        return not self.export_errors
+
+
 def parse_sources(inputs: BuildInputs) -> ImportSession:
     headers = read_lunchtab_template(inputs.product_template_path)
     recipes = read_recipe_candidates(inputs.recipe_list_path)
@@ -768,6 +786,24 @@ def validate_session_export_ready(session: ImportSession) -> list[str]:
         if reasons:
             errors.append(f"{row.row_id}: {', '.join(sorted(set(reasons)))}")
     return errors
+
+
+def final_review_metadata(session: ImportSession) -> FinalReviewMetadata:
+    category_counts = Counter(row.category or "(missing)" for row in session.active_rows)
+    barcode_duplicates = duplicate_barcodes(row.barcode for row in session.active_rows)
+    pos_duplicates = duplicate_values(row.pos_name for row in session.active_rows if row.pos_name)
+    return FinalReviewMetadata(
+        parsed_rows=len(session.rows),
+        active_rows=len(session.active_rows),
+        deleted_rows=len(session.deleted_rows),
+        edited_rows=sum(1 for row in session.rows if row.edited),
+        merge_rows=sum(1 for row in session.deleted_rows if row.deleted_reason.startswith("merged into ")),
+        pos_overrides=sum(1 for row in session.rows if row.pos_overridden),
+        duplicate_barcodes=len(barcode_duplicates),
+        duplicate_pos_names=len(pos_duplicates),
+        category_counts=tuple(sorted(category_counts.items(), key=lambda item: item[0].casefold())),
+        export_errors=tuple(validate_session_export_ready(session)),
+    )
 
 
 def _session_row(index: int, candidate: ProductCandidate, barcode_duplicates: set[str]) -> SessionRow:
