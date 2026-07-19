@@ -7,6 +7,7 @@ from lunchtab_product_init.gui_controller import (
     AppController,
     AppPhase,
     deselect_shown_category_rows,
+    next_displayed_pos_row_id,
     select_category_action_rows,
     select_shown_category_rows,
     toggle_category_row_selection,
@@ -112,3 +113,27 @@ def test_category_selection_helpers_toggle_select_and_deselect_shown_rows() -> N
 
     selected = deselect_shown_category_rows(selected, ["row-3", "row-5"])
     assert selected == frozenset({"row-2", "row-4"})
+
+
+def test_next_displayed_pos_row_advances_within_current_filtered_rows() -> None:
+    assert next_displayed_pos_row_id("row-1", ["row-1", "row-2", "row-3"], ["row-1", "row-2"]) == "row-2"
+
+
+def test_next_displayed_pos_row_keeps_last_visible_row_when_current_is_last() -> None:
+    assert next_displayed_pos_row_id("row-2", ["row-1", "row-2"], ["row-1", "row-2"]) == "row-2"
+
+
+def test_next_displayed_pos_row_uses_next_surviving_row_when_current_leaves_filter() -> None:
+    assert next_displayed_pos_row_id(
+        "row-2",
+        ["row-1", "row-2", "row-3", "row-4"],
+        ["row-1", "row-4"],
+    ) == "row-4"
+
+
+def test_next_displayed_pos_row_uses_stable_fallback_without_previous_context() -> None:
+    assert next_displayed_pos_row_id("row-9", ["row-1", "row-2"], ["row-3", "row-4"]) == "row-3"
+
+
+def test_next_displayed_pos_row_returns_none_when_filter_has_no_rows() -> None:
+    assert next_displayed_pos_row_id("row-1", ["row-1"], []) is None

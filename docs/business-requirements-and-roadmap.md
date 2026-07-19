@@ -104,8 +104,10 @@ assignment is limited to category names the operator enters or loads through a v
      highlighted-delete confirmation, select shown, and deselect shown behavior.
    - Add remaining widget-level coverage for Step 2 delete shortcut, inline category dropdown, and
      filter event behavior.
-   - Add Step 4 GUI-focused coverage for reason filters, Enter-to-replace, displayed-row advance,
-     and preserved selection/focus state.
+   - Controller-level coverage now protects Step 4 displayed-row advance after replacement,
+     including filtered lists and rows that leave the current filter.
+   - Add remaining Step 4 GUI-focused coverage for reason filters, Enter-to-replace, and preserved
+     widget selection/focus state.
    - Add end-to-end session tests for back edits from final review through category, edit, merge,
      POS review, and final validation.
 

@@ -14,6 +14,7 @@ from lunchtab_product_init.gui_controller import (
     AppPhase,
     CategoryActionSelection,
     deselect_shown_category_rows,
+    next_displayed_pos_row_id,
     select_category_action_rows,
     select_shown_category_rows,
     toggle_category_row_selection,
@@ -1233,29 +1234,13 @@ class ProductInitializationApp:
         previous_displayed_row_ids: list[str],
     ) -> None:
         displayed = self._displayed_pos_row_ids()
-        if not displayed:
+        next_row_id = next_displayed_pos_row_id(previous_row_id, previous_displayed_row_ids, displayed)
+        if next_row_id is None:
             self.current_pos_row_id = None
             self.pos_name.set("")
             self.pos_validation.set("")
             self._refresh_suggestions()
             return
-        if previous_row_id in displayed:
-            start_index = displayed.index(previous_row_id) + 1
-            next_row_id = displayed[start_index] if start_index < len(displayed) else displayed[-1]
-        else:
-            old_index = (
-                previous_displayed_row_ids.index(previous_row_id)
-                if previous_row_id in previous_displayed_row_ids
-                else -1
-            )
-            next_row_id = next(
-                (
-                    row_id
-                    for row_id in previous_displayed_row_ids[old_index + 1 :]
-                    if row_id in displayed
-                ),
-                displayed[min(max(old_index, 0), len(displayed) - 1)],
-            )
         self._select_pos_tree_row(next_row_id)
         self._load_pos_row(next_row_id)
 

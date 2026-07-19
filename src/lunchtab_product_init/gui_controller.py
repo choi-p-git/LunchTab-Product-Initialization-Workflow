@@ -113,6 +113,30 @@ def deselect_shown_category_rows(
     return frozenset(str(row_id) for row_id in selected_row_ids if str(row_id) and str(row_id) not in shown)
 
 
+def next_displayed_pos_row_id(
+    previous_row_id: str,
+    previous_displayed_row_ids: Iterable[str],
+    current_displayed_row_ids: Iterable[str],
+) -> str | None:
+    displayed = [str(row_id) for row_id in current_displayed_row_ids if str(row_id)]
+    if not displayed:
+        return None
+    previous_displayed = [str(row_id) for row_id in previous_displayed_row_ids if str(row_id)]
+    previous_row_id = str(previous_row_id)
+    if previous_row_id in displayed:
+        start_index = displayed.index(previous_row_id) + 1
+        return displayed[start_index] if start_index < len(displayed) else displayed[-1]
+    old_index = previous_displayed.index(previous_row_id) if previous_row_id in previous_displayed else -1
+    return next(
+        (
+            row_id
+            for row_id in previous_displayed[old_index + 1 :]
+            if row_id in displayed
+        ),
+        displayed[min(max(old_index, 0), len(displayed) - 1)],
+    )
+
+
 class AppController:
     def __init__(self) -> None:
         self.state = AppState()
