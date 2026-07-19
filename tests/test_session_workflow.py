@@ -27,6 +27,7 @@ from lunchtab_product_init.session_workflow import (
     save_edit,
     save_venue_profile,
     suggest_pos_names,
+    validate_pos_name_for_row,
 )
 
 
@@ -120,6 +121,32 @@ def test_category_filter_can_group_duplicate_item_names() -> None:
     assert [
         row.row_id for row in filter_rows(session, name_filter="Duplicate name")
     ] == ["row-2", "row-5", "row-1", "row-3"]
+
+
+def test_category_filters_compose_for_duplicate_vendor_uncategorized_rows() -> None:
+    session = _session(
+        [
+            _row("row-1", "Apple Juice", "1.00", "SAGEMB001", category="Beverages"),
+            _row("row-2", "Apple  Juice", "1.50", "VENDOR-001", old_category="Beverages"),
+            _row("row-3", "Orange Juice", "1.50", "VENDOR-002"),
+            _row("row-4", "apple juice", "2.50", "VENDOR-003"),
+            _row("row-5", "Loose Apple Juice", "", ""),
+        ]
+    )
+
+    assert [
+        row.row_id
+        for row in filter_rows(
+            session,
+            keyword="juice",
+            name_filter="Duplicate name",
+            barcode_filter="Vendor",
+            category_assignment="No category",
+            price_operator="range",
+            price_value="1.00",
+            price_upper="2.00",
+        )
+    ] == ["row-2"]
 
 
 def test_category_filter_can_select_sagemb_or_vendor_barcodes() -> None:
@@ -373,6 +400,18 @@ def test_pos_suggestions_exclude_names_that_fail_validation() -> None:
     assert "Apple Juice" not in suggest_pos_names(session, "row-2")
 
 
+def test_pos_validation_checks_replacement_value_for_current_row() -> None:
+    session = _session(
+        [
+            _row("row-1", "Apple Juice", "1.00", "A", category="Beverages", pos_name="Apple Juice"),
+            _row("row-2", "Orange Juice", "1.00", "B", category="Beverages", pos_name=""),
+        ]
+    )
+
+    assert validate_pos_name_for_row(session, "row-2", "Apple Juice") == ["duplicate POS name"]
+    assert validate_pos_name_for_row(session, "row-2", "Orange Juice") == []
+
+
 def test_pos_preferences_allow_context_specific_token_shortening() -> None:
     session = _session(
         [
@@ -490,6 +529,47 @@ def test_deleting_duplicate_pos_row_refreshes_surviving_rows() -> None:
     assert row_1.status == "pos_ready"
     assert "duplicate POS name" not in row_1.review_reason
     assert session.can_export
+
+
+def test_back_edit_merge_delete_preserves_reviewed_pos_names_and_refreshes_export_state() -> None:
+    session = _session(
+        [
+            _row("row-1", "Bacon, Egg, and Cheese Bagel", "5.25", "111", category="Breakfast"),
+            _row("row-2", "Sausage Egg and Cheese English Muffin", "5.25", "222", category="Breakfast"),
+            _row("row-3", "Sausage Egg and Cheese English Muffin", "5.25", "333", category="Breakfast"),
+            _row("row-4", "Duplicate POS Source", "1.00", "444", category="Snacks"),
+        ],
+        categories=("Breakfast", "Snacks"),
+    )
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "BEC Bagel")
+    session = replace_pos_name(session, "row-2", "SEC Muff")
+    session = replace_pos_name(session, "row-3", "SEC Muffin")
+    session = replace_pos_name(session, "row-4", "Quick Snack")
+    assert session.can_export
+
+    session = merge_rows(session, "row-2", {"row-3"})
+    session = delete_rows(session, {"row-4"})
+    session = run_pos_generation(session)
+
+    row_1 = next(row for row in session.rows if row.row_id == "row-1")
+    row_2 = next(row for row in session.rows if row.row_id == "row-2")
+    row_3 = next(row for row in session.rows if row.row_id == "row-3")
+    row_4 = next(row for row in session.rows if row.row_id == "row-4")
+    metadata = final_review_metadata(session)
+
+    assert row_1.pos_name == "BEC Bagel"
+    assert row_2.pos_name == "SEC Muff"
+    assert row_2.barcode == "222,333"
+    assert row_2.status == "pos_ready"
+    assert row_3.status == "deleted"
+    assert row_3.deleted_reason == "merged into row-2"
+    assert row_4.status == "deleted"
+    assert session.can_export
+    assert metadata.export_ready
+    assert metadata.active_rows == 2
+    assert metadata.deleted_rows == 2
+    assert metadata.merge_rows == 1
 
 
 def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:
