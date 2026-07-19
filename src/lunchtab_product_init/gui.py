@@ -41,6 +41,7 @@ from lunchtab_product_init.session_workflow import (
     merge_rows,
     next_edit_row,
     no_barcode_rows,
+    ordered_final_session_rows,
     parse_barcodes,
     parse_sources,
     prepare_edit_review,
@@ -75,6 +76,7 @@ class ProductInitializationApp:
         self.current_pos_row_id: str | None = None
         self._suppress_pos_selection_event = False
         self._category_filter_after_id: str | None = None
+        self._tree_sort_state: dict[str, tuple[str, bool, tuple[str, ...]]] = {}
 
         root.title(APP_TITLE)
         size_and_center(root, 1120, 760)
@@ -308,6 +310,7 @@ class ProductInitializationApp:
             ("selected", "name", "price", "barcode", "old_category", "category", "status"),
             ("Select", "Item Name", "Price", "Barcode", "Old Category", "Category", "Status"),
         )
+        self._enable_tree_sort(self.category_tree, numeric_columns=("price",))
         self.category_tree.grid(row=1, column=0, sticky="nsew")
         category_tree = self._tree_widget(self.category_tree)
         category_tree.bind("<Button-1>", self._category_tree_click)
@@ -386,6 +389,7 @@ class ProductInitializationApp:
             ("selected", "name", "price", "barcode", "category", "reason"),
             ("Sel", "Item Name", "Price", "Barcode", "Category", "Reason"),
         )
+        self._enable_tree_sort(self.edit_tree, numeric_columns=("price",))
         self.edit_tree.grid(row=1, column=0, sticky="nsew")
         edit_tree = self._tree_widget(self.edit_tree)
         edit_tree.bind("<<TreeviewSelect>>", lambda _event: self._edit_highlight_changed())
@@ -457,6 +461,7 @@ class ProductInitializationApp:
             ("name", "pos", "status", "reason"),
             ("Item Name", "BaseProductPosName", "Status", "Reason"),
         )
+        self._enable_tree_sort(self.pos_tree)
         self.pos_tree.grid(row=1, column=0, sticky="nsew")
         pos_tree = self._tree_widget(self.pos_tree)
         pos_tree.bind("<<TreeviewSelect>>", lambda _event: self._load_selected_pos_row())
@@ -492,6 +497,7 @@ class ProductInitializationApp:
             ("name", "pos", "price", "barcode", "category"),
             ("BaseProductName", "BaseProductPosName", "Price", "Barcode", "ProductCategories"),
         )
+        self._enable_tree_sort(self.final_tree, numeric_columns=("price",))
         self.final_tree.grid(row=0, column=0, sticky="nsew")
         bottom = ttk.Frame(parent)
         bottom.grid(row=1, column=0, sticky="ew", pady=(8, 0))
@@ -581,6 +587,53 @@ class ProductInitializationApp:
         y.grid(row=0, column=1, sticky="ns")
         x.grid(row=1, column=0, sticky="ew")
         return frame
+
+    def _enable_tree_sort(self, frame: ttk.Frame, *, numeric_columns: tuple[str, ...] = ()) -> None:
+        tree = self._tree_widget(frame)
+        columns = tuple(str(column) for column in tree["columns"])
+        self._tree_sort_state[str(tree)] = ("", True, numeric_columns)
+        for column in columns:
+            label = str(tree.heading(column, "text"))
+            tree.heading(
+                column,
+                text=label,
+                command=lambda selected_column=column: self._sort_tree_by_column(tree, selected_column),
+            )
+
+    def _sort_tree_by_column(self, tree: ttk.Treeview, column: str) -> None:
+        previous_column, previous_ascending, numeric_columns = self._tree_sort_state.get(
+            str(tree),
+            ("", True, ()),
+        )
+        ascending = not previous_ascending if previous_column == column else True
+        self._tree_sort_state[str(tree)] = (column, ascending, numeric_columns)
+        self._apply_tree_sort(tree)
+
+    def _apply_tree_sort(self, tree: ttk.Treeview) -> None:
+        column, ascending, numeric_columns = self._tree_sort_state.get(str(tree), ("", True, ()))
+        if not column:
+            return
+        ordered = sorted(
+            enumerate(tree.get_children("")),
+            key=lambda indexed_item: self._tree_sort_key(
+                tree.set(indexed_item[1], column),
+                numeric=column in numeric_columns,
+                original_index=indexed_item[0],
+            ),
+            reverse=not ascending,
+        )
+        for position, (_original_index, item_id) in enumerate(ordered):
+            tree.move(item_id, "", position)
+
+    @staticmethod
+    def _tree_sort_key(value: str, *, numeric: bool, original_index: int) -> tuple[int, float | str, int]:
+        cleaned = str(value).strip()
+        if numeric:
+            try:
+                return (0, float(cleaned.replace("$", "").replace(",", "")), original_index)
+            except ValueError:
+                return (1, cleaned.casefold(), original_index)
+        return (0, cleaned.casefold(), original_index)
 
     def _tree_widget(self, frame: ttk.Frame) -> ttk.Treeview:
         return next(child for child in frame.winfo_children() if isinstance(child, ttk.Treeview))
@@ -1608,6 +1661,7 @@ class ProductInitializationApp:
                     row.status,
                 ),
             )
+        self._apply_tree_sort(tree)
 
     def _populate_edit_rows(self) -> None:
         session = self.controller.state.session
@@ -1638,6 +1692,7 @@ class ProductInitializationApp:
                     row.review_reason,
                 ),
             )
+        self._apply_tree_sort(tree)
         if self.current_edit_row_id in shown_row_ids:
             tree.selection_set(self.current_edit_row_id)
             tree.focus(self.current_edit_row_id)
@@ -1683,6 +1738,7 @@ class ProductInitializationApp:
         self.pos_reason_combo.configure(values=self._pos_reason_filter_values(session))
         for row in filter_pos_rows(session, self._selected_pos_reason_filter()):
             tree.insert("", "end", iid=row.row_id, values=(row.item_name, row.pos_name, row.status, row.review_reason))
+        self._apply_tree_sort(tree)
         if self.current_pos_row_id:
             row = self._row(self.current_pos_row_id)
             if row is not None and tree.exists(self.current_pos_row_id):
@@ -1696,8 +1752,9 @@ class ProductInitializationApp:
         if session is None:
             self.audit_text.set("")
             return
-        for row in session.active_rows:
+        for row in ordered_final_session_rows(session):
             tree.insert("", "end", iid=row.row_id, values=(row.item_name, row.pos_name, row.price, row.barcode, row.category))
+        self._apply_tree_sort(tree)
         metadata = final_review_metadata(session)
         self.audit_text.set(
             final_review_audit_text(

@@ -18,6 +18,7 @@ from lunchtab_product_init.session_workflow import (
     export_session,
     filter_rows,
     filter_pos_rows,
+    final_rows,
     final_review_metadata,
     learn_pos_preferences,
     load_venue_profile,
@@ -25,6 +26,7 @@ from lunchtab_product_init.session_workflow import (
     merge_rows,
     next_edit_row,
     no_barcode_rows,
+    ordered_final_session_rows,
     prepare_edit_review,
     parse_barcodes,
     parse_sources,
@@ -933,6 +935,69 @@ def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:
     with result.summary.output_paths.category_audit.open(encoding="utf-8-sig", newline="") as file:
         audit_rows = list(csv.DictReader(file))
     assert audit_rows[0]["OldCategory"] == "Drinks"
+
+
+def test_final_rows_are_grouped_by_category_then_name() -> None:
+    session = _session(
+        [
+            _row("row-1", "Zebra Snack", "1.25", "111", category="Snacks", pos_name="ZebraSnack"),
+            _row("row-2", "Apple Drink", "1.50", "222", category="Beverages", pos_name="AppleDrink"),
+            _row("row-3", "Banana Drink", "1.75", "333", category="Beverages", pos_name="BananaDrink"),
+            _row("row-4", "Apple Snack", "2.00", "444", category="Snacks", pos_name="AppleSnack"),
+        ],
+        categories=("Beverages", "Snacks"),
+    )
+
+    assert [row.row_id for row in ordered_final_session_rows(session)] == [
+        "row-2",
+        "row-3",
+        "row-4",
+        "row-1",
+    ]
+    assert [
+        (row["ProductCategories"], row["BaseProductName"])
+        for row in final_rows(session, is_orderable=False)
+    ] == [
+        ("Beverages;", "Apple Drink"),
+        ("Beverages;", "Banana Drink"),
+        ("Snacks;", "Apple Snack"),
+        ("Snacks;", "Zebra Snack"),
+    ]
+
+
+def test_export_sorts_final_import_but_preserves_session_audit_order(tmp_path: Path) -> None:
+    source_template, recipe, odin = _source_files(tmp_path)
+    session = _session(
+        [
+            _row("row-1", "Zebra Snack", "1.25", "111", category="Snacks", pos_name="ZebraSnack"),
+            _row("row-2", "Apple Drink", "1.50", "222", category="Beverages", pos_name="AppleDrink"),
+            _row("row-3", "Apple Snack", "2.00", "333", category="Snacks", pos_name="AppleSnack"),
+        ],
+        categories=("Beverages", "Snacks"),
+    )
+
+    result = export_session(
+        session,
+        BuildInputs(
+            product_template_path=source_template,
+            recipe_list_path=recipe,
+            odin_inventory_path=odin,
+            output_root=tmp_path / "out",
+        ),
+        is_orderable=False,
+    )
+
+    with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
+        final_import = list(csv.DictReader(file))
+    with result.summary.output_paths.session_audit.open(encoding="utf-8-sig", newline="") as file:
+        session_audit = list(csv.DictReader(file))
+
+    assert [row["BaseProductName"] for row in final_import] == [
+        "Apple Drink",
+        "Apple Snack",
+        "Zebra Snack",
+    ]
+    assert [row["RowId"] for row in session_audit] == ["row-1", "row-2", "row-3"]
 
 
 def test_deleted_audit_includes_merge_transfer_details(tmp_path: Path) -> None:

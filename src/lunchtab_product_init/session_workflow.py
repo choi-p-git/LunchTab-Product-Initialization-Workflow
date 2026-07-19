@@ -851,9 +851,18 @@ def learn_pos_preferences(
     )
 
 
+def ordered_final_session_rows(session: ImportSession) -> tuple[SessionRow, ...]:
+    return tuple(
+        sorted(
+            session.active_rows,
+            key=lambda row: (row.category.casefold(), row.item_name.casefold(), row.row_id),
+        )
+    )
+
+
 def final_rows(session: ImportSession, is_orderable: bool) -> list[dict[str, str]]:
     rows = []
-    for row in session.active_rows:
+    for row in ordered_final_session_rows(session):
         errors = validate_export_ready(row)
         if errors:
             raise ValueError(f"Row {row.row_id} is not export-ready: {', '.join(errors)}")

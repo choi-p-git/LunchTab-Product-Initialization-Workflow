@@ -44,6 +44,10 @@ assignment is limited to category names the operator enters or loads through a v
   restriction policies or row-specific category decisions.
 - Back edits must preserve previously touched values and revalidate dependent barcode/POS checks
   without silently recalculating accepted values.
+- Operator viewport tables support header-click sorting without mutating session row order.
+- Final import CSV rows are grouped by `ProductCategories` and sorted by `BaseProductName`
+  ascending within each category.
+- Audit artifacts preserve session/row-id order for traceability.
 - Every export must emit final CSV, category audit, POS-name audit, session audit, deleted-row
   audit, run manifest, and run summary.
 
@@ -98,6 +102,8 @@ assignment is limited to category names the operator enters or loads through a v
 
 5. **Final Review**
    - Operator reviews target output fields in a scrollable table.
+   - Initial final review order matches final export order: category ascending, then item name
+     ascending.
    - Operator can select a row, open an edit dialog with a full-row preview, and adjust final
      item name, POS name, price, barcode, or category before export.
    - Final-review edits are prevalidated before save and require confirmation before updating the
@@ -107,8 +113,9 @@ assignment is limited to category names the operator enters or loads through a v
    - Operator can save the venue profile again before export.
 
 6. **Export Complete**
-   - App writes the final import CSV, category audit, POS-name audit, session audit, deleted-row
-     audit, manifest, and run summary.
+   - App writes the category/name-sorted final import CSV, category audit, POS-name audit, session
+     audit, deleted-row audit, manifest, and run summary.
+   - Category, POS-name, session, and deleted-row audits retain session/row-id order.
    - Operator can open the output folder and major artifacts from the complete tab.
 
 ## Second-Pass Completion Snapshot

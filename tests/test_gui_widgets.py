@@ -571,6 +571,75 @@ def test_category_primary_actions_remain_visible_at_1366x768(app) -> None:
     )
 
 
+def test_tree_header_sort_reorders_display_without_session_mutation(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row("row-1", "Zebra Snack", "1.25", "111", category="Snacks"),
+            _row("row-2", "Apple Juice", "2.50", "222", category="Beverages"),
+            _row("row-3", "Banana Bread", "1.50", "333", category="Bakery"),
+        ),
+        category_names=("Bakery", "Beverages", "Snacks"),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.parse_succeeded(session)
+    _clear_category_filter_vars(app)
+    app._tree_sort_state[str(app._tree_widget(app.category_tree))] = ("", True, ("price",))
+    app._render()
+    tree = app._tree_widget(app.category_tree)
+
+    app._sort_tree_by_column(tree, "name")
+
+    assert list(tree.get_children("")) == ["row-2", "row-3", "row-1"]
+    assert [row.row_id for row in app.controller.state.session.rows] == ["row-1", "row-2", "row-3"]
+
+    app._sort_tree_by_column(tree, "name")
+
+    assert list(tree.get_children("")) == ["row-1", "row-3", "row-2"]
+
+
+def test_final_review_preview_defaults_to_export_order(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Zebra Snack",
+                "1.25",
+                "111",
+                category="Snacks",
+                pos_name="ZebraSnack",
+                status="pos_ready",
+            ),
+            _row(
+                "row-2",
+                "Apple Drink",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="AppleDrink",
+                status="pos_ready",
+            ),
+            _row(
+                "row-3",
+                "Apple Snack",
+                "2.00",
+                "333",
+                category="Snacks",
+                pos_name="AppleSnack",
+                status="pos_ready",
+            ),
+        ),
+        category_names=("Beverages", "Snacks"),
+    )
+    _set_final_session(app, session)
+    app._tree_sort_state[str(app._tree_widget(app.final_tree))] = ("", True, ("price",))
+    app._render()
+    tree = app._tree_widget(app.final_tree)
+
+    assert list(tree.get_children("")) == ["row-2", "row-3", "row-1"]
+
+
 def test_final_review_primary_actions_remain_visible_at_1366x768(app) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),
