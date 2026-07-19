@@ -14,6 +14,7 @@ from lunchtab_product_init.session_workflow import (
     apply_venue_profile,
     assign_category,
     delete_rows,
+    duplicate_name_edit_rows,
     export_session,
     filter_rows,
     filter_pos_rows,
@@ -24,13 +25,17 @@ from lunchtab_product_init.session_workflow import (
     merge_rows,
     next_edit_row,
     no_barcode_rows,
+    prepare_edit_review,
     parse_barcodes,
     parse_sources,
     replace_pos_name,
     run_pos_generation,
     save_edit,
+    save_final_review_edit,
     save_venue_profile,
     suggest_pos_names,
+    validate_edit_name_for_row,
+    validate_final_review_edit,
     validate_pos_name_for_row,
 )
 
@@ -305,6 +310,47 @@ def test_deleting_duplicate_barcode_row_refreshes_surviving_rows() -> None:
     assert "duplicate barcode" not in row_1.review_reason
 
 
+def test_deleting_row_preserves_uncategorized_active_rows_in_category_step() -> None:
+    session = _session(
+        [
+            _row("row-1", "Apple Juice", "1.00", "ABC"),
+            _row("row-2", "Orange Juice", "1.50", "DEF"),
+            _row("row-3", "Missing Barcode", "2.00", "", status="needs_edit"),
+        ]
+    )
+
+    session = delete_rows(session, {"row-1"})
+
+    row_2 = next(row for row in session.rows if row.row_id == "row-2")
+    row_3 = next(row for row in session.rows if row.row_id == "row-3")
+
+    assert row_2.status == "active"
+    assert row_2.review_reason == ""
+    assert row_3.status == "needs_edit"
+    assert row_3.review_reason == "missing barcode; missing category"
+
+
+def test_delete_refresh_preserves_operator_review_rows_in_edit_queue() -> None:
+    session = _session(
+        [
+            _row("row-1", "Review Juice", "1.00", "ABC", category="Beverages"),
+            _row("row-2", "Review Snack", "1.50", "DEF", category="Snacks"),
+            _row("row-3", "Deleted Row", "2.00", "GHI", category="Snacks"),
+        ]
+    )
+    session = mark_for_edit(session, {"row-1", "row-2"})
+
+    session = delete_rows(session, {"row-3"})
+
+    assert [
+        (row.row_id, row.status, row.review_reason)
+        for row in session.edit_queue
+    ] == [
+        ("row-1", "needs_edit", "operator review"),
+        ("row-2", "needs_edit", "operator review"),
+    ]
+
+
 def test_category_filter_can_select_rows_without_barcode() -> None:
     session = _session(
         [
@@ -374,6 +420,43 @@ def test_category_price_filter_can_show_rows_without_price() -> None:
     ] == ["row-1", "row-2"]
 
 
+def test_category_stock_filter_supports_inventory_stock_values_only() -> None:
+    session = _session(
+        [
+            _row("row-1", "Recipe Only", "1.00", "AAA", source="recipe"),
+            _row("row-2", "No Stock Inventory", "1.00", "BBB", source="inventory", stock=""),
+            _row("row-3", "Zero Stock Inventory", "1.00", "CCC", source="inventory", stock="0"),
+            _row("row-4", "Low Stock Inventory", "1.00", "DDD", source="inventory", stock="3"),
+            _row("row-5", "High Stock Inventory", "1.00", "EEE", source="inventory", stock="12"),
+        ]
+    )
+
+    assert [
+        row.row_id for row in filter_rows(session, stock_operator="no_stock")
+    ] == ["row-2"]
+    assert [
+        row.row_id for row in filter_rows(session, stock_operator="=", stock_value="0")
+    ] == ["row-3"]
+    assert [
+        row.row_id for row in filter_rows(session, stock_operator="<", stock_value="5")
+    ] == ["row-3", "row-4"]
+    assert [
+        row.row_id for row in filter_rows(session, stock_operator="<=", stock_value="3")
+    ] == ["row-3", "row-4"]
+    assert [
+        row.row_id for row in filter_rows(session, stock_operator=">=", stock_value="3")
+    ] == ["row-4", "row-5"]
+    assert [
+        row.row_id
+        for row in filter_rows(
+            session,
+            stock_operator="range",
+            stock_value="1",
+            stock_upper="10",
+        )
+    ] == ["row-4"]
+
+
 def test_edit_review_no_barcode_filter_select_delete_and_save_next() -> None:
     session = _session(
         [
@@ -401,6 +484,147 @@ def test_edit_review_no_barcode_filter_select_delete_and_save_next() -> None:
 
     assert session.can_leave_edit_review
     assert next_edit_row(session) is None
+
+
+def test_edit_review_duplicate_name_filter_groups_duplicate_names() -> None:
+    session = _session(
+        [
+            _row("row-1", "Orange Juice", "1.00", "111", category="Beverages", status="needs_edit"),
+            _row("row-2", "Apple Juice", "1.00", "222", category="Beverages", status="needs_edit"),
+            _row("row-3", "Orange Juice", "1.50", "333", category="Beverages", status="needs_edit"),
+            _row("row-4", "Single Item", "2.00", "444", category="Snacks", status="needs_edit"),
+            _row("row-5", "apple juice", "1.25", "555", category="Beverages", status="needs_edit"),
+            _row("row-6", "Orange Juice", "1.75", "666", category="Beverages"),
+        ]
+    )
+
+    assert [
+        row.row_id for row in duplicate_name_edit_rows(session)
+    ] == ["row-2", "row-5", "row-1", "row-3"]
+
+
+def test_prepare_edit_review_marks_duplicate_names_for_manual_review() -> None:
+    session = _session(
+        [
+            _row("row-1", "Orange Juice", "1.00", "111", category="Beverages"),
+            _row("row-2", "orange juice", "1.50", "222", category="Beverages"),
+            _row("row-3", "Single Item", "2.00", "333", category="Snacks"),
+        ]
+    )
+
+    session = prepare_edit_review(session)
+
+    assert [
+        (row.row_id, row.status, row.review_reason)
+        for row in session.rows
+    ] == [
+        ("row-1", "needs_edit", "duplicate name"),
+        ("row-2", "needs_edit", "duplicate name"),
+        ("row-3", "active", ""),
+    ]
+
+
+def test_duplicate_name_review_can_be_approved_without_name_change() -> None:
+    session = _session(
+        [
+            _row("row-1", "Orange Juice", "1.00", "111", category="Beverages"),
+            _row("row-2", "orange juice", "1.50", "222", category="Beverages"),
+        ]
+    )
+    session = prepare_edit_review(session)
+
+    session = save_edit(
+        session,
+        "row-1",
+        item_name="Orange Juice",
+        price="1.00",
+        barcode="111",
+        category="Beverages",
+    )
+
+    row_1 = next(row for row in session.rows if row.row_id == "row-1")
+    row_2 = next(row for row in session.rows if row.row_id == "row-2")
+
+    assert row_1.status == "edit_complete"
+    assert row_1.review_reason == ""
+    assert row_1.edited
+    assert row_2.status == "needs_edit"
+    assert row_2.review_reason == "duplicate name"
+    assert [row.row_id for row in duplicate_name_edit_rows(session)] == ["row-2"]
+
+
+def test_duplicate_name_review_rename_rechecks_and_clears_resolved_pair() -> None:
+    session = _session(
+        [
+            _row("row-1", "Orange Juice", "1.00", "111", category="Beverages"),
+            _row("row-2", "orange juice", "1.50", "222", category="Beverages"),
+        ]
+    )
+    session = prepare_edit_review(session)
+
+    session = save_edit(
+        session,
+        "row-1",
+        item_name="Apple Juice",
+        price="1.00",
+        barcode="111",
+        category="Beverages",
+    )
+
+    assert [
+        (row.row_id, row.item_name, row.status, row.review_reason)
+        for row in session.rows
+    ] == [
+        ("row-1", "Apple Juice", "edit_complete", ""),
+        ("row-2", "orange juice", "edit_complete", ""),
+    ]
+    assert duplicate_name_edit_rows(session) == ()
+
+
+def test_duplicate_name_review_rename_rechecks_and_flags_new_collision() -> None:
+    session = _session(
+        [
+            _row("row-1", "Orange Juice", "1.00", "111", category="Beverages"),
+            _row("row-2", "orange juice", "1.50", "222", category="Beverages"),
+            _row("row-3", "Apple Juice", "2.00", "333", category="Beverages"),
+        ]
+    )
+    session = prepare_edit_review(session)
+
+    session = save_edit(
+        session,
+        "row-1",
+        item_name="Apple Juice",
+        price="1.00",
+        barcode="111",
+        category="Beverages",
+    )
+
+    assert [
+        (row.row_id, row.item_name, row.status, row.review_reason)
+        for row in session.rows
+    ] == [
+        ("row-1", "Apple Juice", "needs_edit", "duplicate name"),
+        ("row-2", "orange juice", "edit_complete", ""),
+        ("row-3", "Apple Juice", "needs_edit", "duplicate name"),
+    ]
+    assert [row.row_id for row in duplicate_name_edit_rows(session)] == ["row-1", "row-3"]
+
+
+def test_edit_name_validation_rejects_new_duplicate_but_allows_unchanged_duplicate_review() -> None:
+    session = _session(
+        [
+            _row("row-1", "Orange Juice", "1.00", "111", category="Beverages"),
+            _row("row-2", "orange juice", "1.50", "222", category="Beverages"),
+            _row("row-3", "Apple Juice", "2.00", "333", category="Beverages"),
+        ]
+    )
+    session = prepare_edit_review(session)
+
+    assert validate_edit_name_for_row(session, "row-1", "Orange Juice") == []
+    assert validate_edit_name_for_row(session, "row-1", "Apple Juice") == [
+        "duplicate item name"
+    ]
 
 
 def test_merge_rows_transfers_barcodes_deletes_sources_and_revalidates() -> None:
@@ -936,6 +1160,59 @@ def test_venue_profile_saves_breakfast_acronym_rules(tmp_path: Path) -> None:
     assert suggest_pos_names(seeded, "row-2")[0] == "SEC Muff"
 
 
+def test_final_review_edit_validation_checks_export_blockers() -> None:
+    session = _session(
+        [
+            _row("row-1", "Apple Juice", "1.25", "111", category="Beverages", pos_name="Apple Juice", status="pos_ready"),
+            _row("row-2", "Orange Juice", "1.50", "222", category="Beverages", pos_name="OrangeJuice", status="pos_ready"),
+        ],
+        categories=("Beverages",),
+    )
+
+    errors = validate_final_review_edit(
+        session,
+        "row-1",
+        item_name="Orange Juice",
+        price="1.25",
+        barcode="222",
+        category="Beverages",
+        pos_name="OrangeJuice",
+    )
+
+    assert errors == ["duplicate POS name", "duplicate barcode", "duplicate item name"]
+
+
+def test_save_final_review_edit_updates_row_and_keeps_export_ready() -> None:
+    session = _session(
+        [
+            _row("row-1", "Apple Juice", "1.25", "111", category="Beverages", pos_name="Apple Juice", status="pos_ready"),
+            _row("row-2", "Orange Juice", "1.50", "222", category="Beverages", pos_name="OrangeJuice", status="pos_ready"),
+        ],
+        categories=("Beverages",),
+    )
+
+    session = save_final_review_edit(
+        session,
+        "row-1",
+        item_name="Apple Bottle",
+        price="1.35",
+        barcode="111, 333",
+        category="Drinks",
+        pos_name="Apple Bottle",
+    )
+
+    row = next(row for row in session.rows if row.row_id == "row-1")
+    assert row.item_name == "Apple Bottle"
+    assert row.price == "1.35"
+    assert row.barcode == "111,333"
+    assert row.category == "Drinks"
+    assert row.pos_name == "Apple Bottle"
+    assert row.status == "pos_ready"
+    assert row.edited is True
+    assert session.category_names == ("Beverages", "Drinks")
+    assert session.can_export is True
+
+
 def _session(
     rows: list[SessionRow],
     *,
@@ -961,16 +1238,19 @@ def _row(
     review_reason: str = "",
     deleted_reason: str = "",
     pos_overridden: bool = False,
+    source: str = "test",
+    stock: str = "",
 ) -> SessionRow:
     return SessionRow(
         row_id=row_id,
         candidate=ProductCandidate(
-            source="test",
+            source=source,
             source_key=row_id,
             item_name=name,
             price=price,
             barcode=barcode,
             category=old_category or category,
+            stock=stock,
         ),
         old_category=old_category or category,
         category=category,

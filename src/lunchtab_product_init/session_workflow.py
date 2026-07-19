@@ -41,6 +41,7 @@ RowStatus = Literal[
     "export_ready",
 ]
 PriceFilterOperator = Literal["=", "<", ">", "<=", ">=", "range", "no_price", "any"]
+StockFilterOperator = Literal["=", "<", ">", "<=", ">=", "range", "no_stock", "any"]
 CategoryAssignmentFilter = Literal["any", "assigned", "unassigned"]
 NameFilter = Literal["any", "duplicate_name"]
 
@@ -248,6 +249,9 @@ def filter_rows(
     price_upper: str = "",
     min_price: str = "",
     max_price: str = "",
+    stock_operator: StockFilterOperator = "any",
+    stock_value: str = "",
+    stock_upper: str = "",
     include_deleted: bool = False,
 ) -> tuple[SessionRow, ...]:
     keyword_norm = normalize_text(keyword)
@@ -256,12 +260,18 @@ def filter_rows(
     barcode_norm = normalize_text(barcode_filter)
     category_assignment = _normalize_category_assignment_filter(category_assignment)
     price_operator = _normalize_price_operator(price_operator)
+    stock_operator_text = str(stock_operator or "").strip().casefold()
+    stock_operator = _normalize_stock_operator(stock_operator)
+    if stock_operator_text in {"0", "zero", "zero stock"} and not stock_value:
+        stock_value = "0"
     if min_price or max_price:
         price_operator = "range"
         price_value = min_price
         price_upper = max_price
     target_price = _decimal_or_none(price_value)
     upper_price = _decimal_or_none(price_upper)
+    target_stock = _decimal_or_none(stock_value)
+    upper_stock = _decimal_or_none(stock_upper)
     rows = session.rows if include_deleted else session.active_rows
     duplicate_names = _duplicate_item_names(rows) if name_filter == "duplicate_name" else set()
     filtered = []
@@ -281,6 +291,16 @@ def filter_rows(
             continue
         price = _decimal_or_none(row.price)
         if not _price_matches(price, price_operator, target_price, upper_price):
+            continue
+        stock = _decimal_or_none(row.candidate.stock)
+        if not _stock_matches(
+            row.candidate.source,
+            row.candidate.stock,
+            stock,
+            stock_operator,
+            target_stock,
+            upper_stock,
+        ):
             continue
         filtered.append(row)
     if name_filter == "duplicate_name":
@@ -372,16 +392,18 @@ def _refresh_after_delete(session: ImportSession) -> ImportSession:
             rows.append(row)
             continue
         edit_reasons = _core_review_reasons(row.candidate, barcode_duplicates)
-        if not row.category:
+        if not row.category and row.status != "active":
             edit_reasons.append("missing category")
         pos_reasons = validate_pos_name(row.pos_name, row.row_id, session.rows) if pos_started else []
+        if _is_unedited_operator_review(row):
+            reasons = sorted(set((*edit_reasons, *pos_reasons, row.review_reason)))
+            rows.append(replace(row, status="needs_edit", review_reason="; ".join(reasons)))
+            continue
         reasons = sorted(set((*edit_reasons, *pos_reasons)))
         if edit_reasons:
             status: RowStatus = "needs_edit"
         elif pos_started:
             status = "pos_needs_review" if pos_reasons else "pos_ready"
-        elif _is_unedited_operator_review(row):
-            status = row.status
         elif row.status == "active":
             status = "active"
         else:
@@ -444,6 +466,72 @@ def no_barcode_rows(session: ImportSession) -> tuple[SessionRow, ...]:
     return tuple(row for row in session.active_rows if not parse_barcodes(row.barcode))
 
 
+def duplicate_name_edit_rows(session: ImportSession) -> tuple[SessionRow, ...]:
+    rows = session.edit_queue
+    duplicate_names = _duplicate_item_names(rows)
+    return tuple(
+        sorted(
+            (
+                row
+                for row in rows
+                if normalize_text(row.item_name) in duplicate_names
+                or "duplicate name" in row.review_reason
+            ),
+            key=lambda row: (normalize_text(row.item_name), row.item_name.casefold(), row.row_id),
+        )
+    )
+
+
+def prepare_edit_review(session: ImportSession) -> ImportSession:
+    duplicate_names = _duplicate_item_names(session.active_rows)
+    rows = []
+    for row in session.rows:
+        if row.status == "deleted":
+            rows.append(row)
+            continue
+        reasons = [
+            reason
+            for reason in _reason_parts(row.review_reason)
+            if reason != "duplicate name"
+        ]
+        if normalize_text(row.item_name) in duplicate_names:
+            reasons.append("duplicate name")
+        if reasons:
+            rows.append(
+                replace(
+                    row,
+                    status="needs_edit" if row.status == "active" else row.status,
+                    review_reason="; ".join(sorted(set(reasons))),
+                )
+            )
+        elif row.status == "needs_edit":
+            rows.append(replace(row, status="edit_complete", review_reason=""))
+        else:
+            rows.append(replace(row, review_reason=""))
+    return replace(session, rows=tuple(rows))
+
+
+def validate_edit_name_for_row(session: ImportSession, row_id: str, item_name: str) -> list[str]:
+    row = _row_by_id(session, row_id)
+    if row is None:
+        return ["select a row"]
+    cleaned = _clean_text(item_name)
+    if not cleaned:
+        return []
+    normalized = normalize_text(cleaned)
+    same_normalized_name = normalized == normalize_text(row.item_name)
+    if same_normalized_name:
+        return []
+    if any(
+        other.row_id != row_id
+        and other.status != "deleted"
+        and normalize_text(other.item_name) == normalized
+        for other in session.rows
+    ):
+        return ["duplicate item name"]
+    return []
+
+
 def save_edit(
     session: ImportSession,
     row_id: str,
@@ -456,13 +544,16 @@ def save_edit(
     category = _clean_text(category)
     session = add_category(session, category)
     updated_rows = []
+    name_changed = False
     for row in session.rows:
         if row.row_id != row_id:
             updated_rows.append(row)
             continue
+        cleaned_name = _clean_text(item_name)
+        name_changed = cleaned_name != row.item_name
         candidate = replace(
             row.candidate,
-            item_name=_clean_text(item_name),
+            item_name=cleaned_name,
             price=_clean_text(price),
             barcode=format_barcodes(parse_barcodes(barcode)),
             category=category,
@@ -480,7 +571,11 @@ def save_edit(
                 edited=True,
             )
         )
-    return _refresh_barcode_review(replace(session, rows=tuple(updated_rows)))
+    return _refresh_barcode_review(
+        replace(session, rows=tuple(updated_rows)),
+        saved_row_id=row_id,
+        saved_name_changed=name_changed,
+    )
 
 
 def next_edit_row(session: ImportSession) -> SessionRow | None:
@@ -542,6 +637,98 @@ def replace_pos_name(session: ImportSession, row_id: str, pos_name: str) -> Impo
         preferences = learn_pos_preferences(preferences, target.item_name, cleaned)
     session = replace(session, rows=tuple(rows), pos_preferences=preferences)
     return _refresh_pos_status(session)
+
+
+def validate_final_review_edit(
+    session: ImportSession,
+    row_id: str,
+    *,
+    item_name: str,
+    price: str,
+    barcode: str,
+    category: str,
+    pos_name: str,
+) -> list[str]:
+    row = _row_by_id(session, row_id)
+    if row is None or row.status == "deleted":
+        return ["row is not available for final review edit"]
+    cleaned_name = _clean_text(item_name)
+    cleaned_category = _clean_text(category)
+    cleaned_pos_name = _clean_text(pos_name)
+    candidate = replace(
+        row.candidate,
+        item_name=cleaned_name,
+        price=_clean_text(price),
+        barcode=format_barcodes(parse_barcodes(barcode)),
+        category=cleaned_category,
+    )
+    proposed_rows = tuple(
+        replace(
+            current,
+            candidate=candidate,
+            category=cleaned_category,
+            pos_name=cleaned_pos_name,
+        )
+        if current.row_id == row_id
+        else current
+        for current in session.rows
+    )
+    barcode_duplicates = duplicate_barcodes(current.barcode for current in proposed_rows if current.status != "deleted")
+    reasons = _core_review_reasons(candidate, barcode_duplicates)
+    if not cleaned_category:
+        reasons.append("missing category")
+    reasons.extend(validate_pos_name(cleaned_pos_name, row_id, proposed_rows))
+    reasons.extend(validate_edit_name_for_row(session, row_id, cleaned_name))
+    return sorted(set(reasons))
+
+
+def save_final_review_edit(
+    session: ImportSession,
+    row_id: str,
+    *,
+    item_name: str,
+    price: str,
+    barcode: str,
+    category: str,
+    pos_name: str,
+) -> ImportSession:
+    reasons = validate_final_review_edit(
+        session,
+        row_id,
+        item_name=item_name,
+        price=price,
+        barcode=barcode,
+        category=category,
+        pos_name=pos_name,
+    )
+    if reasons:
+        raise ValueError("; ".join(reasons))
+    cleaned_category = _clean_text(category)
+    session = add_category(session, cleaned_category)
+    rows = []
+    for row in session.rows:
+        if row.row_id != row_id:
+            rows.append(row)
+            continue
+        candidate = replace(
+            row.candidate,
+            item_name=_clean_text(item_name),
+            price=_clean_text(price),
+            barcode=format_barcodes(parse_barcodes(barcode)),
+            category=cleaned_category,
+        )
+        rows.append(
+            replace(
+                row,
+                candidate=candidate,
+                category=cleaned_category,
+                pos_name=_clean_text(pos_name),
+                status="pos_ready",
+                review_reason="",
+                edited=True,
+            )
+        )
+    return replace(session, rows=tuple(rows))
 
 
 def validate_pos_name(pos_name: str, row_id: str, rows: tuple[SessionRow, ...]) -> list[str]:
@@ -855,8 +1042,14 @@ def _core_review_reasons(candidate: ProductCandidate, barcode_duplicates: set[st
     return reasons
 
 
-def _refresh_barcode_review(session: ImportSession) -> ImportSession:
+def _refresh_barcode_review(
+    session: ImportSession,
+    *,
+    saved_row_id: str | None = None,
+    saved_name_changed: bool = False,
+) -> ImportSession:
     duplicates = duplicate_barcodes(row.barcode for row in session.active_rows)
+    duplicate_names = _duplicate_item_names(session.active_rows)
     rows = []
     for row in session.rows:
         if row.status == "deleted":
@@ -865,6 +1058,21 @@ def _refresh_barcode_review(session: ImportSession) -> ImportSession:
         reasons = _core_review_reasons(row.candidate, duplicates)
         if not row.category:
             reasons.append("missing category")
+        duplicate_name = normalize_text(row.item_name) in duplicate_names
+        duplicate_name_review_approved = (
+            duplicate_name
+            and row.row_id == saved_row_id
+            and not saved_name_changed
+            and row.edited
+        )
+        duplicate_name_already_approved = (
+            duplicate_name
+            and row.edited
+            and "duplicate name" not in _reason_parts(row.review_reason)
+            and row.row_id != saved_row_id
+        )
+        if duplicate_name and not duplicate_name_review_approved and not duplicate_name_already_approved:
+            reasons.append("duplicate name")
         if not reasons and _is_unedited_operator_review(row):
             rows.append(row)
             continue
@@ -874,7 +1082,11 @@ def _refresh_barcode_review(session: ImportSession) -> ImportSession:
 
 
 def _is_unedited_operator_review(row: SessionRow) -> bool:
-    return row.status == "needs_edit" and not row.edited and "operator review" in row.review_reason
+    return (
+        row.status == "needs_edit"
+        and not row.edited
+        and "operator review" in row.review_reason
+    )
 
 
 def _refresh_pos_status(session: ImportSession) -> ImportSession:
@@ -1528,6 +1740,19 @@ def _normalize_price_operator(value: str) -> PriceFilterOperator:
     return "any"
 
 
+def _normalize_stock_operator(value: str) -> StockFilterOperator:
+    normalized = str(value or "").strip().casefold()
+    if normalized in {"", "any"}:
+        return "any"
+    if normalized in {"=", "exact", "exact match", "0", "zero", "zero stock"}:
+        return "="
+    if normalized in {"no stock", "no_stock", "missing stock", "without stock", "null"}:
+        return "no_stock"
+    if normalized in {"<", ">", "<=", ">=", "range"}:
+        return normalized  # type: ignore[return-value]
+    return "any"
+
+
 def _normalize_category_assignment_filter(value: str) -> CategoryAssignmentFilter:
     normalized = normalize_text(value)
     if normalized in {"has category", "assigned", "category assigned"}:
@@ -1581,6 +1806,49 @@ def _price_matches(price, operator: PriceFilterOperator, target, upper) -> bool:
     return True
 
 
+def _stock_matches(
+    source: str, raw_stock: str, stock, operator: StockFilterOperator, target, upper
+) -> bool:
+    if operator == "any":
+        return True
+    if not _is_inventory_source(source):
+        return False
+    if not str(raw_stock or "").strip():
+        return operator == "no_stock"
+    if stock is None:
+        return operator == "no_stock"
+    if operator == "no_stock":
+        return False
+    if target is None:
+        return True
+    if operator == "=":
+        return stock == target
+    if operator == "<":
+        return stock < target
+    if operator == ">":
+        return stock > target
+    if operator == "<=":
+        return stock <= target
+    if operator == ">=":
+        return stock >= target
+    if operator == "range":
+        if stock < target:
+            return False
+        return upper is None or stock <= upper
+    return True
+
+
+def _is_inventory_source(source: str) -> bool:
+    return str(source or "").strip().casefold() in {
+        "odin",
+        "inventory",
+        "generic_inventory",
+        "recipe+odin",
+        "recipe+inventory",
+        "recipe+generic_inventory",
+    }
+
+
 def _barcode_filter_matches(barcode: str, barcode_filter: str) -> bool:
     if not barcode_filter:
         return True
@@ -1613,10 +1881,14 @@ def _sort_category_names(values) -> tuple[str, ...]:
 
 
 def _append_reason(current: str, reason: str) -> str:
-    values = [part.strip() for part in current.split(";") if part.strip()]
+    values = _reason_parts(current)
     if reason and reason not in values:
         values.append(reason)
     return "; ".join(values)
+
+
+def _reason_parts(value: str) -> list[str]:
+    return [part.strip() for part in value.split(";") if part.strip()]
 
 
 def _title_token(token: str) -> str:

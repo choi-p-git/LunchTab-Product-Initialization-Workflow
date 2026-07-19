@@ -180,7 +180,7 @@ def deselect_shown_category_rows(
     return frozenset(str(row_id) for row_id in selected_row_ids if str(row_id) and str(row_id) not in shown)
 
 
-def next_displayed_pos_row_id(
+def next_displayed_row_id(
     previous_row_id: str,
     previous_displayed_row_ids: Iterable[str],
     current_displayed_row_ids: Iterable[str],
@@ -201,6 +201,18 @@ def next_displayed_pos_row_id(
             if row_id in displayed
         ),
         displayed[min(max(old_index, 0), len(displayed) - 1)],
+    )
+
+
+def next_displayed_pos_row_id(
+    previous_row_id: str,
+    previous_displayed_row_ids: Iterable[str],
+    current_displayed_row_ids: Iterable[str],
+) -> str | None:
+    return next_displayed_row_id(
+        previous_row_id,
+        previous_displayed_row_ids,
+        current_displayed_row_ids,
     )
 
 

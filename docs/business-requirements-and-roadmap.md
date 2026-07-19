@@ -23,15 +23,18 @@ assignment is limited to category names the operator enters or loads through a v
 - Generic inventory CSV files must contain `Item Name`, `Price`, `Category`, `Barcode`, and
   `Stock` headers.
 - Rows enter category assignment when they have usable item name and price.
-- Missing barcode, duplicate barcode, missing name, missing price, missing category, invalid POS
-  name, and duplicate POS name must block final export.
+- Missing barcode, duplicate barcode, duplicate item name before edit approval, missing name,
+  missing price, missing category, invalid POS name, and duplicate POS name must block final
+  export.
 - Comma-separated barcode fields represent multiple barcodes for one product and must be split for
   duplicate validation.
 - Final-row `Handle` should mirror `BaseProductName`.
 - Final-row `IsOrderable` is operator-configurable and defaults to `false`.
 - `ProductCategories` must contain operator-created Lunchtab category names only.
 - Category assignment must be fast enough for bulk operator work: keyword, old category, barcode,
-  category status, price, and no-price filters are part of the core workflow.
+  category status, price/no-price, and inventory-stock filters are part of the core workflow.
+- Inventory-stock filters apply only to Odin or generic inventory rows, including recipe rows
+  enriched by inventory matches. Recipe-only rows must not appear in stock-filtered views.
 - Edit review must allow operators to choose which row to edit, delete unneeded rows, undo recent
   edit-review actions, and merge barcodes from source rows into a selected target row.
 - POS-name generation must preserve previously reviewed POS names during back edits, validate the
@@ -61,8 +64,8 @@ assignment is limited to category names the operator enters or loads through a v
 
 2. **Categories**
    - Operator adds or loads category names.
-   - Operator filters rows by keyword, old category, barcode type, category assignment state, price,
-     and no-price state.
+   - Operator filters rows by keyword, old category, barcode type, category assignment state,
+     price/no-price state, and inventory stock state or quantity.
    - Operator mass-selects, selects highlighted rows, assigns categories, deletes rows, or marks
      rows for edit review.
    - Category assignment refreshes stale edit-review reasons before the operator moves forward.
@@ -70,10 +73,19 @@ assignment is limited to category names the operator enters or loads through a v
 3. **Edit Review**
    - Operator reviews queued rows and can load any selected row into the edit form.
    - Editable fields are name, price, barcode, and category.
+   - Duplicate item names are automatically queued for manual review when the operator leaves
+     category assignment; the operator must edit or approve each duplicate-name row before POS
+     generation.
+   - Save actions from mouse click or Enter key advance to the next displayed review row and
+     focus the edit form for fast queue processing.
+   - Saving a row re-runs required-field, barcode, category, and duplicate-name review checks so
+     resolved duplicate pairs leave the queue and new name collisions are immediately flagged.
+   - Edited item names are pre-validated for uniqueness before save; unchanged duplicate-name
+     review rows can still be approved intentionally.
    - Category edit uses the session category catalog as a dropdown while still allowing typed
      corrections.
-   - No-barcode filtering, select-all shown, individual toggles, deletion, undo, and row merge are
-     supported.
+   - No-barcode filtering, duplicate-name grouping for merge work, select-all shown, individual
+     toggles, deletion, undo, and row merge are supported.
    - Merge transfers source barcode values into the selected target row, comma-separates them, and
      deletes source rows from export.
 
@@ -86,6 +98,10 @@ assignment is limited to category names the operator enters or loads through a v
 
 5. **Final Review**
    - Operator reviews target output fields in a scrollable table.
+   - Operator can select a row, open an edit dialog with a full-row preview, and adjust final
+     item name, POS name, price, barcode, or category before export.
+   - Final-review edits are prevalidated before save and require confirmation before updating the
+     working session.
    - Export remains disabled until active rows pass required-field, barcode, category, POS-name
      length, duplicate barcode, and duplicate POS-name validation.
    - Operator can save the venue profile again before export.
@@ -144,7 +160,9 @@ assignment is limited to category names the operator enters or loads through a v
      with widget coverage confirming primary controls remain visible at 1366x768.
    - Reduce unnecessary clicks in high-volume work paths: category assignment, edit review,
      no-barcode deletion, row merge, and POS-name override.
-   - Improve final-review metadata density without crowding the export and profile-save actions.
+   - Final-review metadata and edit actions are split into a wrapped summary row and a
+     right-aligned action bar, with widget coverage confirming primary actions remain visible at
+     1366x768.
    - Preserve the controller/session separation while moving any repeated widget-state rules into
      testable helpers.
 

@@ -123,6 +123,43 @@ def test_category_keyword_filter_debounces_and_immediate_refresh_cancels_pending
     assert list(tree.get_children("")) == ["row-3"]
 
 
+def test_category_stock_filter_uses_inventory_rows_only(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row("row-1", "Recipe Only", "1.25", "111", source="recipe"),
+            _row("row-2", "Inventory No Stock", "1.50", "222", source="inventory"),
+            _row("row-3", "Inventory Zero Stock", "1.75", "333", source="inventory", stock="0"),
+            _row("row-4", "Inventory Five Stock", "2.00", "444", source="inventory", stock="5"),
+        ),
+        category_names=("Beverages",),
+    )
+    app.controller.parse_succeeded(session)
+    _clear_category_filter_vars(app)
+    app._render()
+    app.notebook.select(app.tabs["categories"])
+    app.root.update()
+
+    tree = app._tree_widget(app.category_tree)
+    assert set(tree.get_children("")) == {"row-1", "row-2", "row-3", "row-4"}
+
+    app.stock_operator.set("No stock")
+    app._stock_operator_changed()
+    app.root.update()
+    assert list(tree.get_children("")) == ["row-2"]
+
+    app.stock_operator.set("0")
+    app._stock_operator_changed()
+    app.root.update()
+    assert list(tree.get_children("")) == ["row-3"]
+
+    app.stock_operator.set(">=")
+    app.stock_value.set("5")
+    app._stock_operator_changed()
+    app.root.update()
+    assert list(tree.get_children("")) == ["row-4"]
+
+
 def test_inline_category_dropdown_applies_category_and_closes(app) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),
@@ -166,6 +203,317 @@ def test_inline_category_dropdown_applies_category_and_closes(app) -> None:
     assert app.inline_category_combo is None
     assert str(app.category_undo_button.cget("state")) == "normal"
     assert app.category_undo_button.cget("text") == "Undo: Set category to Snacks"
+
+
+def test_go_to_edit_resets_no_barcode_filter_and_shows_operator_review_rows(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Marked Valid Row",
+                "1.25",
+                "111",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="operator review",
+            ),
+            _row(
+                "row-2",
+                "Missing Barcode Row",
+                "1.50",
+                "",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="missing barcode",
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.parse_succeeded(session)
+    app.edit_no_barcode_only = True
+
+    app._go_to_edit()
+    app.root.update()
+
+    tree = app._tree_widget(app.edit_tree)
+
+    assert not app.edit_no_barcode_only
+    assert list(tree.get_children("")) == ["row-1", "row-2"]
+
+
+def test_edit_duplicate_name_filter_groups_review_rows_for_merge(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Orange Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="operator review",
+            ),
+            _row(
+                "row-2",
+                "Apple Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="operator review",
+            ),
+            _row(
+                "row-3",
+                "orange juice",
+                "1.75",
+                "333",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="operator review",
+            ),
+            _row(
+                "row-4",
+                "Single Item",
+                "2.00",
+                "444",
+                category="Snacks",
+                status="needs_edit",
+                review_reason="operator review",
+            ),
+            _row(
+                "row-5",
+                "Apple Juice",
+                "2.25",
+                "555",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="operator review",
+            ),
+        ),
+        category_names=("Beverages", "Snacks"),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.parse_succeeded(session)
+    app._go_to_edit()
+
+    app._show_duplicate_name_edit_rows()
+    app.root.update()
+
+    tree = app._tree_widget(app.edit_tree)
+
+    assert not app.edit_no_barcode_only
+    assert app.edit_duplicate_name_only
+    assert list(tree.get_children("")) == ["row-2", "row-5", "row-1", "row-3"]
+
+
+def test_go_to_edit_marks_duplicate_names_for_review(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row("row-1", "Orange Juice", "1.25", "111", category="Beverages"),
+            _row("row-2", "orange juice", "1.50", "222", category="Beverages"),
+            _row("row-3", "Single Item", "2.00", "333", category="Snacks"),
+        ),
+        category_names=("Beverages", "Snacks"),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.parse_succeeded(session)
+
+    app._go_to_edit()
+    app.root.update()
+
+    tree = app._tree_widget(app.edit_tree)
+
+    assert list(tree.get_children("")) == ["row-1", "row-2"]
+    assert [
+        (row.row_id, row.status, row.review_reason)
+        for row in app.controller.state.session.rows
+    ] == [
+        ("row-1", "needs_edit", "duplicate name"),
+        ("row-2", "needs_edit", "duplicate name"),
+        ("row-3", "active", ""),
+    ]
+
+
+def test_save_edit_confirms_unchanged_valid_review_row(app, monkeypatch) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Orange Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="duplicate name",
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    prompts = []
+
+    def confirm_save(title: str, message: str) -> bool:
+        prompts.append((title, message))
+        return True
+
+    monkeypatch.setattr(gui_module.messagebox, "askyesno", confirm_save)
+    app.controller = gui_module.AppController()
+    app.controller.set_session(session, phase=gui_module.AppPhase.EDIT_REVIEW)
+    app._load_edit_row("row-1")
+
+    app._save_edit()
+    app.root.update()
+
+    row_1 = app.controller.state.session.rows[0]
+
+    assert prompts == [
+        (gui_module.APP_TITLE, "Save this valid row without changing any fields?")
+    ]
+    assert row_1.status == "edit_complete"
+    assert row_1.review_reason == ""
+    assert row_1.edited
+
+
+def test_save_edit_advances_to_next_displayed_row_and_focuses_name(app, monkeypatch) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Missing Price",
+                "",
+                "111",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="missing or invalid price",
+            ),
+            _row(
+                "row-2",
+                "Review Row",
+                "1.50",
+                "222",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="operator review",
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    focus_calls = []
+    selection_calls = []
+    monkeypatch.setattr(app.edit_name_entry, "focus_set", lambda: focus_calls.append("focus"))
+    monkeypatch.setattr(
+        app.edit_name_entry,
+        "selection_range",
+        lambda start, end: selection_calls.append((start, end)),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.set_session(session, phase=gui_module.AppPhase.EDIT_REVIEW)
+    app._render()
+    app._select_edit_tree_row("row-1")
+    app._load_edit_row("row-1")
+
+    app.edit_price.set("1.25")
+    app._save_edit()
+    app.root.update()
+    app.root.update_idletasks()
+
+    tree = app._tree_widget(app.edit_tree)
+    row_1 = next(row for row in app.controller.state.session.rows if row.row_id == "row-1")
+
+    assert row_1.status == "edit_complete"
+    assert app.current_edit_row_id == "row-2"
+    assert tree.selection() == ("row-2",)
+    assert app.edit_name.get() == "Review Row"
+    assert focus_calls
+    assert selection_calls[-1] == (0, tk.END)
+
+
+def test_edit_entry_return_saves_and_advances_to_next_displayed_row(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Missing Barcode",
+                "1.00",
+                "",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="missing barcode",
+            ),
+            _row(
+                "row-2",
+                "Review Row",
+                "1.50",
+                "222",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="operator review",
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.set_session(session, phase=gui_module.AppPhase.EDIT_REVIEW)
+    app._render()
+    app._select_edit_tree_row("row-1")
+    app._load_edit_row("row-1")
+
+    app.edit_barcode.set("111")
+
+    assert app._edit_entry_return(_Event()) == "break"
+
+    row_1 = next(row for row in app.controller.state.session.rows if row.row_id == "row-1")
+    assert row_1.status == "edit_complete"
+    assert app.current_edit_row_id == "row-2"
+    assert app.edit_name.get() == "Review Row"
+
+
+def test_edit_duplicate_name_precheck_disables_save_and_enter(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Orange Juice",
+                "1.00",
+                "111",
+                category="Beverages",
+                status="needs_edit",
+                review_reason="duplicate name",
+            ),
+            _row(
+                "row-2",
+                "Apple Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                status="active",
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.set_session(session, phase=gui_module.AppPhase.EDIT_REVIEW)
+    app._render()
+    app._select_edit_tree_row("row-1")
+    app._load_edit_row("row-1")
+
+    app.edit_name.set("Apple Juice")
+    app._update_edit_action_state()
+
+    assert app.edit_validation.get() == "duplicate item name"
+    assert str(app.save_edit_button.cget("state")) == "disabled"
+    assert app._edit_entry_return(_Event()) == "break"
+
+    row_1 = next(row for row in app.controller.state.session.rows if row.row_id == "row-1")
+    assert row_1.item_name == "Orange Juice"
+    assert row_1.status == "needs_edit"
 
 
 def test_inventory_file_selection_clears_alternate_inventory_source(app, monkeypatch) -> None:
@@ -221,6 +569,51 @@ def test_category_primary_actions_remain_visible_at_1366x768(app) -> None:
             app.to_edit_button,
         ),
     )
+
+
+def test_final_review_primary_actions_remain_visible_at_1366x768(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Apple Juice",
+                status="pos_ready",
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="pos_ready",
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    _set_final_session(app, session)
+    app.root.geometry("1366x768+0+0")
+    app.root.deiconify()
+    app.notebook.select(app.tabs["final"])
+    app._render()
+    app.root.update()
+    app.root.update_idletasks()
+
+    _assert_widgets_inside_root(
+        app.root,
+        (
+            app.final_audit_label,
+            app.final_save_profile_button,
+            app.edit_final_row_button,
+            app.export_button,
+        ),
+    )
+    assert app.final_audit_label.cget("wraplength") >= 320
 
 
 def test_pos_reason_filter_shows_rows_requiring_attention(app) -> None:
@@ -382,6 +775,111 @@ def test_pos_entry_return_replaces_valid_name_and_returns_break(app) -> None:
     assert app.pos_name.get() == ""
 
 
+def test_final_review_edit_dialog_disables_save_for_invalid_edit(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Apple Juice",
+                status="pos_ready",
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="pos_ready",
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    _set_final_session(app, session)
+    app._render()
+    app.notebook.select(app.tabs["final"])
+    tree = app._tree_widget(app.final_tree)
+    tree.selection_set("row-1")
+    tree.focus("row-1")
+
+    app._open_final_row_edit_dialog()
+    app.root.update()
+    app.final_edit_vars["pos_name"].set("OrangeJuice")
+    app.root.update()
+
+    assert str(app.final_edit_save_button.cget("state")) == "disabled"
+    assert "duplicate POS name" in app.final_edit_validation.get()
+    app.final_edit_dialog.destroy()
+
+
+def test_final_review_edit_dialog_confirms_and_saves_valid_edit(app, monkeypatch) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Apple Juice",
+                status="pos_ready",
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="pos_ready",
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    _set_final_session(app, session)
+    app._render()
+    app.notebook.select(app.tabs["final"])
+    tree = app._tree_widget(app.final_tree)
+    tree.selection_set("row-1")
+    tree.focus("row-1")
+    prompts = []
+    monkeypatch.setattr(
+        gui_module.messagebox,
+        "askyesno",
+        lambda title, message: prompts.append((title, message)) or True,
+    )
+
+    app._open_final_row_edit_dialog()
+    app.root.update()
+    app.final_edit_vars["item_name"].set("Apple Bottle")
+    app.final_edit_vars["price"].set("1.35")
+    app.final_edit_vars["barcode"].set("111, 333")
+    app.final_edit_vars["category"].set("Drinks")
+    app.final_edit_vars["pos_name"].set("Apple Bottle")
+    app.root.update()
+
+    assert str(app.final_edit_save_button.cget("state")) == "normal"
+    assert app._save_final_row_edit("row-1") == "break"
+    app.root.update()
+
+    row = next(row for row in app.controller.state.session.rows if row.row_id == "row-1")
+    tree = app._tree_widget(app.final_tree)
+    assert prompts == [(gui_module.APP_TITLE, "Save edits to this final review row?")]
+    assert row.item_name == "Apple Bottle"
+    assert row.price == "1.35"
+    assert row.barcode == "111,333"
+    assert row.category == "Drinks"
+    assert row.pos_name == "Apple Bottle"
+    assert row.edited is True
+    assert tree.set("row-1", "name") == "Apple Bottle"
+
+
 class _Event:
     pass
 
@@ -401,6 +899,9 @@ def _clear_category_filter_vars(app: ProductInitializationApp) -> None:
     app.price_operator.set("=")
     app.min_price.set("")
     app.max_price.set("")
+    app.stock_operator.set("Any")
+    app.stock_value.set("")
+    app.stock_upper.set("")
     app._category_filter_after_id = None
 
 
@@ -409,6 +910,13 @@ def _set_pos_session(app: ProductInitializationApp, session: ImportSession) -> N
     app.odin_inventory_text.set("")
     app.generic_inventory_text.set("")
     app.controller.set_session(session, phase=gui_module.AppPhase.POS_REVIEW)
+
+
+def _set_final_session(app: ProductInitializationApp, session: ImportSession) -> None:
+    app.controller = gui_module.AppController()
+    app.odin_inventory_text.set("")
+    app.generic_inventory_text.set("")
+    app.controller.set_session(session, phase=gui_module.AppPhase.FINAL_REVIEW)
 
 
 def _assert_widgets_inside_root(root: tk.Tk, widgets: tuple[tk.Widget, ...]) -> None:
@@ -438,16 +946,19 @@ def _row(
     pos_name: str = "",
     status: str = "active",
     review_reason: str = "",
+    source: str = "test",
+    stock: str = "",
 ) -> SessionRow:
     return SessionRow(
         row_id=row_id,
         candidate=ProductCandidate(
-            source="test",
+            source=source,
             source_key=row_id,
             item_name=name,
             price=price,
             barcode=barcode,
             category=category,
+            stock=stock,
         ),
         old_category=category,
         category=category,

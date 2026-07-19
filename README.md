@@ -14,8 +14,8 @@ run manifest, and run summary.
 
 ```powershell
 uv sync
-uv run lunchtab-product-init
-uv run lunchtab-pos-name
+uv run lt-prod-init
+uv run lt-pos-name
 ```
 
 ## Local Lunchtab Knowledge Base
@@ -40,15 +40,15 @@ Focused checks:
 ```powershell
 uv run pytest -q
 uv run ruff check .
-uv run lunchtab-product-init --smoke-test
-uv run lunchtab-pos-name --smoke-test
+uv run lt-prod-init --smoke-test
+uv run lt-pos-name --smoke-test
 ```
 
 ## Operator Workflow
 
 1. Select the Lunchtab product template CSV.
 2. Select the recipe-list CSV exported from Menu Builder -> Recipe List.
-3. Select the Odin cafeteria inventory workbook.
+3. Optionally select either the Odin cafeteria inventory workbook or a generic inventory CSV.
 4. Choose an output folder, or keep the default `Documents\Lunchtab Product Initialization`.
 5. Parse the source files to build the working set.
 6. Add valid Lunchtab category names, filter rows by keyword or price, assign categories, delete
@@ -103,7 +103,7 @@ See `docs/business-requirements-and-roadmap.md` for the tracked roadmap summary.
 For the smaller one-file automation, run:
 
 ```powershell
-uv run lunchtab-pos-name
+uv run lt-pos-name
 ```
 
 Select an existing Lunchtab target CSV. The app requires the CSV header to exactly match the
