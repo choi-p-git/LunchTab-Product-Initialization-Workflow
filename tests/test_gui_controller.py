@@ -33,7 +33,7 @@ def test_controller_ready_to_parse_after_required_files_selected() -> None:
     assert inputs.generic_inventory_path is None
 
 
-def test_controller_tracks_optional_inventory_inputs() -> None:
+def test_controller_inventory_inputs_are_mutually_exclusive() -> None:
     controller = AppController()
     controller.select_product_template(Path("ProductData.csv"))
     controller.select_recipe_list(Path("recipeList.csv"))
@@ -41,9 +41,15 @@ def test_controller_tracks_optional_inventory_inputs() -> None:
     state = controller.select_generic_inventory(Path("inventory.csv"))
 
     assert state.can_parse
+    assert state.odin_inventory_path is None
+    assert state.generic_inventory_path == Path("inventory.csv")
     inputs = controller.build_inputs()
-    assert inputs.odin_inventory_path == Path("inventory.xlsx")
+    assert inputs.odin_inventory_path is None
     assert inputs.generic_inventory_path == Path("inventory.csv")
+
+    state = controller.select_odin_inventory(Path("inventory.xlsx"))
+    assert state.odin_inventory_path == Path("inventory.xlsx")
+    assert state.generic_inventory_path is None
 
 
 def test_controller_tracks_is_orderable_setting() -> None:

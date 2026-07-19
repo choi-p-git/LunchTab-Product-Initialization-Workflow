@@ -203,6 +203,7 @@ class FinalReviewMetadata:
 
 
 def parse_sources(inputs: BuildInputs) -> ImportSession:
+    _require_single_inventory_source(inputs)
     headers = read_lunchtab_template(inputs.product_template_path)
     recipes = read_recipe_candidates(inputs.recipe_list_path)
     inventory = []
@@ -217,6 +218,11 @@ def parse_sources(inputs: BuildInputs) -> ImportSession:
         for index, candidate in enumerate(candidates, start=1)
     )
     return ImportSession(headers=headers, rows=rows)
+
+
+def _require_single_inventory_source(inputs: BuildInputs) -> None:
+    if inputs.odin_inventory_path is not None and inputs.generic_inventory_path is not None:
+        raise ValueError("Select either Odin inventory or generic inventory, not both.")
 
 
 def add_category(session: ImportSession, name: str) -> ImportSession:

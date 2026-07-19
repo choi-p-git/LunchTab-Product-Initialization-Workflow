@@ -149,6 +149,24 @@ def test_parse_sources_can_merge_generic_inventory_csv(tmp_path: Path) -> None:
     assert row.old_category == "Beverages"
 
 
+def test_parse_sources_rejects_multiple_inventory_sources(tmp_path: Path) -> None:
+    template = tmp_path / "ProductData.csv"
+    recipe = tmp_path / "recipe.csv"
+    _write_csv(template, [], list(LUNCHTAB_TEMPLATE_HEADERS))
+    _write_csv(recipe, [], ["Menu Item Name", "Price", "Barcode"])
+
+    with pytest.raises(ValueError, match="either Odin inventory or generic inventory"):
+        parse_sources(
+            BuildInputs(
+                product_template_path=template,
+                recipe_list_path=recipe,
+                output_root=tmp_path / "out",
+                odin_inventory_path=tmp_path / "inventory.xlsx",
+                generic_inventory_path=tmp_path / "inventory.csv",
+            )
+        )
+
+
 def test_category_names_are_sorted_ascending() -> None:
     session = _session([])
 

@@ -18,6 +18,8 @@ assignment is limited to category names the operator enters or loads through a v
 - Final output must match the selected Lunchtab ProductData template headers.
 - ProductData template and recipe list are required to parse; Odin workbook and generic inventory
   CSV inputs are optional enrichment sources.
+- Only one inventory source can be selected per run. Operators must choose either the Odin workbook
+  or the generic inventory CSV, not both.
 - Generic inventory CSV files must contain `Item Name`, `Price`, `Category`, `Barcode`, and
   `Stock` headers.
 - Rows enter category assignment when they have usable item name and price.
@@ -47,10 +49,14 @@ assignment is limited to category names the operator enters or loads through a v
 1. **Parse Sources**
    - Operator selects ProductData template, recipe list, optional Odin inventory workbook,
      optional generic inventory CSV, optional venue profile, output folder, and `IsOrderable`.
+   - Selecting an Odin inventory workbook clears any generic inventory CSV selection, and selecting
+     a generic inventory CSV clears any Odin inventory workbook selection.
    - App parses and merges candidate rows into a working session.
    - `old_category` is preserved from source data for filtering.
    - A blank generic inventory CSV template is available from Step 1 for venues without usable
      Odin exports.
+   - If a venue has rows from multiple inventory systems, the operator must manually consolidate
+     them into the generic inventory CSV before parsing.
    - Category and POS-name decisions remain deferred.
 
 2. **Categories**
@@ -119,6 +125,7 @@ assignment is limited to category names the operator enters or loads through a v
 
 4. **Operator UX hardening**
    - Undo buttons now show the next action to be reverted for category and edit-review workflows.
+   - Step 1 now enforces a single inventory source per run: Odin workbook or generic inventory CSV.
 
 ## Third-Pass Roadmap
 
@@ -165,6 +172,8 @@ assignment is limited to category names the operator enters or loads through a v
 - Exact Lunchtab admin screens used before exporting `ProductData`.
 - Required source export names, filters, and timing for ProductData, recipe list, and Odin
   inventory or generic inventory CSV.
+- SOP should instruct operators to manually transfer Odin rows into the generic inventory CSV when
+  a venue needs consolidated data from Odin and another inventory source in the same run.
 - Whether repeat ProductData uploads should preserve existing product-library rows, since Lunchtab
   upload behavior may replace rather than append the product library.
 - Venue category creation rules and whether category names differ by location.

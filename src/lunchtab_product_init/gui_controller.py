@@ -10,6 +10,8 @@ from lunchtab_product_init.models import BuildInputs
 from lunchtab_product_init.session_workflow import FinalReviewMetadata, ImportSession, SessionExportResult
 from lunchtab_product_init.workflow import default_output_root
 
+_UNCHANGED = object()
+
 
 class AppPhase(Enum):
     EMPTY = "empty"
@@ -213,10 +215,10 @@ class AppController:
         return self._select(recipe_list_path=path)
 
     def select_odin_inventory(self, path: Path) -> AppState:
-        return self._select(odin_inventory_path=path)
+        return self._select(odin_inventory_path=path, generic_inventory_path=None)
 
     def select_generic_inventory(self, path: Path) -> AppState:
-        return self._select(generic_inventory_path=path)
+        return self._select(odin_inventory_path=None, generic_inventory_path=path)
 
     def select_output_root(self, path: Path) -> AppState:
         self.state = replace(self.state, output_root=path, result=None)
@@ -327,16 +329,32 @@ class AppController:
     def _select(
         self,
         *,
-        product_template_path: Path | None = None,
-        recipe_list_path: Path | None = None,
-        odin_inventory_path: Path | None = None,
-        generic_inventory_path: Path | None = None,
+        product_template_path: Path | None | object = _UNCHANGED,
+        recipe_list_path: Path | None | object = _UNCHANGED,
+        odin_inventory_path: Path | None | object = _UNCHANGED,
+        generic_inventory_path: Path | None | object = _UNCHANGED,
     ) -> AppState:
+        product_template = (
+            self.state.product_template_path
+            if product_template_path is _UNCHANGED
+            else product_template_path
+        )
+        recipe_list = self.state.recipe_list_path if recipe_list_path is _UNCHANGED else recipe_list_path
+        odin_inventory = (
+            self.state.odin_inventory_path
+            if odin_inventory_path is _UNCHANGED
+            else odin_inventory_path
+        )
+        generic_inventory = (
+            self.state.generic_inventory_path
+            if generic_inventory_path is _UNCHANGED
+            else generic_inventory_path
+        )
         values = {
-            "product_template_path": product_template_path or self.state.product_template_path,
-            "recipe_list_path": recipe_list_path or self.state.recipe_list_path,
-            "odin_inventory_path": odin_inventory_path or self.state.odin_inventory_path,
-            "generic_inventory_path": generic_inventory_path or self.state.generic_inventory_path,
+            "product_template_path": product_template,
+            "recipe_list_path": recipe_list,
+            "odin_inventory_path": odin_inventory,
+            "generic_inventory_path": generic_inventory,
             "session": None,
             "result": None,
         }

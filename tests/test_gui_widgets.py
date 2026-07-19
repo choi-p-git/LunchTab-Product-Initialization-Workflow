@@ -168,6 +168,26 @@ def test_inline_category_dropdown_applies_category_and_closes(app) -> None:
     assert app.category_undo_button.cget("text") == "Undo: Set category to Snacks"
 
 
+def test_inventory_file_selection_clears_alternate_inventory_source(app, monkeypatch) -> None:
+    selections = iter(("C:/source/inventory.xlsx", "C:/source/inventory.csv"))
+    monkeypatch.setattr(gui_module.filedialog, "askopenfilename", lambda **_kwargs: next(selections))
+
+    app.generic_inventory_text.set("C:/source/old-inventory.csv")
+    app._choose_odin()
+
+    assert app.odin_inventory_text.get() == "C:/source/inventory.xlsx"
+    assert app.generic_inventory_text.get() == ""
+    assert app.controller.state.odin_inventory_path is not None
+    assert app.controller.state.generic_inventory_path is None
+
+    app._choose_generic_inventory()
+
+    assert app.odin_inventory_text.get() == ""
+    assert app.generic_inventory_text.get() == "C:/source/inventory.csv"
+    assert app.controller.state.odin_inventory_path is None
+    assert app.controller.state.generic_inventory_path is not None
+
+
 class _Event:
     pass
 

@@ -341,7 +341,13 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _require_single_inventory_source(inputs: BuildInputs) -> None:
+    if inputs.odin_inventory_path is not None and inputs.generic_inventory_path is not None:
+        raise ValueError("Select either Odin inventory or generic inventory, not both.")
+
+
 def build_product_import(inputs: BuildInputs) -> BuildResult:
+    _require_single_inventory_source(inputs)
     headers = read_lunchtab_template(inputs.product_template_path)
     category_profile = load_category_profile(inputs.category_profile_path)
     recipes = read_recipe_candidates(inputs.recipe_list_path)

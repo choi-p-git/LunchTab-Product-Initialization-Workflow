@@ -504,7 +504,13 @@ class ProductInitializationApp:
         self._choose_file("Select recipe list", [("CSV files", "*.csv")], self.recipe_list_text, self.controller.select_recipe_list)
 
     def _choose_odin(self) -> None:
-        self._choose_file("Select Odin inventory workbook", [("Excel workbooks", "*.xlsx")], self.odin_inventory_text, self.controller.select_odin_inventory)
+        self._choose_file(
+            "Select Odin inventory workbook",
+            [("Excel workbooks", "*.xlsx")],
+            self.odin_inventory_text,
+            self.controller.select_odin_inventory,
+            clear_variables=(self.generic_inventory_text,),
+        )
 
     def _choose_generic_inventory(self) -> None:
         self._choose_file(
@@ -512,6 +518,7 @@ class ProductInitializationApp:
             [("CSV files", "*.csv")],
             self.generic_inventory_text,
             self.controller.select_generic_inventory,
+            clear_variables=(self.odin_inventory_text,),
         )
 
     def _open_generic_inventory_template(self) -> None:
@@ -537,10 +544,20 @@ class ProductInitializationApp:
         self.venue_profile_text.set(selected)
         self._render()
 
-    def _choose_file(self, title: str, filetypes, variable: tk.StringVar, setter) -> None:
+    def _choose_file(
+        self,
+        title: str,
+        filetypes,
+        variable: tk.StringVar,
+        setter,
+        *,
+        clear_variables: tuple[tk.StringVar, ...] = (),
+    ) -> None:
         selected = filedialog.askopenfilename(title=title, filetypes=filetypes)
         if selected:
             variable.set(selected)
+            for clear_variable in clear_variables:
+                clear_variable.set("")
             setter(Path(selected))
             self._render()
 

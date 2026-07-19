@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+import pytest
 from openpyxl import Workbook
 
 from lunchtab_product_init.models import BuildInputs, CategoryResult, ProductCandidate
@@ -107,6 +108,19 @@ def test_write_generic_inventory_template_uses_required_headers(tmp_path: Path) 
 
     assert reader.fieldnames == ["Item Name", "Price", "Category", "Barcode", "Stock"]
     assert rows == []
+
+
+def test_build_product_import_rejects_multiple_inventory_sources(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="either Odin inventory or generic inventory"):
+        build_product_import(
+            BuildInputs(
+                product_template_path=tmp_path / "ProductData.csv",
+                recipe_list_path=tmp_path / "recipe.csv",
+                output_root=tmp_path / "out",
+                odin_inventory_path=tmp_path / "inventory.xlsx",
+                generic_inventory_path=tmp_path / "inventory.csv",
+            )
+        )
 
 
 def test_build_product_import_can_mark_rows_orderable(tmp_path: Path) -> None:
