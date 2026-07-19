@@ -284,18 +284,43 @@ class ProductInitializationApp:
 
         actions = ttk.Frame(body)
         actions.grid(row=2, column=0, sticky="ew", pady=(8, 0))
-        ttk.Button(actions, text="Select all shown", command=self._select_all_category_rows).pack(side="left")
-        ttk.Button(actions, text="Select highlighted", command=self._select_highlighted_category_rows).pack(side="left", padx=(8, 0))
-        ttk.Button(actions, text="Deselect all shown", command=self._deselect_all_category_rows).pack(side="left", padx=(8, 0))
-        self.category_combo = ttk.Combobox(actions, textvariable=self.selected_category, state="readonly", width=24)
+        actions.columnconfigure(0, weight=1)
+        actions.columnconfigure(1, weight=1)
+        row_actions = ttk.Frame(actions)
+        row_actions.grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.select_all_category_button = ttk.Button(
+            row_actions,
+            text="Select all shown",
+            command=self._select_all_category_rows,
+        )
+        self.select_all_category_button.pack(side="left")
+        self.select_highlighted_category_button = ttk.Button(
+            row_actions,
+            text="Select highlighted",
+            command=self._select_highlighted_category_rows,
+        )
+        self.select_highlighted_category_button.pack(side="left", padx=(8, 0))
+        self.deselect_all_category_button = ttk.Button(
+            row_actions,
+            text="Deselect all shown",
+            command=self._deselect_all_category_rows,
+        )
+        self.deselect_all_category_button.pack(side="left", padx=(8, 0))
+        self.category_combo = ttk.Combobox(row_actions, textvariable=self.selected_category, state="readonly", width=24)
         self.category_combo.pack(side="left", padx=8)
-        ttk.Button(actions, text="Assign category", command=self._assign_category).pack(side="left")
-        ttk.Button(actions, text="Mark for edit", command=self._mark_category_for_edit).pack(side="left", padx=8)
-        ttk.Button(actions, text="Delete rows", command=self._delete_category_rows).pack(side="left")
-        self.save_profile_button = ttk.Button(actions, text="Save venue profile...", command=self._save_profile)
-        self.save_profile_button.pack(side="right")
-        self.to_edit_button = ttk.Button(actions, text="Next: Edit review", command=self._go_to_edit)
-        self.to_edit_button.pack(side="right", padx=8)
+        self.assign_category_button = ttk.Button(row_actions, text="Assign category", command=self._assign_category)
+        self.assign_category_button.pack(side="left")
+        self.mark_category_button = ttk.Button(row_actions, text="Mark for edit", command=self._mark_category_for_edit)
+        self.mark_category_button.pack(side="left", padx=8)
+        self.delete_category_button = ttk.Button(row_actions, text="Delete rows", command=self._delete_category_rows)
+        self.delete_category_button.pack(side="left")
+        workflow_actions = ttk.Frame(actions)
+        workflow_actions.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(6, 0))
+        workflow_actions.columnconfigure(0, weight=1)
+        self.save_profile_button = ttk.Button(workflow_actions, text="Save venue profile...", command=self._save_profile)
+        self.save_profile_button.grid(row=0, column=1, sticky="e")
+        self.to_edit_button = ttk.Button(workflow_actions, text="Next: Edit review", command=self._go_to_edit)
+        self.to_edit_button.grid(row=0, column=2, sticky="e", padx=(8, 0))
         self._price_operator_changed()
 
     def _build_edit_tab(self) -> None:

@@ -140,6 +140,8 @@ assignment is limited to category names the operator enters or loads through a v
 2. **Layout and UX Refinement**
    - Review all tabs at 1366x768 with Windows display scaling and confirm primary actions remain
      visible and reachable.
+   - Step 2 category action controls have been split into row-action and workflow-action bands,
+     with widget coverage confirming primary controls remain visible at 1366x768.
    - Reduce unnecessary clicks in high-volume work paths: category assignment, edit review,
      no-barcode deletion, row merge, and POS-name override.
    - Improve final-review metadata density without crowding the export and profile-save actions.

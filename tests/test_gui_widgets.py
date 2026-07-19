@@ -188,6 +188,41 @@ def test_inventory_file_selection_clears_alternate_inventory_source(app, monkeyp
     assert app.controller.state.generic_inventory_path is not None
 
 
+def test_category_primary_actions_remain_visible_at_1366x768(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row("row-1", "Apple Juice", "1.25", "111", category="Beverages"),
+            _row("row-2", "Orange Juice", "1.50", "222", category="Beverages"),
+        ),
+        category_names=("Beverages",),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.parse_succeeded(session)
+    _clear_category_filter_vars(app)
+    app.root.geometry("1366x768+0+0")
+    app.root.deiconify()
+    app.notebook.select(app.tabs["categories"])
+    app._render()
+    app.root.update()
+    app.root.update_idletasks()
+
+    _assert_widgets_inside_root(
+        app.root,
+        (
+            app.select_all_category_button,
+            app.select_highlighted_category_button,
+            app.deselect_all_category_button,
+            app.category_combo,
+            app.assign_category_button,
+            app.mark_category_button,
+            app.delete_category_button,
+            app.save_profile_button,
+            app.to_edit_button,
+        ),
+    )
+
+
 def test_pos_reason_filter_shows_rows_requiring_attention(app) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),
@@ -374,6 +409,23 @@ def _set_pos_session(app: ProductInitializationApp, session: ImportSession) -> N
     app.odin_inventory_text.set("")
     app.generic_inventory_text.set("")
     app.controller.set_session(session, phase=gui_module.AppPhase.POS_REVIEW)
+
+
+def _assert_widgets_inside_root(root: tk.Tk, widgets: tuple[tk.Widget, ...]) -> None:
+    root_left = root.winfo_rootx()
+    root_top = root.winfo_rooty()
+    root_right = root_left + root.winfo_width()
+    root_bottom = root_top + root.winfo_height()
+    if root.winfo_width() <= 1 or root.winfo_height() <= 1:
+        pytest.skip("Tk did not expose root geometry for layout test.")
+    for widget in widgets:
+        assert widget.winfo_ismapped(), f"{widget} is not mapped"
+        widget_left = widget.winfo_rootx()
+        widget_top = widget.winfo_rooty()
+        widget_right = widget_left + widget.winfo_width()
+        widget_bottom = widget_top + widget.winfo_height()
+        assert root_left <= widget_left < widget_right <= root_right
+        assert root_top <= widget_top < widget_bottom <= root_bottom
 
 
 def _row(
