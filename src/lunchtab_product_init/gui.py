@@ -15,9 +15,11 @@ from lunchtab_product_init.gui_controller import (
     CategoryActionSelection,
     UndoEntry,
     deselect_shown_category_rows,
+    final_review_audit_text,
     next_displayed_pos_row_id,
     select_category_action_rows,
     select_shown_category_rows,
+    source_file_audits,
     toggle_category_row_selection,
     undo_button_text,
 )
@@ -1473,19 +1475,12 @@ class ProductInitializationApp:
         for row in session.active_rows:
             tree.insert("", "end", iid=row.row_id, values=(row.item_name, row.pos_name, row.price, row.barcode, row.category))
         metadata = final_review_metadata(session)
-        category_counts = ", ".join(
-            f"{category}: {count}" for category, count in metadata.category_counts
-        ) or "(none)"
-        export_status = "ready" if metadata.export_ready else f"{len(metadata.export_errors)} blocker(s)"
         self.audit_text.set(
-            f"Rows: parsed {metadata.parsed_rows} | active {metadata.active_rows} | "
-            f"deleted {metadata.deleted_rows} | edited {metadata.edited_rows} | "
-            f"merged {metadata.merge_rows}\n"
-            f"Validation: export {export_status} | duplicate barcodes {metadata.duplicate_barcodes} | "
-            f"duplicate POS names {metadata.duplicate_pos_names}\n"
-            f"Categories: {category_counts}\n"
-            f"POS overrides: {metadata.pos_overrides} | "
-            f"IsOrderable: {'true' if self.controller.state.is_orderable else 'false'}"
+            final_review_audit_text(
+                metadata,
+                is_orderable=self.controller.state.is_orderable,
+                source_files=source_file_audits(self.controller.state),
+            )
         )
 
     def _load_next_edit_row(self) -> None:

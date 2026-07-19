@@ -84,7 +84,7 @@ assignment is limited to category names the operator enters or loads through a v
 ## Roadmap
 
 1. **Final-review metadata expansion**
-   - Show source filenames and source hashes from the manifest.
+   - Final review now shows selected source filenames with short SHA-256 hashes.
    - Show active duplicate-check status for barcodes and POS names.
    - Show category counts by category.
    - Show edit count, POS override count, deleted count, merge count, and `IsOrderable`.

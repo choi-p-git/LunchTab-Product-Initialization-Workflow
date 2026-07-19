@@ -6,16 +6,20 @@ from pathlib import Path
 from lunchtab_product_init.gui_controller import (
     AppController,
     AppPhase,
+    AppState,
+    SourceFileAudit,
     UndoEntry,
     deselect_shown_category_rows,
+    final_review_audit_text,
     next_displayed_pos_row_id,
     select_category_action_rows,
     select_shown_category_rows,
+    source_file_audits,
     toggle_category_row_selection,
     undo_button_text,
 )
 from lunchtab_product_init.models import LUNCHTAB_TEMPLATE_HEADERS
-from lunchtab_product_init.session_workflow import ImportSession
+from lunchtab_product_init.session_workflow import FinalReviewMetadata, ImportSession
 
 
 def test_controller_ready_to_parse_after_all_files_selected() -> None:
@@ -98,6 +102,63 @@ def test_undo_button_text_shows_next_undo_action() -> None:
             UndoEntry(session=session, label="Delete 1 row"),
         ]
     ) == "Undo: Delete 1 row"
+
+
+def test_source_file_audits_hash_selected_inputs(tmp_path: Path) -> None:
+    template = tmp_path / "ProductData.csv"
+    recipe = tmp_path / "recipeList.csv"
+    inventory = tmp_path / "inventory.xlsx"
+    template.write_text("template", encoding="utf-8")
+    recipe.write_text("recipe", encoding="utf-8")
+    inventory.write_bytes(b"inventory")
+
+    audits = source_file_audits(
+        AppState(
+            product_template_path=template,
+            recipe_list_path=recipe,
+            odin_inventory_path=inventory,
+        )
+    )
+
+    assert [audit.label for audit in audits] == ["Template", "Recipe", "Odin"]
+    assert [audit.filename for audit in audits] == [
+        "ProductData.csv",
+        "recipeList.csv",
+        "inventory.xlsx",
+    ]
+    assert all(len(audit.sha256) == 64 for audit in audits)
+    assert audits[0].sha256 == "5cde0f1298f41f7d1c8b907a36992a7a513225a2615bd6e307bf1a9149b06b40"
+    assert audits[0].short_sha256 == "5cde0f1298f4"
+
+
+def test_final_review_audit_text_includes_source_filenames_and_short_hashes() -> None:
+    metadata = FinalReviewMetadata(
+        parsed_rows=10,
+        active_rows=8,
+        deleted_rows=2,
+        edited_rows=1,
+        merge_rows=1,
+        pos_overrides=3,
+        duplicate_barcodes=0,
+        duplicate_pos_names=1,
+        category_counts=(("Bread", 4), ("Snacks", 4)),
+        export_errors=("row-1: duplicate POS name",),
+    )
+
+    text = final_review_audit_text(
+        metadata,
+        is_orderable=True,
+        source_files=(
+            SourceFileAudit("Template", "ProductData.csv", "abcdef1234567890"),
+            SourceFileAudit("Recipe", "recipeList.csv", "123456abcdef7890"),
+        ),
+    )
+
+    assert "Rows: parsed 10 | active 8 | deleted 2 | edited 1 | merged 1" in text
+    assert "Validation: export 1 blocker(s) | duplicate barcodes 0 | duplicate POS names 1" in text
+    assert "Categories: Bread: 4, Snacks: 4" in text
+    assert "POS overrides: 3 | IsOrderable: true" in text
+    assert "Sources: Template: ProductData.csv (abcdef123456); Recipe: recipeList.csv (123456abcdef)" in text
 
 
 def test_category_action_rows_prefer_checked_rows_over_highlighted_rows() -> None:

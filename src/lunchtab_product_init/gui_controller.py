@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from enum import Enum
 from pathlib import Path
 
 from lunchtab_product_init.models import BuildInputs
-from lunchtab_product_init.session_workflow import ImportSession, SessionExportResult
+from lunchtab_product_init.session_workflow import FinalReviewMetadata, ImportSession, SessionExportResult
 from lunchtab_product_init.workflow import default_output_root
 
 
@@ -79,11 +80,61 @@ class UndoEntry:
     label: str
 
 
+@dataclass(frozen=True)
+class SourceFileAudit:
+    label: str
+    filename: str
+    sha256: str
+
+    @property
+    def short_sha256(self) -> str:
+        return self.sha256[:12]
+
+
 def undo_button_text(entries: Iterable[UndoEntry]) -> str:
     entries = tuple(entries)
     if not entries:
         return "Undo"
     return f"Undo: {entries[-1].label}"
+
+
+def source_file_audits(state: AppState) -> tuple[SourceFileAudit, ...]:
+    paths = (
+        ("Template", state.product_template_path),
+        ("Recipe", state.recipe_list_path),
+        ("Odin", state.odin_inventory_path),
+    )
+    return tuple(
+        SourceFileAudit(label=label, filename=path.name, sha256=_sha256(path))
+        for label, path in paths
+        if path is not None
+    )
+
+
+def final_review_audit_text(
+    metadata: FinalReviewMetadata,
+    *,
+    is_orderable: bool,
+    source_files: Iterable[SourceFileAudit] = (),
+) -> str:
+    category_counts = ", ".join(
+        f"{category}: {count}" for category, count in metadata.category_counts
+    ) or "(none)"
+    export_status = "ready" if metadata.export_ready else f"{len(metadata.export_errors)} blocker(s)"
+    source_text = "; ".join(
+        f"{source.label}: {source.filename} ({source.short_sha256})" for source in source_files
+    ) or "(none)"
+    return (
+        f"Rows: parsed {metadata.parsed_rows} | active {metadata.active_rows} | "
+        f"deleted {metadata.deleted_rows} | edited {metadata.edited_rows} | "
+        f"merged {metadata.merge_rows}\n"
+        f"Validation: export {export_status} | duplicate barcodes {metadata.duplicate_barcodes} | "
+        f"duplicate POS names {metadata.duplicate_pos_names}\n"
+        f"Categories: {category_counts}\n"
+        f"POS overrides: {metadata.pos_overrides} | "
+        f"IsOrderable: {'true' if is_orderable else 'false'}\n"
+        f"Sources: {source_text}"
+    )
 
 
 def select_category_action_rows(
@@ -299,3 +350,11 @@ class AppController:
     def _require_session(self) -> None:
         if self.state.session is None:
             raise RuntimeError("Parse source files before continuing.")
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
