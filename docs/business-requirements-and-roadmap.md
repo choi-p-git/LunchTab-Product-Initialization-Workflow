@@ -117,9 +117,8 @@ assignment is limited to category names the operator enters or loads through a v
 1. **Widget-Level GUI Coverage**
    - Add display-safe Tk widget tests that skip cleanly when Tcl/Tk or a display server is
      unavailable.
-   - Step 2 Delete-key behavior and inline category dropdown behavior are covered through a real
-     `ProductInitializationApp` instance.
-   - Add remaining Step 2 widget coverage for filter event behavior.
+   - Step 2 Delete-key behavior, inline category dropdown behavior, and keyword filter debounce
+     behavior are covered through a real `ProductInitializationApp` instance.
    - Cover Step 4 reason filter changes, Enter-to-replace, displayed-row advance, and entry focus
      or selection state through widget-level tests.
 

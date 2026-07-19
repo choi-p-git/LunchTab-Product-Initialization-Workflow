@@ -10,7 +10,7 @@ from lunchtab_product_init.models import LUNCHTAB_TEMPLATE_HEADERS, ProductCandi
 from lunchtab_product_init.session_workflow import ImportSession, SessionRow
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def app():
     try:
         root = tk.Tk()
@@ -35,6 +35,7 @@ def test_category_delete_key_deletes_highlighted_row_after_confirmation(app, mon
         category_names=("Beverages",),
     )
     app.controller.parse_succeeded(session)
+    _clear_category_filter_vars(app)
     app._render()
     app.root.update()
 
@@ -67,6 +68,61 @@ def test_category_delete_key_deletes_highlighted_row_after_confirmation(app, mon
     assert "row-2" in tree.get_children("")
 
 
+def test_category_keyword_filter_debounces_and_immediate_refresh_cancels_pending(
+    app,
+    monkeypatch,
+) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row("row-1", "Apple Juice", "1.25", "111", category="Beverages"),
+            _row("row-2", "Chicken Sandwich", "6.50", "222", category="Entrees"),
+            _row("row-3", "Orange Juice", "1.50", "333", category="Beverages"),
+        ),
+        category_names=("Beverages", "Entrees"),
+    )
+    app.controller.parse_succeeded(session)
+    _clear_category_filter_vars(app)
+    app._render()
+    app.root.geometry("1120x760")
+    app.root.deiconify()
+    app.notebook.select(app.tabs["categories"])
+    app.root.update()
+
+    tree = app._tree_widget(app.category_tree)
+    assert set(tree.get_children("")) == {"row-1", "row-2", "row-3"}
+
+    app.category_filter.set("chicken")
+    app.category_filter_entry.focus_set()
+    monkeypatch.setattr(app.root, "focus_get", lambda: app.category_filter_entry)
+    app.root.update()
+
+    app._category_filter_key_released(_KeyEvent(app.category_filter_entry, "n"))
+    pending_after_id = app._category_filter_after_id
+    assert pending_after_id is not None
+    assert set(tree.get_children("")) == {"row-1", "row-2", "row-3"}
+
+    app.root.after_cancel(pending_after_id)
+    app._run_category_filter_refresh()
+    app.root.update()
+    tree = app._tree_widget(app.category_tree)
+    assert app._category_filter_after_id is None
+    assert list(tree.get_children("")) == ["row-2"]
+
+    app.category_filter.set("orange")
+    app._category_filter_after_id = "pending-filter"
+    after_cancel_calls = []
+    monkeypatch.setattr(app.root, "after_cancel", after_cancel_calls.append)
+
+    app._refresh_category_rows()
+    app.root.update()
+    tree = app._tree_widget(app.category_tree)
+
+    assert after_cancel_calls == ["pending-filter"]
+    assert app._category_filter_after_id is None
+    assert list(tree.get_children("")) == ["row-3"]
+
+
 def test_inline_category_dropdown_applies_category_and_closes(app) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),
@@ -77,6 +133,7 @@ def test_inline_category_dropdown_applies_category_and_closes(app) -> None:
         category_names=("Beverages", "Snacks"),
     )
     app.controller.parse_succeeded(session)
+    _clear_category_filter_vars(app)
     app._render()
     app.root.geometry("1120x760")
     app.root.deiconify()
@@ -113,6 +170,24 @@ def test_inline_category_dropdown_applies_category_and_closes(app) -> None:
 
 class _Event:
     pass
+
+
+class _KeyEvent:
+    def __init__(self, widget: tk.Widget, keysym: str) -> None:
+        self.widget = widget
+        self.keysym = keysym
+
+
+def _clear_category_filter_vars(app: ProductInitializationApp) -> None:
+    app.category_filter.set("")
+    app.name_filter.set("Any")
+    app.old_category_filter.set("")
+    app.barcode_filter.set("Any")
+    app.category_assignment_filter.set("Any")
+    app.price_operator.set("=")
+    app.min_price.set("")
+    app.max_price.set("")
+    app._category_filter_after_id = None
 
 
 def _row(row_id: str, name: str, price: str, barcode: str, *, category: str = "") -> SessionRow:
