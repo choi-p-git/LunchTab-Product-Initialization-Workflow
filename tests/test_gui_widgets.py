@@ -67,11 +67,55 @@ def test_category_delete_key_deletes_highlighted_row_after_confirmation(app, mon
     assert "row-2" in tree.get_children("")
 
 
+def test_inline_category_dropdown_applies_category_and_closes(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row("row-1", "Apple Juice", "1.25", "111", category=""),
+            _row("row-2", "Orange Juice", "1.50", "222", category="Beverages"),
+        ),
+        category_names=("Beverages", "Snacks"),
+    )
+    app.controller.parse_succeeded(session)
+    app._render()
+    app.root.geometry("1120x760")
+    app.root.deiconify()
+    app.notebook.select(app.tabs["categories"])
+    app.root.update()
+
+    tree = app._tree_widget(app.category_tree)
+    tree.see("row-1")
+    app.root.update()
+    app.root.update_idletasks()
+    if not tree.bbox("row-1", "#6"):
+        pytest.skip("Tk did not expose category-cell geometry for inline dropdown test.")
+
+    app._show_inline_category_dropdown("row-1", focus=True)
+    app.root.update()
+
+    combo = app.inline_category_combo
+    assert combo is not None
+    assert combo.winfo_exists()
+    assert str(combo.cget("state")) == "readonly"
+    assert combo.cget("values") == ("Beverages", "Snacks")
+
+    app._apply_inline_category("row-1", "Snacks")
+    app.root.update()
+    row_1 = next(row for row in app.controller.state.session.rows if row.row_id == "row-1")
+
+    assert row_1.category == "Snacks"
+    assert row_1.status == "active"
+    assert row_1.review_reason == ""
+    assert app.inline_category_combo is None
+    assert str(app.category_undo_button.cget("state")) == "normal"
+    assert app.category_undo_button.cget("text") == "Undo: Set category to Snacks"
+
+
 class _Event:
     pass
 
 
-def _row(row_id: str, name: str, price: str, barcode: str, *, category: str) -> SessionRow:
+def _row(row_id: str, name: str, price: str, barcode: str, *, category: str = "") -> SessionRow:
     return SessionRow(
         row_id=row_id,
         candidate=ProductCandidate(
