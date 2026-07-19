@@ -108,8 +108,10 @@ assignment is limited to category names the operator enters or loads through a v
      including filtered lists and rows that leave the current filter.
    - Add remaining Step 4 GUI-focused coverage for reason filters, Enter-to-replace, and preserved
      widget selection/focus state.
-   - Add end-to-end session tests for back edits from final review through category, edit, merge,
-     POS review, and final validation.
+   - End-to-end session coverage now includes back edits from final review through category, edit,
+     merge, POS review, and final validation, plus a local raw-data/profile integration test that
+     parses real ignored source exports, applies the saved venue profile, completes a deterministic
+     export subset, and verifies final CSV/audit/manifest outputs.
 
 4. **Operator UX hardening**
    - Review button layout at 1366x768 with Windows scaling.

@@ -4,6 +4,8 @@ import csv
 import json
 from pathlib import Path
 
+import pytest
+
 from lunchtab_product_init.models import BuildInputs, LUNCHTAB_TEMPLATE_HEADERS, ProductCandidate
 from lunchtab_product_init.session_workflow import (
     ImportSession,
@@ -22,6 +24,7 @@ from lunchtab_product_init.session_workflow import (
     next_edit_row,
     no_barcode_rows,
     parse_barcodes,
+    parse_sources,
     replace_pos_name,
     run_pos_generation,
     save_edit,
@@ -714,6 +717,82 @@ def test_final_review_metadata_summarizes_counts_and_validation() -> None:
     assert "row-2: duplicate barcode" in metadata.export_errors
 
 
+def test_raw_data_guided_session_profile_subset_exports_with_audits(tmp_path: Path) -> None:
+    template, recipe, inventory, profile_path = _raw_data_paths()
+    inputs = BuildInputs(
+        product_template_path=template,
+        recipe_list_path=recipe,
+        odin_inventory_path=inventory,
+        output_root=tmp_path / "out",
+    )
+    profile = load_venue_profile(profile_path)
+
+    session = apply_venue_profile(parse_sources(inputs), profile)
+    raw_row_count = len(session.rows)
+
+    assert raw_row_count > 1000
+    assert len(session.category_names) >= 20
+    assert "Bread" in session.category_names
+    assert "Vendor Beverages" in session.category_names
+    assert len(no_barcode_rows(session)) > 300
+    assert any(row.old_category for row in session.rows)
+
+    keep_ids = _first_exportable_unique_barcode_row_ids(session, count=5)
+    assert len(keep_ids) == 5
+
+    session = delete_rows(
+        session,
+        {row.row_id for row in session.rows if row.row_id not in keep_ids},
+        "raw fixture excluded",
+    )
+    session = assign_category(session, keep_ids, "Bread")
+    session = run_pos_generation(session)
+    for index, row in enumerate(session.active_rows, start=1):
+        session = replace_pos_name(session, row.row_id, f"RawPOS{index:02d}")
+
+    metadata = final_review_metadata(session)
+    assert metadata.export_ready
+    assert metadata.parsed_rows == raw_row_count
+    assert metadata.active_rows == 5
+    assert metadata.deleted_rows == raw_row_count - 5
+    assert metadata.pos_overrides == 5
+    assert metadata.category_counts == (("Bread", 5),)
+
+    result = export_session(session, inputs, is_orderable=True)
+
+    with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
+        final_rows = list(csv.DictReader(file))
+    with result.summary.output_paths.deleted_audit.open(encoding="utf-8-sig", newline="") as file:
+        deleted_rows = list(csv.DictReader(file))
+    with result.summary.output_paths.session_audit.open(encoding="utf-8-sig", newline="") as file:
+        session_audit_rows = list(csv.DictReader(file))
+    manifest = json.loads(result.summary.output_paths.manifest.read_text(encoding="utf-8"))
+
+    assert result.summary.parsed_rows == raw_row_count
+    assert result.summary.exported_rows == 5
+    assert result.summary.deleted_rows == raw_row_count - 5
+    assert result.summary.category_count == len(session.category_names)
+    assert result.summary.pos_overrides == 5
+    assert len(final_rows) == 5
+    assert len(deleted_rows) == raw_row_count - 5
+    assert len(session_audit_rows) == raw_row_count
+    assert {row["IsOrderable"] for row in final_rows} == {"true"}
+    assert {row["ProductCategories"] for row in final_rows} == {"Bread;"}
+    assert [row["BaseProductPosName"] for row in final_rows] == [
+        f"RawPOS{index:02d}" for index in range(1, 6)
+    ]
+    assert all(row["Barcodes"] for row in final_rows)
+    assert {row["DeletedReason"] for row in deleted_rows} == {"raw fixture excluded"}
+    assert manifest["sources"]["product_template"]["filename"] == template.name
+    assert manifest["sources"]["recipe_list"]["filename"] == recipe.name
+    assert manifest["sources"]["odin_inventory"]["filename"] == inventory.name
+    assert all(len(source["sha256"]) == 64 for source in manifest["sources"].values())
+    assert manifest["counts"]["exported_rows"] == 5
+    assert manifest["counts"]["deleted_rows"] == raw_row_count - 5
+    assert "Bread" in manifest["categories"]
+    assert "chicken" in manifest["pos_name_preferences"]
+
+
 def test_venue_profile_saves_categories_and_pos_preferences(tmp_path: Path) -> None:
     preferences = learn_pos_preferences(_session([]).pos_preferences, "Chicken Caesar Salad", "Chick Cae Sal")
     session = _session([], categories=("Salads",), preferences=preferences)
@@ -823,3 +902,29 @@ def _write_csv(path: Path, rows: list[dict[str, str]], fieldnames: list[str]) ->
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _raw_data_paths() -> tuple[Path, Path, Path, Path]:
+    raw_data = Path(__file__).resolve().parents[1] / "Raw Data"
+    template = sorted(raw_data.glob("ProductData*.csv"))
+    recipe = sorted(raw_data.glob("recipeList*.csv"))
+    inventory = sorted(raw_data.glob("*.xlsx"))
+    profile = sorted(raw_data.glob("*.json"))
+    if not template or not recipe or not inventory or not profile:
+        pytest.skip("Raw Data integration fixture is not available in this checkout.")
+    return template[0], recipe[0], inventory[0], profile[0]
+
+
+def _first_exportable_unique_barcode_row_ids(session: ImportSession, *, count: int) -> set[str]:
+    row_ids = []
+    seen_barcodes = set()
+    for row in session.active_rows:
+        barcodes = parse_barcodes(row.barcode)
+        barcode_keys = {barcode.casefold() for barcode in barcodes}
+        if row.status != "active" or not barcodes or barcode_keys & seen_barcodes:
+            continue
+        row_ids.append(row.row_id)
+        seen_barcodes.update(barcode_keys)
+        if len(row_ids) == count:
+            break
+    return set(row_ids)
