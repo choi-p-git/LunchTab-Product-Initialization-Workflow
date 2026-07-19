@@ -80,6 +80,75 @@ def test_parse_barcodes_splits_trims_and_dedupes() -> None:
     assert parse_barcodes(" ABC, DEF ,ABC,, ghi ") == ("ABC", "DEF", "ghi")
 
 
+def test_parse_sources_allows_recipe_only_without_inventory(tmp_path: Path) -> None:
+    template = tmp_path / "ProductData.csv"
+    recipe = tmp_path / "recipe.csv"
+    _write_csv(template, [], list(LUNCHTAB_TEMPLATE_HEADERS))
+    _write_csv(
+        recipe,
+        [{"Menu Item Name": "Apple Juice", "Price": "$1.25", "Barcode": " SAGEMB111 "}],
+        ["Menu Item Name", "Price", "Barcode"],
+    )
+
+    session = parse_sources(
+        BuildInputs(
+            product_template_path=template,
+            recipe_list_path=recipe,
+            output_root=tmp_path / "out",
+        )
+    )
+
+    assert len(session.rows) == 1
+    assert session.rows[0].candidate.source == "recipe"
+    assert session.rows[0].candidate.item_name == "Apple Juice"
+    assert session.rows[0].candidate.price == "1.25"
+    assert session.rows[0].candidate.barcode == "SAGEMB111"
+    assert session.rows[0].old_category == ""
+
+
+def test_parse_sources_can_merge_generic_inventory_csv(tmp_path: Path) -> None:
+    template = tmp_path / "ProductData.csv"
+    recipe = tmp_path / "recipe.csv"
+    inventory = tmp_path / "inventory.csv"
+    _write_csv(template, [], list(LUNCHTAB_TEMPLATE_HEADERS))
+    _write_csv(
+        recipe,
+        [{"Menu Item Name": "Apple Juice", "Price": "", "Barcode": "111"}],
+        ["Menu Item Name", "Price", "Barcode"],
+    )
+    _write_csv(
+        inventory,
+        [
+            {
+                "Item Name": "Apple Juice Retail",
+                "Price": "1.25",
+                "Category": "Beverages",
+                "Barcode": "111",
+                "Stock": "5",
+            }
+        ],
+        ["Item Name", "Price", "Category", "Barcode", "Stock"],
+    )
+
+    session = parse_sources(
+        BuildInputs(
+            product_template_path=template,
+            recipe_list_path=recipe,
+            output_root=tmp_path / "out",
+            generic_inventory_path=inventory,
+        )
+    )
+
+    assert len(session.rows) == 1
+    row = session.rows[0]
+    assert row.candidate.source == "recipe+inventory"
+    assert row.candidate.item_name == "Apple Juice"
+    assert row.candidate.price == "1.25"
+    assert row.candidate.category == "Beverages"
+    assert row.candidate.stock == "5"
+    assert row.old_category == "Beverages"
+
+
 def test_category_names_are_sorted_ascending() -> None:
     session = _session([])
 
@@ -791,7 +860,10 @@ def test_raw_data_guided_session_profile_subset_exports_with_audits(tmp_path: Pa
     assert manifest["sources"]["product_template"]["filename"] == template.name
     assert manifest["sources"]["recipe_list"]["filename"] == recipe.name
     assert manifest["sources"]["odin_inventory"]["filename"] == inventory.name
-    assert all(len(source["sha256"]) == 64 for source in manifest["sources"].values())
+    assert manifest["sources"]["generic_inventory"] is None
+    assert all(
+        len(source["sha256"]) == 64 for source in manifest["sources"].values() if source is not None
+    )
     assert manifest["counts"]["exported_rows"] == 5
     assert manifest["counts"]["deleted_rows"] == raw_row_count - 5
     assert "Bread" in manifest["categories"]

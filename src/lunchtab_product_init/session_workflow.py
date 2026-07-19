@@ -25,6 +25,7 @@ from lunchtab_product_init.workflow import (
     NAMING_AUDIT_NAME,
     merge_candidates,
     product_row,
+    read_generic_inventory_candidates,
     read_lunchtab_template,
     read_odin_candidates,
     read_recipe_candidates,
@@ -204,8 +205,12 @@ class FinalReviewMetadata:
 def parse_sources(inputs: BuildInputs) -> ImportSession:
     headers = read_lunchtab_template(inputs.product_template_path)
     recipes = read_recipe_candidates(inputs.recipe_list_path)
-    odin = read_odin_candidates(inputs.odin_inventory_path)
-    candidates = merge_candidates(recipes, odin)
+    inventory = []
+    if inputs.odin_inventory_path is not None:
+        inventory.extend(read_odin_candidates(inputs.odin_inventory_path))
+    if inputs.generic_inventory_path is not None:
+        inventory.extend(read_generic_inventory_candidates(inputs.generic_inventory_path))
+    candidates = merge_candidates(recipes, inventory)
     barcode_duplicates = duplicate_barcodes(candidate.barcode for candidate in candidates)
     rows = tuple(
         _session_row(index, candidate, barcode_duplicates)
@@ -1426,6 +1431,7 @@ def _write_manifest(
             "product_template": _source_info(inputs.product_template_path),
             "recipe_list": _source_info(inputs.recipe_list_path),
             "odin_inventory": _source_info(inputs.odin_inventory_path),
+            "generic_inventory": _source_info(inputs.generic_inventory_path),
         },
         "counts": {
             "parsed_rows": summary.parsed_rows,
@@ -1480,7 +1486,9 @@ def _write_summary(
     )
 
 
-def _source_info(path: Path) -> dict[str, str]:
+def _source_info(path: Path | None) -> dict[str, str] | None:
+    if path is None:
+        return None
     return {"filename": path.name, "sha256": _sha256(path)}
 
 

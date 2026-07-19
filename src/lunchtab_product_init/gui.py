@@ -49,6 +49,7 @@ from lunchtab_product_init.session_workflow import (
     validate_pos_name_for_row,
 )
 from lunchtab_product_init.ui_helpers import size_and_center
+from lunchtab_product_init.workflow import write_generic_inventory_template
 
 APP_TITLE = "Lunchtab Product Initialization"
 
@@ -74,6 +75,7 @@ class ProductInitializationApp:
         self.product_template_text = tk.StringVar()
         self.recipe_list_text = tk.StringVar()
         self.odin_inventory_text = tk.StringVar()
+        self.generic_inventory_text = tk.StringVar()
         self.venue_profile_text = tk.StringVar()
         self.output_text = tk.StringVar(value=str(self.controller.state.output_root))
         self.status_text = tk.StringVar(value=self.controller.state.message)
@@ -156,15 +158,16 @@ class ProductInitializationApp:
         form.columnconfigure(1, weight=1)
         self._file_row(form, 0, "ProductData template", self.product_template_text, self._choose_template)
         self._file_row(form, 1, "Recipe list", self.recipe_list_text, self._choose_recipe)
-        self._file_row(form, 2, "Odin inventory", self.odin_inventory_text, self._choose_odin)
-        self._file_row(form, 3, "Venue profile", self.venue_profile_text, self._choose_venue_profile)
-        self._file_row(form, 4, "Save results in", self.output_text, self._choose_output)
+        self._file_row(form, 2, "Odin inventory (optional)", self.odin_inventory_text, self._choose_odin)
+        self._generic_inventory_row(form, 3)
+        self._file_row(form, 4, "Venue profile", self.venue_profile_text, self._choose_venue_profile)
+        self._file_row(form, 5, "Save results in", self.output_text, self._choose_output)
         ttk.Checkbutton(
             form,
             text="Set target CSV IsOrderable to true",
             variable=self.is_orderable,
             command=self._set_is_orderable,
-        ).grid(row=5, column=0, columnspan=3, sticky="w", pady=(10, 0))
+        ).grid(row=6, column=0, columnspan=3, sticky="w", pady=(10, 0))
         actions = ttk.Frame(parent)
         actions.grid(row=1, column=0, sticky="ew", pady=(12, 0))
         actions.columnconfigure(0, weight=1)
@@ -452,6 +455,28 @@ class ProductInitializationApp:
         ttk.Entry(parent, textvariable=variable, state="readonly").grid(row=row, column=1, sticky="ew", padx=8, pady=5)
         ttk.Button(parent, text="Browse...", command=command).grid(row=row, column=2, pady=5)
 
+    def _generic_inventory_row(self, parent, row: int) -> None:
+        label_frame = ttk.Frame(parent)
+        label_frame.grid(row=row, column=0, sticky="w", pady=5)
+        ttk.Label(label_frame, text="Generic inventory (optional)", width=22).grid(row=0, column=0, sticky="w")
+        ttk.Button(label_frame, text="Template", command=self._open_generic_inventory_template).grid(
+            row=0,
+            column=1,
+            padx=(6, 0),
+        )
+        ttk.Entry(parent, textvariable=self.generic_inventory_text, state="readonly").grid(
+            row=row,
+            column=1,
+            sticky="ew",
+            padx=8,
+            pady=5,
+        )
+        ttk.Button(parent, text="Browse...", command=self._choose_generic_inventory).grid(
+            row=row,
+            column=2,
+            pady=5,
+        )
+
     @staticmethod
     def _tree(parent, columns: tuple[str, ...], labels: tuple[str, ...]) -> ttk.Treeview:
         frame = ttk.Frame(parent)
@@ -480,6 +505,22 @@ class ProductInitializationApp:
 
     def _choose_odin(self) -> None:
         self._choose_file("Select Odin inventory workbook", [("Excel workbooks", "*.xlsx")], self.odin_inventory_text, self.controller.select_odin_inventory)
+
+    def _choose_generic_inventory(self) -> None:
+        self._choose_file(
+            "Select generic inventory list",
+            [("CSV files", "*.csv")],
+            self.generic_inventory_text,
+            self.controller.select_generic_inventory,
+        )
+
+    def _open_generic_inventory_template(self) -> None:
+        path = self.controller.state.output_root / "generic-inventory-template.csv"
+        try:
+            write_generic_inventory_template(path)
+            open_path(path)
+        except Exception as error:
+            messagebox.showerror(APP_TITLE, friendly_error(error))
 
     def _choose_venue_profile(self) -> None:
         selected = filedialog.askopenfilename(

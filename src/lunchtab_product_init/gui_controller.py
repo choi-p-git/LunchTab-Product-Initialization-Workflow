@@ -29,19 +29,19 @@ class AppState:
     product_template_path: Path | None = None
     recipe_list_path: Path | None = None
     odin_inventory_path: Path | None = None
+    generic_inventory_path: Path | None = None
     output_root: Path = default_output_root()
     is_orderable: bool = False
     phase: AppPhase = AppPhase.EMPTY
     session: ImportSession | None = None
     result: SessionExportResult | None = None
-    message: str = "Select the three source files to begin."
+    message: str = "Select ProductData template and recipe list to begin."
 
     @property
     def can_parse(self) -> bool:
         return (
             self.product_template_path is not None
             and self.recipe_list_path is not None
-            and self.odin_inventory_path is not None
             and self.phase not in {AppPhase.PARSING, AppPhase.EXPORTING}
         )
 
@@ -103,6 +103,7 @@ def source_file_audits(state: AppState) -> tuple[SourceFileAudit, ...]:
         ("Template", state.product_template_path),
         ("Recipe", state.recipe_list_path),
         ("Odin", state.odin_inventory_path),
+        ("Generic Inventory", state.generic_inventory_path),
     )
     return tuple(
         SourceFileAudit(label=label, filename=path.name, sha256=_sha256(path))
@@ -214,6 +215,9 @@ class AppController:
     def select_odin_inventory(self, path: Path) -> AppState:
         return self._select(odin_inventory_path=path)
 
+    def select_generic_inventory(self, path: Path) -> AppState:
+        return self._select(generic_inventory_path=path)
+
     def select_output_root(self, path: Path) -> AppState:
         self.state = replace(self.state, output_root=path, result=None)
         return self.state
@@ -226,20 +230,20 @@ class AppController:
         if (
             self.state.product_template_path is None
             or self.state.recipe_list_path is None
-            or self.state.odin_inventory_path is None
         ):
-            raise RuntimeError("All three source files must be selected before parsing.")
+            raise RuntimeError("ProductData template and recipe list must be selected before parsing.")
         return BuildInputs(
             product_template_path=self.state.product_template_path,  # type: ignore[arg-type]
             recipe_list_path=self.state.recipe_list_path,  # type: ignore[arg-type]
-            odin_inventory_path=self.state.odin_inventory_path,  # type: ignore[arg-type]
             output_root=self.state.output_root,
+            odin_inventory_path=self.state.odin_inventory_path,
+            generic_inventory_path=self.state.generic_inventory_path,
             is_orderable=self.state.is_orderable,
         )
 
     def begin_parse(self) -> AppState:
         if not self.state.can_parse:
-            raise RuntimeError("All three source files must be selected before parsing.")
+            raise RuntimeError("ProductData template and recipe list must be selected before parsing.")
         self.state = replace(
             self.state,
             phase=AppPhase.PARSING,
@@ -326,23 +330,25 @@ class AppController:
         product_template_path: Path | None = None,
         recipe_list_path: Path | None = None,
         odin_inventory_path: Path | None = None,
+        generic_inventory_path: Path | None = None,
     ) -> AppState:
         values = {
             "product_template_path": product_template_path or self.state.product_template_path,
             "recipe_list_path": recipe_list_path or self.state.recipe_list_path,
             "odin_inventory_path": odin_inventory_path or self.state.odin_inventory_path,
+            "generic_inventory_path": generic_inventory_path or self.state.generic_inventory_path,
             "session": None,
             "result": None,
         }
         ready = all(
             values[key] is not None
-            for key in ("product_template_path", "recipe_list_path", "odin_inventory_path")
+            for key in ("product_template_path", "recipe_list_path")
         )
         values["phase"] = AppPhase.READY_TO_PARSE if ready else AppPhase.EMPTY
         values["message"] = (
             "Parse sources to begin the guided workflow."
             if ready
-            else "Select the three source files to begin."
+            else "Select ProductData template and recipe list to begin."
         )
         self.state = replace(self.state, **values)
         return self.state

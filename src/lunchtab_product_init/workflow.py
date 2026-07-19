@@ -37,6 +37,7 @@ REJECTED_AUDIT_NAME = "Rejected Product Audit.csv"
 NAMING_AUDIT_NAME = "BaseProductPosName Audit.csv"
 CATEGORY_AUDIT_NAME = "Product Category Audit.csv"
 ZERO_STOCK_REVIEW_NAME = "Zero Stock Odin Review.csv"
+GENERIC_INVENTORY_HEADERS = ("Item Name", "Price", "Category", "Barcode", "Stock")
 
 
 def default_output_root() -> Path:
@@ -65,7 +66,7 @@ def _handle(name: str) -> str:
 
 
 def _is_zero_stock(candidate: ProductCandidate) -> bool:
-    if candidate.source not in {"odin", "recipe+odin"}:
+    if candidate.source not in {"odin", "inventory", "recipe+odin", "recipe+inventory"}:
         return False
     try:
         return Decimal(str(candidate.stock or "").strip()) == Decimal("0")
@@ -145,6 +146,36 @@ def read_odin_candidates(path: Path) -> list[ProductCandidate]:
     return candidates
 
 
+def read_generic_inventory_candidates(path: Path) -> list[ProductCandidate]:
+    headers, rows = read_csv(path)
+    missing = sorted(set(GENERIC_INVENTORY_HEADERS) - set(headers))
+    if missing:
+        raise ValueError(f"Generic inventory list is missing required columns: {', '.join(missing)}")
+    candidates = []
+    for index, row in enumerate(rows, start=2):
+        item = row.get("Item Name", "").strip()
+        barcode = _barcode(row.get("Barcode", ""))
+        if not item and not barcode:
+            continue
+        candidates.append(
+            ProductCandidate(
+                source="inventory",
+                source_key=f"inventory:{index}",
+                item_name=item,
+                price=_money_text(row.get("Price", "")),
+                barcode=barcode,
+                category=row.get("Category", "").strip(),
+                stock=row.get("Stock", "").strip(),
+                odin_name=item,
+            )
+        )
+    return candidates
+
+
+def write_generic_inventory_template(path: Path) -> None:
+    write_csv(path, GENERIC_INVENTORY_HEADERS, [])
+
+
 def merge_candidates(
     recipe_candidates: list[ProductCandidate],
     odin_candidates: list[ProductCandidate],
@@ -163,9 +194,10 @@ def merge_candidates(
         odin = by_barcode.get(recipe.barcode)
         if odin:
             seen_odin_barcodes.add(recipe.barcode)
+            source = "recipe+inventory" if odin.source == "inventory" else "recipe+odin"
             merged.append(
                 ProductCandidate(
-                    source="recipe+odin",
+                    source=source,
                     source_key=f"{recipe.source_key}|{odin.source_key}",
                     item_name=recipe.item_name or odin.item_name,
                     price=recipe.price or odin.price,
@@ -313,8 +345,12 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
     headers = read_lunchtab_template(inputs.product_template_path)
     category_profile = load_category_profile(inputs.category_profile_path)
     recipes = read_recipe_candidates(inputs.recipe_list_path)
-    odin = read_odin_candidates(inputs.odin_inventory_path)
-    candidates = merge_candidates(recipes, odin)
+    inventory = []
+    if inputs.odin_inventory_path is not None:
+        inventory.extend(read_odin_candidates(inputs.odin_inventory_path))
+    if inputs.generic_inventory_path is not None:
+        inventory.extend(read_generic_inventory_candidates(inputs.generic_inventory_path))
+    candidates = merge_candidates(recipes, inventory)
     category_results = {
         candidate.source_key: infer_categories(candidate, category_profile)
         for candidate in candidates
@@ -501,7 +537,15 @@ def _write_manifest(inputs: BuildInputs, paths: OutputPaths, summary: BuildSumma
             "odin_inventory": {
                 "filename": inputs.odin_inventory_path.name,
                 "sha256": _sha256(inputs.odin_inventory_path),
-            },
+            }
+            if inputs.odin_inventory_path is not None
+            else None,
+            "generic_inventory": {
+                "filename": inputs.generic_inventory_path.name,
+                "sha256": _sha256(inputs.generic_inventory_path),
+            }
+            if inputs.generic_inventory_path is not None
+            else None,
         },
         "counts": {
             "candidate_rows": summary.candidate_rows,
@@ -544,7 +588,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build a Lunchtab product import CSV.")
     parser.add_argument("--product-template", type=Path, required=True)
     parser.add_argument("--recipe-list", type=Path, required=True)
-    parser.add_argument("--odin-inventory", type=Path, required=True)
+    parser.add_argument("--odin-inventory", type=Path)
+    parser.add_argument("--generic-inventory", type=Path)
     parser.add_argument("--output-root", type=Path, default=default_output_root())
     parser.add_argument("--category-profile", type=Path)
     parser.add_argument("--is-orderable", action="store_true")
@@ -557,8 +602,9 @@ def main() -> None:
         BuildInputs(
             product_template_path=args.product_template,
             recipe_list_path=args.recipe_list,
-            odin_inventory_path=args.odin_inventory,
             output_root=args.output_root,
+            odin_inventory_path=args.odin_inventory,
+            generic_inventory_path=args.generic_inventory,
             category_profile_path=args.category_profile,
             is_orderable=args.is_orderable,
         )

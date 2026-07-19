@@ -6,7 +6,11 @@ from pathlib import Path
 from openpyxl import Workbook
 
 from lunchtab_product_init.models import BuildInputs, CategoryResult, ProductCandidate
-from lunchtab_product_init.workflow import build_product_import, classify_candidates
+from lunchtab_product_init.workflow import (
+    build_product_import,
+    classify_candidates,
+    write_generic_inventory_template,
+)
 
 
 def write_csv(path: Path, rows: list[dict[str, str]], fieldnames: list[str]) -> None:
@@ -90,6 +94,19 @@ def test_build_product_import_accepts_complete_matched_row(tmp_path: Path) -> No
     assert audit_rows[0]["FinalCategories"] == "Breakfast;"
     assert audit_rows[0]["RestrictionPolicy"] == "exempt"
     assert audit_rows[0]["ConfidenceBand"] == "high"
+
+
+def test_write_generic_inventory_template_uses_required_headers(tmp_path: Path) -> None:
+    template = tmp_path / "generic-inventory-template.csv"
+
+    write_generic_inventory_template(template)
+
+    with template.open(encoding="utf-8-sig", newline="") as file:
+        reader = csv.DictReader(file)
+        rows = list(reader)
+
+    assert reader.fieldnames == ["Item Name", "Price", "Category", "Barcode", "Stock"]
+    assert rows == []
 
 
 def test_build_product_import_can_mark_rows_orderable(tmp_path: Path) -> None:

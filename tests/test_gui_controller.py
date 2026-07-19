@@ -22,13 +22,28 @@ from lunchtab_product_init.models import LUNCHTAB_TEMPLATE_HEADERS
 from lunchtab_product_init.session_workflow import FinalReviewMetadata, ImportSession
 
 
-def test_controller_ready_to_parse_after_all_files_selected() -> None:
+def test_controller_ready_to_parse_after_required_files_selected() -> None:
+    controller = AppController()
+    controller.select_product_template(Path("ProductData.csv"))
+    state = controller.select_recipe_list(Path("recipeList.csv"))
+    assert state.phase == AppPhase.READY_TO_PARSE
+    assert state.can_parse
+    inputs = controller.build_inputs()
+    assert inputs.odin_inventory_path is None
+    assert inputs.generic_inventory_path is None
+
+
+def test_controller_tracks_optional_inventory_inputs() -> None:
     controller = AppController()
     controller.select_product_template(Path("ProductData.csv"))
     controller.select_recipe_list(Path("recipeList.csv"))
-    state = controller.select_odin_inventory(Path("inventory.xlsx"))
-    assert state.phase == AppPhase.READY_TO_PARSE
+    controller.select_odin_inventory(Path("inventory.xlsx"))
+    state = controller.select_generic_inventory(Path("inventory.csv"))
+
     assert state.can_parse
+    inputs = controller.build_inputs()
+    assert inputs.odin_inventory_path == Path("inventory.xlsx")
+    assert inputs.generic_inventory_path == Path("inventory.csv")
 
 
 def test_controller_tracks_is_orderable_setting() -> None:
@@ -41,7 +56,6 @@ def test_controller_parse_and_step_transitions() -> None:
     controller = AppController()
     controller.select_product_template(Path("ProductData.csv"))
     controller.select_recipe_list(Path("recipeList.csv"))
-    controller.select_odin_inventory(Path("inventory.xlsx"))
 
     assert controller.begin_parse().phase == AppPhase.PARSING
     session = ImportSession(headers=list(LUNCHTAB_TEMPLATE_HEADERS), rows=())
@@ -87,7 +101,7 @@ def test_controller_requires_all_files_before_parse() -> None:
     try:
         controller.begin_parse()
     except RuntimeError as error:
-        assert "All three source files" in str(error)
+        assert "ProductData template and recipe list" in str(error)
     else:
         raise AssertionError("begin_parse should reject incomplete input")
 
@@ -111,20 +125,23 @@ def test_source_file_audits_hash_selected_inputs(tmp_path: Path) -> None:
     template.write_text("template", encoding="utf-8")
     recipe.write_text("recipe", encoding="utf-8")
     inventory.write_bytes(b"inventory")
-
+    generic = tmp_path / "inventory.csv"
+    generic.write_text("inventory", encoding="utf-8")
     audits = source_file_audits(
         AppState(
             product_template_path=template,
             recipe_list_path=recipe,
             odin_inventory_path=inventory,
+            generic_inventory_path=generic,
         )
     )
 
-    assert [audit.label for audit in audits] == ["Template", "Recipe", "Odin"]
+    assert [audit.label for audit in audits] == ["Template", "Recipe", "Odin", "Generic Inventory"]
     assert [audit.filename for audit in audits] == [
         "ProductData.csv",
         "recipeList.csv",
         "inventory.xlsx",
+        "inventory.csv",
     ]
     assert all(len(audit.sha256) == 64 for audit in audits)
     assert audits[0].sha256 == "5cde0f1298f41f7d1c8b907a36992a7a513225a2615bd6e307bf1a9149b06b40"

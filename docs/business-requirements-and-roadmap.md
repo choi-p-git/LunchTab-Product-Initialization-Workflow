@@ -3,9 +3,11 @@
 ## Summary
 
 Lunchtab Product Initialization is a Windows desktop workflow for building upload-ready
-ProductData CSV files from Lunchtab, recipe-list, and Odin inventory exports. The current refined
-workflow is operator-guided: parse source rows first, assign venue categories manually, review and
-repair row data, steer POS names, review final output, then export audited artifacts.
+ProductData CSV files from Lunchtab ProductData templates, SAGE recipe-list exports, and optional
+inventory exports. Inventory enrichment can come from an Odin workbook or a generic five-column
+CSV template. The current refined workflow is operator-guided: parse source rows first, assign
+venue categories manually, review and repair row data, steer POS names, review final output, then
+export audited artifacts.
 
 The app does not administer Lunchtab restriction policies in this workflow. Product category
 assignment is limited to category names the operator enters or loads through a venue profile.
@@ -14,6 +16,10 @@ assignment is limited to category names the operator enters or loads through a v
 
 - Source exports must never be modified.
 - Final output must match the selected Lunchtab ProductData template headers.
+- ProductData template and recipe list are required to parse; Odin workbook and generic inventory
+  CSV inputs are optional enrichment sources.
+- Generic inventory CSV files must contain `Item Name`, `Price`, `Category`, `Barcode`, and
+  `Stock` headers.
 - Rows enter category assignment when they have usable item name and price.
 - Missing barcode, duplicate barcode, missing name, missing price, missing category, invalid POS
   name, and duplicate POS name must block final export.
@@ -39,10 +45,12 @@ assignment is limited to category names the operator enters or loads through a v
 ## Current Guided Workflow
 
 1. **Parse Sources**
-   - Operator selects ProductData template, recipe list, Odin inventory, optional venue profile,
-     output folder, and `IsOrderable`.
+   - Operator selects ProductData template, recipe list, optional Odin inventory workbook,
+     optional generic inventory CSV, optional venue profile, output folder, and `IsOrderable`.
    - App parses and merges candidate rows into a working session.
    - `old_category` is preserved from source data for filtering.
+   - A blank generic inventory CSV template is available from Step 1 for venues without usable
+     Odin exports.
    - Category and POS-name decisions remain deferred.
 
 2. **Categories**
@@ -156,7 +164,9 @@ assignment is limited to category names the operator enters or loads through a v
 
 - Exact Lunchtab admin screens used before exporting `ProductData`.
 - Required source export names, filters, and timing for ProductData, recipe list, and Odin
-  inventory.
+  inventory or generic inventory CSV.
+- Whether repeat ProductData uploads should preserve existing product-library rows, since Lunchtab
+  upload behavior may replace rather than append the product library.
 - Venue category creation rules and whether category names differ by location.
 - How barcodes are assigned, combined, or retired in Lunchtab before and after import.
 - How `IsOrderable`, product publication, tax categories, requirement categories, and restriction

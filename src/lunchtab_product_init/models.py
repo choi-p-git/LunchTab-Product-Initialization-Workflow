@@ -108,8 +108,9 @@ class CategoryResult:
 class BuildInputs:
     product_template_path: Path
     recipe_list_path: Path
-    odin_inventory_path: Path
     output_root: Path
+    odin_inventory_path: Path | None = None
+    generic_inventory_path: Path | None = None
     category_profile_path: Path | None = None
     is_orderable: bool = False
 
