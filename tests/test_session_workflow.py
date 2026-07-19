@@ -48,6 +48,28 @@ def test_category_assignment_filters_and_marks_rows() -> None:
     assert session.rows[1].status == "needs_edit"
 
 
+def test_category_assignment_clears_stale_missing_category_reason() -> None:
+    session = _session(
+        [
+            _row(
+                "row-1",
+                "No Barcode Item",
+                "1.00",
+                "",
+                status="needs_edit",
+                review_reason="missing barcode; missing category",
+            )
+        ]
+    )
+
+    session = assign_category(session, {"row-1"}, "Snacks")
+
+    row = session.rows[0]
+    assert row.category == "Snacks"
+    assert row.status == "needs_edit"
+    assert row.review_reason == "missing barcode"
+
+
 def test_parse_barcodes_splits_trims_and_dedupes() -> None:
     assert parse_barcodes(" ABC, DEF ,ABC,, ghi ") == ("ABC", "DEF", "ghi")
 
@@ -553,6 +575,7 @@ def _row(
     old_category: str = "",
     pos_name: str = "",
     status: str = "active",
+    review_reason: str = "",
 ) -> SessionRow:
     return SessionRow(
         row_id=row_id,
@@ -568,6 +591,7 @@ def _row(
         category=category,
         pos_name=pos_name,
         status=status,  # type: ignore[arg-type]
+        review_reason=review_reason,
     )
 
 

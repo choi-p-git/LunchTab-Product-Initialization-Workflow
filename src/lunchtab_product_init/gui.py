@@ -302,11 +302,17 @@ class ProductInitializationApp:
                 ("Name", self.edit_name),
                 ("Price", self.edit_price),
                 ("Barcode", self.edit_barcode),
-                ("Category", self.edit_category),
             )
         ):
             ttk.Label(form, text=label).grid(row=row, column=0, sticky="w", pady=4)
             ttk.Entry(form, textvariable=variable).grid(row=row, column=1, sticky="ew", pady=4)
+        ttk.Label(form, text="Category").grid(row=3, column=0, sticky="w", pady=4)
+        self.edit_category_combo = ttk.Combobox(
+            form,
+            textvariable=self.edit_category,
+            values=(),
+        )
+        self.edit_category_combo.grid(row=3, column=1, sticky="ew", pady=4)
         self.save_edit_button = ttk.Button(form, text="Save row edit", command=self._save_edit)
         self.save_edit_button.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(10, 0))
         ttk.Button(form, text="Delete current row", command=self._delete_current_edit_row).grid(
@@ -1321,6 +1327,7 @@ class ProductInitializationApp:
         self._clear(tree)
         if session is None:
             return
+        self.edit_category_combo.configure(values=session.category_names)
         rows = no_barcode_rows(session) if self.edit_no_barcode_only else session.edit_queue
         shown_row_ids = []
         for row in rows:

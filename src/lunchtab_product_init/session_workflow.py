@@ -248,12 +248,49 @@ def filter_rows(
 def assign_category(session: ImportSession, row_ids: set[str], category: str) -> ImportSession:
     session = add_category(session, category)
     cleaned = _clean_text(category)
+    return _refresh_after_category_assignment(
+        replace(
+            session,
+            rows=tuple(
+                replace(row, category=cleaned)
+                if row.row_id in row_ids and row.status != "deleted"
+                else row
+                for row in session.rows
+            ),
+        ),
+        row_ids,
+    )
+
+
+def _refresh_after_category_assignment(
+    session: ImportSession, row_ids: set[str]
+) -> ImportSession:
+    barcode_duplicates = duplicate_barcodes(row.barcode for row in session.active_rows)
+    rows = []
+    for row in session.rows:
+        if row.row_id not in row_ids or row.status == "deleted":
+            rows.append(row)
+            continue
+        reasons = _core_review_reasons(row.candidate, barcode_duplicates)
+        if not row.category:
+            reasons.append("missing category")
+        if reasons:
+            rows.append(
+                replace(
+                    row,
+                    status="needs_edit",
+                    review_reason="; ".join(sorted(set(reasons))),
+                )
+            )
+        elif _is_unedited_operator_review(row):
+            rows.append(replace(row, status="needs_edit", review_reason="operator review"))
+        elif row.status == "active":
+            rows.append(replace(row, review_reason=""))
+        else:
+            rows.append(replace(row, status="edit_complete", review_reason=""))
     return replace(
         session,
-        rows=tuple(
-            replace(row, category=cleaned) if row.row_id in row_ids and row.status != "deleted" else row
-            for row in session.rows
-        ),
+        rows=tuple(rows),
     )
 
 
