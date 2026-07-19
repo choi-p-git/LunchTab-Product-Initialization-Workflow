@@ -52,6 +52,7 @@ class ProductInitializationApp:
         self.current_edit_row_id: str | None = None
         self.current_pos_row_id: str | None = None
         self._suppress_pos_selection_event = False
+        self._category_filter_after_id: str | None = None
 
         root.title(APP_TITLE)
         size_and_center(root, 1120, 760)
@@ -174,9 +175,11 @@ class ProductInitializationApp:
         ttk.Button(tools, text="Undo", command=self._undo_category_action).grid(row=0, column=3, padx=(10, 0))
 
         ttk.Label(tools, text="Keyword filter").grid(row=1, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(tools, textvariable=self.category_filter, width=22).grid(
+        self.category_filter_entry = ttk.Entry(tools, textvariable=self.category_filter, width=22)
+        self.category_filter_entry.grid(
             row=1, column=1, padx=(6, 8), sticky="w", pady=(8, 0)
         )
+        self._bind_live_category_filter(self.category_filter_entry)
         ttk.Label(tools, text="Old category filter").grid(
             row=1, column=2, sticky="w", pady=(8, 0)
         )
@@ -188,7 +191,7 @@ class ProductInitializationApp:
         self.old_category_combo.grid(
             row=1, column=3, padx=(6, 8), sticky="w", pady=(8, 0)
         )
-        self.old_category_combo.bind("<Return>", lambda _event: self._refresh_category_rows())
+        self._bind_live_category_filter(self.old_category_combo)
         self.old_category_combo.bind("<<ComboboxSelected>>", lambda _event: self._refresh_category_rows())
         ttk.Label(tools, text="Price filter").grid(row=1, column=4, sticky="w", pady=(8, 0))
         self.price_operator_combo = ttk.Combobox(
@@ -202,12 +205,11 @@ class ProductInitializationApp:
         self.price_operator_combo.bind("<<ComboboxSelected>>", lambda _event: self._price_operator_changed())
         self.price_value_entry = ttk.Entry(tools, textvariable=self.min_price, width=10)
         self.price_value_entry.grid(row=1, column=6, padx=(0, 4), sticky="w", pady=(8, 0))
+        self._bind_live_category_filter(self.price_value_entry)
         ttk.Label(tools, text="Upper bound").grid(row=1, column=7, sticky="w", pady=(8, 0))
         self.price_upper_entry = ttk.Entry(tools, textvariable=self.max_price, width=10)
         self.price_upper_entry.grid(row=1, column=8, padx=(6, 8), sticky="w", pady=(8, 0))
-        ttk.Button(tools, text="Apply filter", command=self._refresh_category_rows).grid(
-            row=1, column=9, sticky="w", pady=(8, 0)
-        )
+        self._bind_live_category_filter(self.price_upper_entry)
         ttk.Label(tools, text="Barcode filter").grid(row=2, column=0, sticky="w", pady=(8, 0))
         self.barcode_filter_combo = ttk.Combobox(
             tools,
@@ -558,6 +560,30 @@ class ProductInitializationApp:
         self._render()
 
     def _refresh_category_rows(self) -> None:
+        if self._category_filter_after_id is not None:
+            self.root.after_cancel(self._category_filter_after_id)
+            self._category_filter_after_id = None
+        self._populate_category_rows()
+
+    def _bind_live_category_filter(self, widget: tk.Widget) -> None:
+        widget.bind("<KeyRelease>", self._category_filter_key_released)
+        widget.bind("<Return>", lambda _event: (self._refresh_category_rows(), "break")[1])
+
+    def _category_filter_key_released(self, event: tk.Event) -> None:
+        if event.keysym in {"Return", "Escape", "Tab", "Shift_L", "Shift_R", "Control_L", "Control_R"}:
+            return
+        widget = event.widget
+        if self.root.focus_get() is not widget:
+            return
+        self._schedule_category_filter_refresh()
+
+    def _schedule_category_filter_refresh(self) -> None:
+        if self._category_filter_after_id is not None:
+            self.root.after_cancel(self._category_filter_after_id)
+        self._category_filter_after_id = self.root.after(500, self._run_category_filter_refresh)
+
+    def _run_category_filter_refresh(self) -> None:
+        self._category_filter_after_id = None
         self._populate_category_rows()
 
     def _toggle_category_selection(self) -> None:
