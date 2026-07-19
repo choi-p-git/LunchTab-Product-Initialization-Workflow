@@ -81,48 +81,89 @@ assignment is limited to category names the operator enters or loads through a v
      audit, manifest, and run summary.
    - Operator can open the output folder and major artifacts from the complete tab.
 
-## Roadmap
+## Second-Pass Completion Snapshot
 
 1. **Final-review metadata expansion**
    - Final review now shows selected source filenames with short SHA-256 hashes.
-   - Show active duplicate-check status for barcodes and POS names.
-   - Show category counts by category.
-   - Show edit count, POS override count, deleted count, merge count, and `IsOrderable`.
+   - Final review shows active duplicate-check status for barcodes and POS names.
+   - Final review shows category counts by category.
+   - Final review shows edit count, POS override count, deleted count, merge count, and
+     `IsOrderable`.
    - Keep the table focused on upload columns while metadata is displayed in a separate summary
      area.
 
 2. **Merge and deleted-row audit refinement**
-   - Add explicit merge audit details: target row, source row, transferred barcodes, target barcode
+   - Merge audit details now include target row, source row, transferred barcodes, target barcode
      before merge, target barcode after merge, operator action timestamp, and source-row deletion
      reason.
-   - Expand deleted-row audit columns so deletion and merge outcomes are readable without comparing
-     multiple files.
-   - Preserve source row name, price, category, barcode, old category, and final deletion reason.
+   - Deleted-row audit columns preserve source row name, price, category, barcode, old category,
+     final deletion reason, and merge-specific transfer details.
 
 3. **Targeted workflow tests**
    - Controller-level coverage now protects Step 2 checked-row selection, highlighted-row fallback,
      highlighted-delete confirmation, select shown, and deselect shown behavior.
-   - Add remaining widget-level coverage for Step 2 delete shortcut, inline category dropdown, and
-     filter event behavior.
    - Controller-level coverage now protects Step 4 displayed-row advance after replacement,
      including filtered lists and rows that leave the current filter.
-   - Add remaining Step 4 GUI-focused coverage for reason filters, Enter-to-replace, and preserved
-     widget selection/focus state.
    - End-to-end session coverage now includes back edits from final review through category, edit,
      merge, POS review, and final validation, plus a local raw-data/profile integration test that
      parses real ignored source exports, applies the saved venue profile, completes a deterministic
      export subset, and verifies final CSV/audit/manifest outputs.
 
 4. **Operator UX hardening**
-   - Review button layout at 1366x768 with Windows scaling.
-   - Improve final-review metadata density without crowding the export action.
    - Undo buttons now show the next action to be reverted for category and edit-review workflows.
 
-5. **Packaging and release readiness**
+## Third-Pass Roadmap
+
+1. **Widget-Level GUI Coverage**
+   - Add display-safe Tk widget tests that skip cleanly when Tcl/Tk or a display server is
+     unavailable.
+   - Cover Step 2 Delete-key behavior, inline category dropdown behavior, and filter event
+     behavior through a real `ProductInitializationApp` instance.
+   - Cover Step 4 reason filter changes, Enter-to-replace, displayed-row advance, and entry focus
+     or selection state through widget-level tests.
+
+2. **Layout and UX Refinement**
+   - Review all tabs at 1366x768 with Windows display scaling and confirm primary actions remain
+     visible and reachable.
+   - Reduce unnecessary clicks in high-volume work paths: category assignment, edit review,
+     no-barcode deletion, row merge, and POS-name override.
+   - Improve final-review metadata density without crowding the export and profile-save actions.
+   - Preserve the controller/session separation while moving any repeated widget-state rules into
+     testable helpers.
+
+3. **Operator Documentation**
+   - Build an operator quick-start for running the app from source or packaged builds.
+   - Build a formal SOP for the full import workflow, including source export prerequisites,
+     Lunchtab admin setup, category/profile preparation, import execution, validation, and
+     post-import checks.
+   - Interview the operator before finalizing SOP sections that depend on off-app Lunchtab
+     configuration or local administrative policy.
+
+4. **Business Analysis Package**
+   - After the SOP interview, run a full BA analysis package in the private untracked
+     `business analysis/` folder.
+   - Capture current-state workflow, future-state workflow, actors, systems, business rules,
+     exception paths, time trial estimates, risks, requirements, assumptions, and decision log.
+   - Keep observed facts separate from inferred recommendations, and gate future-state proposals
+     on explicit operator confirmation.
+
+5. **Packaging and Release Readiness**
    - Build and smoke test a Windows desktop bundle.
    - Confirm Tcl/Tk packaging, default output folder behavior, and artifact open actions.
-   - Add release notes and operator quick-start documentation once the first manual workflow is
-     accepted.
+   - Add release notes once the operator workflow, quick-start, SOP, and BA review are accepted.
+
+## Interview Topics for SOP and BA Pass
+
+- Exact Lunchtab admin screens used before exporting `ProductData`.
+- Required source export names, filters, and timing for ProductData, recipe list, and Odin
+  inventory.
+- Venue category creation rules and whether category names differ by location.
+- How barcodes are assigned, combined, or retired in Lunchtab before and after import.
+- How `IsOrderable`, product publication, tax categories, requirement categories, and restriction
+  categories are configured outside this app.
+- Expected operator role, approval checkpoints, and escalation path for ambiguous rows.
+- Current manual workflow duration by step, error rate, and target time savings.
+- Post-import validation steps in Lunchtab POS/admin screens.
 
 ## Out of Scope for Current Refined Workflow
 

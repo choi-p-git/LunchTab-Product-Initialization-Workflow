@@ -98,6 +98,7 @@ class SessionRow:
     merge_target_barcode_before: str = ""
     merge_target_barcode_after: str = ""
     merge_transferred_barcodes: str = ""
+    merge_action_timestamp: str = ""
     edited: bool = False
     pos_overridden: bool = False
 
@@ -394,6 +395,7 @@ def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[s
         raise ValueError("All source rows selected for merge must be active.")
 
     target_barcode_before = target.barcode
+    merge_action_timestamp = datetime.now().isoformat(timespec="seconds")
     merged_barcode = format_barcodes(
         (*parse_barcodes(target.barcode), *(barcode for row in source_rows for barcode in parse_barcodes(row.barcode)))
     )
@@ -418,6 +420,7 @@ def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[s
                     merge_target_barcode_before=target_barcode_before,
                     merge_target_barcode_after=merged_barcode,
                     merge_transferred_barcodes=format_barcodes(parse_barcodes(row.barcode)),
+                    merge_action_timestamp=merge_action_timestamp,
                     review_reason=_append_reason(row.review_reason, f"barcode transferred to {target_row_id}"),
                 )
             )
@@ -1372,6 +1375,7 @@ def _session_audit_headers() -> list[str]:
         "MergeTransferredBarcodes",
         "MergeTargetBarcodeBefore",
         "MergeTargetBarcodeAfter",
+        "MergeActionTimestamp",
         "ReviewReason",
     ]
 
@@ -1396,6 +1400,7 @@ def _session_audit_rows(rows_or_session):
             "MergeTransferredBarcodes": row.merge_transferred_barcodes,
             "MergeTargetBarcodeBefore": row.merge_target_barcode_before,
             "MergeTargetBarcodeAfter": row.merge_target_barcode_after,
+            "MergeActionTimestamp": row.merge_action_timestamp,
             "ReviewReason": row.review_reason,
         }
 

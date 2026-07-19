@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -337,6 +338,8 @@ def test_merge_rows_transfers_barcodes_deletes_sources_and_revalidates() -> None
     assert source.merge_transferred_barcodes == "222,333"
     assert source.merge_target_barcode_before == "111"
     assert source.merge_target_barcode_after == "111,222,333"
+    assert source.merge_action_timestamp
+    datetime.fromisoformat(source.merge_action_timestamp)
     assert "barcode transferred to row-1" in source.review_reason
 
 
@@ -667,6 +670,8 @@ def test_deleted_audit_includes_merge_transfer_details(tmp_path: Path) -> None:
     assert deleted[0]["MergeTransferredBarcodes"] == "222,333"
     assert deleted[0]["MergeTargetBarcodeBefore"] == "111"
     assert deleted[0]["MergeTargetBarcodeAfter"] == "111,222,333"
+    assert deleted[0]["MergeActionTimestamp"]
+    datetime.fromisoformat(deleted[0]["MergeActionTimestamp"])
 
 
 def test_final_review_metadata_summarizes_counts_and_validation() -> None:
