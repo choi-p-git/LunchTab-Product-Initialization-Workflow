@@ -102,6 +102,9 @@ def test_write_generic_inventory_template_uses_required_headers(tmp_path: Path) 
 
     write_generic_inventory_template(template)
 
+    assert template.read_text(encoding="utf-8-sig") == (
+        '"Item Name","Price","Category","Barcode","Stock"\n'
+    )
     with template.open(encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
         rows = list(reader)

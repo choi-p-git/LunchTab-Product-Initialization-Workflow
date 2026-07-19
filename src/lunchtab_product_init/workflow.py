@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import re
@@ -173,7 +174,10 @@ def read_generic_inventory_candidates(path: Path) -> list[ProductCandidate]:
 
 
 def write_generic_inventory_template(path: Path) -> None:
-    write_csv(path, GENERIC_INVENTORY_HEADERS, [])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as file:
+        writer = csv.writer(file, quoting=csv.QUOTE_ALL, lineterminator="\n")
+        writer.writerow(GENERIC_INVENTORY_HEADERS)
 
 
 def merge_candidates(
