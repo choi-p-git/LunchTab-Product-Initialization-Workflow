@@ -303,6 +303,10 @@ def test_merge_rows_transfers_barcodes_deletes_sources_and_revalidates() -> None
     assert target.edited
     assert source.status == "deleted"
     assert source.deleted_reason == "merged into row-1"
+    assert source.merge_target_row_id == "row-1"
+    assert source.merge_transferred_barcodes == "222,333"
+    assert source.merge_target_barcode_before == "111"
+    assert source.merge_target_barcode_after == "111,222,333"
     assert "barcode transferred to row-1" in source.review_reason
 
 
@@ -527,10 +531,59 @@ def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:
     with result.summary.output_paths.deleted_audit.open(encoding="utf-8-sig", newline="") as file:
         deleted = list(csv.DictReader(file))
     assert deleted[0]["ItemName"] == "Deleted Chips"
+    assert "MergeTargetRowId" in deleted[0]
 
     with result.summary.output_paths.category_audit.open(encoding="utf-8-sig", newline="") as file:
         audit_rows = list(csv.DictReader(file))
     assert audit_rows[0]["OldCategory"] == "Drinks"
+
+
+def test_deleted_audit_includes_merge_transfer_details(tmp_path: Path) -> None:
+    source_template, recipe, odin = _source_files(tmp_path)
+    session = _session(
+        [
+            _row(
+                "row-1",
+                "Target Item",
+                "1.25",
+                "111",
+                category="Snacks",
+                pos_name="TargetItem",
+            ),
+            _row(
+                "row-2",
+                "Source Item",
+                "1.25",
+                "222,333",
+                category="Snacks",
+                pos_name="SourceItem",
+            ),
+        ],
+        categories=("Snacks",),
+    )
+    session = merge_rows(session, "row-1", {"row-2"})
+    session = replace_pos_name(session, "row-1", "TargetItem")
+
+    result = export_session(
+        session,
+        BuildInputs(
+            product_template_path=source_template,
+            recipe_list_path=recipe,
+            odin_inventory_path=odin,
+            output_root=tmp_path / "out",
+        ),
+        is_orderable=False,
+    )
+
+    with result.summary.output_paths.deleted_audit.open(encoding="utf-8-sig", newline="") as file:
+        deleted = list(csv.DictReader(file))
+
+    assert deleted[0]["RowId"] == "row-2"
+    assert deleted[0]["DeletedReason"] == "merged into row-1"
+    assert deleted[0]["MergeTargetRowId"] == "row-1"
+    assert deleted[0]["MergeTransferredBarcodes"] == "222,333"
+    assert deleted[0]["MergeTargetBarcodeBefore"] == "111"
+    assert deleted[0]["MergeTargetBarcodeAfter"] == "111,222,333"
 
 
 def test_final_review_metadata_summarizes_counts_and_validation() -> None:

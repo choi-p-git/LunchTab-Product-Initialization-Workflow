@@ -94,6 +94,10 @@ class SessionRow:
     status: RowStatus = "active"
     review_reason: str = ""
     deleted_reason: str = ""
+    merge_target_row_id: str = ""
+    merge_target_barcode_before: str = ""
+    merge_target_barcode_after: str = ""
+    merge_transferred_barcodes: str = ""
     edited: bool = False
     pos_overridden: bool = False
 
@@ -389,6 +393,7 @@ def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[s
     if len(source_rows) != len(source_row_ids):
         raise ValueError("All source rows selected for merge must be active.")
 
+    target_barcode_before = target.barcode
     merged_barcode = format_barcodes(
         (*parse_barcodes(target.barcode), *(barcode for row in source_rows for barcode in parse_barcodes(row.barcode)))
     )
@@ -409,6 +414,10 @@ def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[s
                     row,
                     status="deleted",
                     deleted_reason=f"merged into {target_row_id}",
+                    merge_target_row_id=target_row_id,
+                    merge_target_barcode_before=target_barcode_before,
+                    merge_target_barcode_after=merged_barcode,
+                    merge_transferred_barcodes=format_barcodes(parse_barcodes(row.barcode)),
                     review_reason=_append_reason(row.review_reason, f"barcode transferred to {target_row_id}"),
                 )
             )
@@ -1359,6 +1368,10 @@ def _session_audit_headers() -> list[str]:
         "Status",
         "Edited",
         "DeletedReason",
+        "MergeTargetRowId",
+        "MergeTransferredBarcodes",
+        "MergeTargetBarcodeBefore",
+        "MergeTargetBarcodeAfter",
         "ReviewReason",
     ]
 
@@ -1379,6 +1392,10 @@ def _session_audit_rows(rows_or_session):
             "Status": row.status,
             "Edited": "true" if row.edited else "false",
             "DeletedReason": row.deleted_reason,
+            "MergeTargetRowId": row.merge_target_row_id,
+            "MergeTransferredBarcodes": row.merge_transferred_barcodes,
+            "MergeTargetBarcodeBefore": row.merge_target_barcode_before,
+            "MergeTargetBarcodeAfter": row.merge_target_barcode_after,
             "ReviewReason": row.review_reason,
         }
 
