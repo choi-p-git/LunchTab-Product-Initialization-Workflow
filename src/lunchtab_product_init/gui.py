@@ -13,11 +13,13 @@ from lunchtab_product_init.gui_controller import (
     AppController,
     AppPhase,
     CategoryActionSelection,
+    UndoEntry,
     deselect_shown_category_rows,
     next_displayed_pos_row_id,
     select_category_action_rows,
     select_shown_category_rows,
     toggle_category_row_selection,
+    undo_button_text,
 )
 from lunchtab_product_init.session_workflow import (
     ImportSession,
@@ -55,8 +57,8 @@ class ProductInitializationApp:
         self.controller = AppController()
         self.events: queue.Queue[tuple[str, object]] = queue.Queue()
         self.category_selection: set[str] = set()
-        self.category_undo_stack: list[ImportSession] = []
-        self.edit_undo_stack: list[ImportSession] = []
+        self.category_undo_stack: list[UndoEntry] = []
+        self.edit_undo_stack: list[UndoEntry] = []
         self.edit_selection: set[str] = set()
         self.edit_no_barcode_only = False
         self.current_edit_row_id: str | None = None
@@ -182,7 +184,8 @@ class ProductInitializationApp:
         self.category_entry.grid(row=0, column=1, padx=(6, 8), sticky="w")
         self.category_entry.bind("<Return>", lambda _event: (self._add_category(), "break")[1])
         ttk.Button(tools, text="Add", command=self._add_category).grid(row=0, column=2, sticky="w")
-        ttk.Button(tools, text="Undo", command=self._undo_category_action).grid(row=0, column=3, padx=(10, 0))
+        self.category_undo_button = ttk.Button(tools, text="Undo", command=self._undo_category_action)
+        self.category_undo_button.grid(row=0, column=3, padx=(10, 0))
 
         ttk.Label(tools, text="Keyword filter").grid(row=1, column=0, sticky="w", pady=(8, 0))
         self.category_filter_entry = ttk.Entry(tools, textvariable=self.category_filter, width=22)
@@ -309,7 +312,8 @@ class ProductInitializationApp:
         ttk.Button(tools, text="Toggle selected row", command=self._toggle_edit_selection).pack(side="left")
         ttk.Button(tools, text="Delete selected", command=self._delete_edit_rows).pack(side="left")
         ttk.Button(tools, text="Merge selected...", command=self._open_merge_rows_dialog).pack(side="left", padx=(6, 0))
-        ttk.Button(tools, text="Undo", command=self._undo_edit_action).pack(side="left", padx=(6, 0))
+        self.edit_undo_button = ttk.Button(tools, text="Undo", command=self._undo_edit_action)
+        self.edit_undo_button.pack(side="left", padx=(6, 0))
         self.edit_tree = self._tree(
             left,
             ("selected", "name", "price", "barcode", "category", "reason"),
@@ -546,6 +550,8 @@ class ProductInitializationApp:
                 name, payload = self.events.get_nowait()
                 if name == "parsed":
                     self.controller.parse_succeeded(payload)  # type: ignore[arg-type]
+                    self.category_undo_stack.clear()
+                    self.edit_undo_stack.clear()
                 elif name == "exported":
                     self.controller.export_succeeded(payload)  # type: ignore[arg-type]
                 else:
@@ -566,7 +572,7 @@ class ProductInitializationApp:
 
         next_session = add_category(session, self.category_name.get())
         if next_session != session:
-            self._push_category_undo()
+            self._push_category_undo("Add category")
             self._set_category_session(next_session)
         self.category_name.set("")
         self.category_entry.focus_set()
@@ -703,7 +709,7 @@ class ProductInitializationApp:
             return
         next_session = assign_category(session, {row_id}, category)
         if next_session != session:
-            self._push_category_undo()
+            self._push_category_undo(f"Set category to {category}")
             self._set_category_session(next_session)
         self._close_inline_category_dropdown()
         self._render()
@@ -740,7 +746,7 @@ class ProductInitializationApp:
         category = self.selected_category.get() or self.category_name.get()
         next_session = assign_category(session, set(action.row_ids), category)
         if next_session != session:
-            self._push_category_undo()
+            self._push_category_undo(f"Assign {len(action.row_ids)} row{'' if len(action.row_ids) == 1 else 's'}")
             self._set_category_session(next_session)
             self.category_selection.clear()
             self._render()
@@ -752,7 +758,7 @@ class ProductInitializationApp:
             return
         next_session = mark_for_edit(session, set(action.row_ids))
         if next_session != session:
-            self._push_category_undo()
+            self._push_category_undo(f"Mark {len(action.row_ids)} row{'' if len(action.row_ids) == 1 else 's'} for edit")
             self._set_category_session(next_session)
             self.category_selection.clear()
             self._render()
@@ -771,21 +777,21 @@ class ProductInitializationApp:
                 return
         next_session = delete_rows(session, set(action.row_ids))
         if next_session != session:
-            self._push_category_undo()
+            self._push_category_undo(f"Delete {len(action.row_ids)} row{'' if len(action.row_ids) == 1 else 's'}")
             self._set_category_session(next_session)
             self.category_selection.clear()
             self._render()
 
-    def _push_category_undo(self) -> None:
+    def _push_category_undo(self, label: str) -> None:
         session = self.controller.state.session
         if session is None:
             return
-        self.category_undo_stack.append(session)
+        self.category_undo_stack.append(UndoEntry(session=session, label=label))
 
     def _undo_category_action(self) -> None:
         if not self.category_undo_stack:
             return
-        self._set_category_session(self.category_undo_stack.pop())
+        self._set_category_session(self.category_undo_stack.pop().session)
         self.category_selection.clear()
         self._render()
 
@@ -865,7 +871,7 @@ class ProductInitializationApp:
         next_session = delete_rows(session, set(self.edit_selection), "edit review deletion")
         if next_session == session:
             return
-        self._push_edit_undo()
+        self._push_edit_undo(f"Delete {len(self.edit_selection)} edit row{'' if len(self.edit_selection) == 1 else 's'}")
         self._set_edit_session(next_session)
         self.edit_selection.clear()
         self._load_next_edit_row()
@@ -957,7 +963,7 @@ class ProductInitializationApp:
             except Exception as error:
                 messagebox.showerror(APP_TITLE, friendly_error(error), parent=dialog)
                 return
-            self._push_edit_undo()
+            self._push_edit_undo(f"Merge {len(source_ids)} row{'' if len(source_ids) == 1 else 's'}")
             self._set_edit_session(next_session)
             self.edit_selection.clear()
             self.current_edit_row_id = target_id
@@ -1040,22 +1046,22 @@ class ProductInitializationApp:
             return
         if next_session == session:
             return
-        self._push_edit_undo()
+        self._push_edit_undo("Save row edit")
         self._set_edit_session(next_session)
         self._load_next_edit_row()
         self._render()
 
-    def _push_edit_undo(self) -> None:
+    def _push_edit_undo(self, label: str) -> None:
         session = self.controller.state.session
         if session is None:
             return
-        self.edit_undo_stack.append(session)
+        self.edit_undo_stack.append(UndoEntry(session=session, label=label))
 
     def _undo_edit_action(self) -> None:
         if not self.edit_undo_stack:
             return
         previous_row_id = self.current_edit_row_id
-        self._set_edit_session(self.edit_undo_stack.pop())
+        self._set_edit_session(self.edit_undo_stack.pop().session)
         self.edit_selection.clear()
         if previous_row_id and self._row(previous_row_id) is not None:
             self._load_edit_row(previous_row_id)
@@ -1299,6 +1305,7 @@ class ProductInitializationApp:
         self.to_final_button.configure(state="normal" if state.can_leave_pos_review else "disabled")
         self.export_button.configure(state="normal" if state.can_export else "disabled")
         self._update_pos_action_state()
+        self._update_undo_buttons()
         self._sync_notebook_tab_states()
         if state.phase == AppPhase.CATEGORIZING:
             self.notebook.select(self.tabs["categories"])
@@ -1314,6 +1321,16 @@ class ProductInitializationApp:
         self._populate_edit_rows()
         self._populate_pos_rows()
         self._populate_final_rows()
+
+    def _update_undo_buttons(self) -> None:
+        self.category_undo_button.configure(
+            text=undo_button_text(self.category_undo_stack),
+            state="normal" if self.category_undo_stack else "disabled",
+        )
+        self.edit_undo_button.configure(
+            text=undo_button_text(self.edit_undo_stack),
+            state="normal" if self.edit_undo_stack else "disabled",
+        )
 
     def _sync_notebook_tab_states(self) -> None:
         unlocked = self._unlocked_tab_keys()

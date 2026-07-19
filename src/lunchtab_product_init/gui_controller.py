@@ -73,6 +73,19 @@ class CategoryActionSelection:
         return self.using_highlighted and bool(self.row_ids)
 
 
+@dataclass(frozen=True)
+class UndoEntry:
+    session: ImportSession
+    label: str
+
+
+def undo_button_text(entries: Iterable[UndoEntry]) -> str:
+    entries = tuple(entries)
+    if not entries:
+        return "Undo"
+    return f"Undo: {entries[-1].label}"
+
+
 def select_category_action_rows(
     checked_row_ids: Iterable[str],
     highlighted_row_ids: Iterable[str],

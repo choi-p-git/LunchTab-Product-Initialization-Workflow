@@ -6,11 +6,13 @@ from pathlib import Path
 from lunchtab_product_init.gui_controller import (
     AppController,
     AppPhase,
+    UndoEntry,
     deselect_shown_category_rows,
     next_displayed_pos_row_id,
     select_category_action_rows,
     select_shown_category_rows,
     toggle_category_row_selection,
+    undo_button_text,
 )
 from lunchtab_product_init.models import LUNCHTAB_TEMPLATE_HEADERS
 from lunchtab_product_init.session_workflow import ImportSession
@@ -84,6 +86,18 @@ def test_controller_requires_all_files_before_parse() -> None:
         assert "All three source files" in str(error)
     else:
         raise AssertionError("begin_parse should reject incomplete input")
+
+
+def test_undo_button_text_shows_next_undo_action() -> None:
+    session = ImportSession(headers=list(LUNCHTAB_TEMPLATE_HEADERS), rows=())
+
+    assert undo_button_text([]) == "Undo"
+    assert undo_button_text(
+        [
+            UndoEntry(session=session, label="Assign 2 rows"),
+            UndoEntry(session=session, label="Delete 1 row"),
+        ]
+    ) == "Undo: Delete 1 row"
 
 
 def test_category_action_rows_prefer_checked_rows_over_highlighted_rows() -> None:

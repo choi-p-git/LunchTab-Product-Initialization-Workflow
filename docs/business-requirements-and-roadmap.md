@@ -116,7 +116,7 @@ assignment is limited to category names the operator enters or loads through a v
 4. **Operator UX hardening**
    - Review button layout at 1366x768 with Windows scaling.
    - Improve final-review metadata density without crowding the export action.
-   - Consider richer undo history labels so operators can see what will be reverted.
+   - Undo buttons now show the next action to be reverted for category and edit-review workflows.
 
 5. **Packaging and release readiness**
    - Build and smoke test a Windows desktop bundle.
