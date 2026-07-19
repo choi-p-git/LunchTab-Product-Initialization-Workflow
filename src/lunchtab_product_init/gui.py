@@ -9,7 +9,15 @@ from tkinter import filedialog, messagebox, ttk
 from typing import Callable
 
 from lunchtab_product_init.desktop import friendly_error, open_path
-from lunchtab_product_init.gui_controller import AppController, AppPhase
+from lunchtab_product_init.gui_controller import (
+    AppController,
+    AppPhase,
+    CategoryActionSelection,
+    deselect_shown_category_rows,
+    select_category_action_rows,
+    select_shown_category_rows,
+    toggle_category_row_selection,
+)
 from lunchtab_product_init.session_workflow import (
     ImportSession,
     VenueProfile,
@@ -614,10 +622,7 @@ class ProductInitializationApp:
         self._toggle_category_row(row_id)
 
     def _toggle_category_row(self, row_id: str) -> None:
-        if row_id in self.category_selection:
-            self.category_selection.remove(row_id)
-        else:
-            self.category_selection.add(row_id)
+        self.category_selection = set(toggle_category_row_selection(self.category_selection, row_id))
         self._populate_category_rows()
 
     def _category_tree_click(self, event: tk.Event) -> str | None:
@@ -709,32 +714,30 @@ class ProductInitializationApp:
 
     def _select_all_category_rows(self) -> None:
         tree = self._tree_widget(self.category_tree)
-        self.category_selection.update(tree.get_children(""))
+        self.category_selection = set(select_shown_category_rows(self.category_selection, tree.get_children("")))
         self._populate_category_rows()
 
     def _select_highlighted_category_rows(self) -> None:
         tree = self._tree_widget(self.category_tree)
-        self.category_selection.update(str(row_id) for row_id in tree.selection())
+        self.category_selection = set(select_shown_category_rows(self.category_selection, tree.selection()))
         self._populate_category_rows()
 
     def _deselect_all_category_rows(self) -> None:
         tree = self._tree_widget(self.category_tree)
-        self.category_selection.difference_update(tree.get_children(""))
+        self.category_selection = set(deselect_shown_category_rows(self.category_selection, tree.get_children("")))
         self._populate_category_rows()
 
-    def _category_action_row_ids(self) -> tuple[set[str], bool]:
-        if self.category_selection:
-            return set(self.category_selection), False
+    def _category_action_selection(self) -> CategoryActionSelection:
         tree = self._tree_widget(self.category_tree)
-        return {str(row_id) for row_id in tree.selection()}, True
+        return select_category_action_rows(self.category_selection, tree.selection())
 
     def _assign_category(self) -> None:
         session = self.controller.state.session
-        row_ids, _using_highlighted = self._category_action_row_ids()
-        if session is None or not row_ids:
+        action = self._category_action_selection()
+        if session is None or not action.row_ids:
             return
         category = self.selected_category.get() or self.category_name.get()
-        next_session = assign_category(session, row_ids, category)
+        next_session = assign_category(session, set(action.row_ids), category)
         if next_session != session:
             self._push_category_undo()
             self._set_category_session(next_session)
@@ -743,10 +746,10 @@ class ProductInitializationApp:
 
     def _mark_category_for_edit(self) -> None:
         session = self.controller.state.session
-        row_ids, _using_highlighted = self._category_action_row_ids()
-        if session is None or not row_ids:
+        action = self._category_action_selection()
+        if session is None or not action.row_ids:
             return
-        next_session = mark_for_edit(session, row_ids)
+        next_session = mark_for_edit(session, set(action.row_ids))
         if next_session != session:
             self._push_category_undo()
             self._set_category_session(next_session)
@@ -755,17 +758,17 @@ class ProductInitializationApp:
 
     def _delete_category_rows(self) -> None:
         session = self.controller.state.session
-        row_ids, using_highlighted = self._category_action_row_ids()
-        if session is None or not row_ids:
+        action = self._category_action_selection()
+        if session is None or not action.row_ids:
             return
-        if using_highlighted and row_ids:
-            count = len(row_ids)
+        if action.needs_delete_confirmation:
+            count = len(action.row_ids)
             if not messagebox.askyesno(
                 APP_TITLE,
                 f"Delete {count} highlighted row{'s' if count != 1 else ''} from this import?",
             ):
                 return
-        next_session = delete_rows(session, row_ids)
+        next_session = delete_rows(session, set(action.row_ids))
         if next_session != session:
             self._push_category_undo()
             self._set_category_session(next_session)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from enum import Enum
 from pathlib import Path
@@ -60,6 +61,56 @@ class AppState:
     @property
     def can_export(self) -> bool:
         return self.session is not None and self.session.can_export
+
+
+@dataclass(frozen=True)
+class CategoryActionSelection:
+    row_ids: frozenset[str]
+    using_highlighted: bool = False
+
+    @property
+    def needs_delete_confirmation(self) -> bool:
+        return self.using_highlighted and bool(self.row_ids)
+
+
+def select_category_action_rows(
+    checked_row_ids: Iterable[str],
+    highlighted_row_ids: Iterable[str],
+) -> CategoryActionSelection:
+    checked = frozenset(str(row_id) for row_id in checked_row_ids if str(row_id))
+    if checked:
+        return CategoryActionSelection(checked, using_highlighted=False)
+    highlighted = frozenset(str(row_id) for row_id in highlighted_row_ids if str(row_id))
+    return CategoryActionSelection(highlighted, using_highlighted=bool(highlighted))
+
+
+def toggle_category_row_selection(selected_row_ids: Iterable[str], row_id: str) -> frozenset[str]:
+    selected = set(str(selected_row_id) for selected_row_id in selected_row_ids if str(selected_row_id))
+    row_id = str(row_id)
+    if not row_id:
+        return frozenset(selected)
+    if row_id in selected:
+        selected.remove(row_id)
+    else:
+        selected.add(row_id)
+    return frozenset(selected)
+
+
+def select_shown_category_rows(
+    selected_row_ids: Iterable[str],
+    shown_row_ids: Iterable[str],
+) -> frozenset[str]:
+    selected = set(str(row_id) for row_id in selected_row_ids if str(row_id))
+    selected.update(str(row_id) for row_id in shown_row_ids if str(row_id))
+    return frozenset(selected)
+
+
+def deselect_shown_category_rows(
+    selected_row_ids: Iterable[str],
+    shown_row_ids: Iterable[str],
+) -> frozenset[str]:
+    shown = {str(row_id) for row_id in shown_row_ids if str(row_id)}
+    return frozenset(str(row_id) for row_id in selected_row_ids if str(row_id) and str(row_id) not in shown)
 
 
 class AppController:

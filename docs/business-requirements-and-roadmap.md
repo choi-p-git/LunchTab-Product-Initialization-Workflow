@@ -100,8 +100,10 @@ assignment is limited to category names the operator enters or loads through a v
    - Preserve source row name, price, category, barcode, old category, and final deletion reason.
 
 3. **Targeted workflow tests**
-   - Add controller/widget-level coverage for Step 2 category selection, highlighted selection,
-     delete shortcut, inline category dropdown, and filter behavior.
+   - Controller-level coverage now protects Step 2 checked-row selection, highlighted-row fallback,
+     highlighted-delete confirmation, select shown, and deselect shown behavior.
+   - Add remaining widget-level coverage for Step 2 delete shortcut, inline category dropdown, and
+     filter event behavior.
    - Add Step 4 GUI-focused coverage for reason filters, Enter-to-replace, displayed-row advance,
      and preserved selection/focus state.
    - Add end-to-end session tests for back edits from final review through category, edit, merge,

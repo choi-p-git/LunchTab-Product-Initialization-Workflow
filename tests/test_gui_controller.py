@@ -3,7 +3,14 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
-from lunchtab_product_init.gui_controller import AppController, AppPhase
+from lunchtab_product_init.gui_controller import (
+    AppController,
+    AppPhase,
+    deselect_shown_category_rows,
+    select_category_action_rows,
+    select_shown_category_rows,
+    toggle_category_row_selection,
+)
 from lunchtab_product_init.models import LUNCHTAB_TEMPLATE_HEADERS
 from lunchtab_product_init.session_workflow import ImportSession
 
@@ -76,3 +83,32 @@ def test_controller_requires_all_files_before_parse() -> None:
         assert "All three source files" in str(error)
     else:
         raise AssertionError("begin_parse should reject incomplete input")
+
+
+def test_category_action_rows_prefer_checked_rows_over_highlighted_rows() -> None:
+    action = select_category_action_rows(["row-1", "row-2"], ["row-3"])
+
+    assert action.row_ids == frozenset({"row-1", "row-2"})
+    assert not action.using_highlighted
+    assert not action.needs_delete_confirmation
+
+
+def test_category_action_rows_fall_back_to_highlighted_rows_for_delete_confirmation() -> None:
+    action = select_category_action_rows([], ["row-3", "row-4"])
+
+    assert action.row_ids == frozenset({"row-3", "row-4"})
+    assert action.using_highlighted
+    assert action.needs_delete_confirmation
+
+
+def test_category_selection_helpers_toggle_select_and_deselect_shown_rows() -> None:
+    selected = toggle_category_row_selection([], "row-1")
+    selected = toggle_category_row_selection(selected, "row-2")
+    selected = toggle_category_row_selection(selected, "row-1")
+    assert selected == frozenset({"row-2"})
+
+    selected = select_shown_category_rows(selected, ["row-3", "row-4"])
+    assert selected == frozenset({"row-2", "row-3", "row-4"})
+
+    selected = deselect_shown_category_rows(selected, ["row-3", "row-5"])
+    assert selected == frozenset({"row-2", "row-4"})
