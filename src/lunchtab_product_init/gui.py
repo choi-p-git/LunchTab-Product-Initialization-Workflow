@@ -248,6 +248,9 @@ class ProductInitializationApp:
         )
         self.name_filter_combo.grid(row=2, column=5, padx=(6, 8), sticky="w", pady=(8, 0))
         self.name_filter_combo.bind("<<ComboboxSelected>>", lambda _event: self._refresh_category_rows())
+        ttk.Button(tools, text="Clear filters", command=self._clear_category_filters).grid(
+            row=2, column=6, sticky="w", pady=(8, 0)
+        )
 
         self.category_tree = self._tree(
             body,
@@ -563,6 +566,22 @@ class ProductInitializationApp:
         if self._category_filter_after_id is not None:
             self.root.after_cancel(self._category_filter_after_id)
             self._category_filter_after_id = None
+        self._populate_category_rows()
+
+    def _clear_category_filters(self) -> None:
+        if self._category_filter_after_id is not None:
+            self.root.after_cancel(self._category_filter_after_id)
+            self._category_filter_after_id = None
+        self.category_filter.set("")
+        self.old_category_filter.set("")
+        self.barcode_filter.set("Any")
+        self.category_assignment_filter.set("Any")
+        self.name_filter.set("Any")
+        self.price_operator.set("=")
+        self.min_price.set("")
+        self.max_price.set("")
+        self.price_value_entry.configure(state="normal")
+        self.price_upper_entry.configure(state="disabled")
         self._populate_category_rows()
 
     def _bind_live_category_filter(self, widget: tk.Widget) -> None:
