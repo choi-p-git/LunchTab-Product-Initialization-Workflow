@@ -105,6 +105,22 @@ def test_old_category_is_preserved_and_filterable() -> None:
     ] == ["row-3"]
 
 
+def test_category_filter_can_group_duplicate_item_names() -> None:
+    session = _session(
+        [
+            _row("row-1", "Z Drink", "1.00", "A"),
+            _row("row-2", "Apple Juice", "1.00", "B"),
+            _row("row-3", "z drink", "1.25", "C"),
+            _row("row-4", "Banana", "1.00", "D"),
+            _row("row-5", "Apple  Juice", "1.50", "E"),
+        ]
+    )
+
+    assert [
+        row.row_id for row in filter_rows(session, name_filter="Duplicate name")
+    ] == ["row-2", "row-5", "row-1", "row-3"]
+
+
 def test_category_filter_can_select_sagemb_or_vendor_barcodes() -> None:
     session = _session(
         [
@@ -339,6 +355,17 @@ def test_pos_generation_validation_override_learning_and_suggestions() -> None:
     assert session.can_leave_pos_review
     assert session.pos_preferences.abbreviations["chicken"] == "Chick"
     assert suggest_pos_names(session, "row-2")[0] == "Chick Cae Sal"
+
+
+def test_pos_suggestions_exclude_names_that_fail_validation() -> None:
+    session = _session(
+        [
+            _row("row-1", "Apple Juice", "1.00", "A", category="Beverages", pos_name="Apple Juice"),
+            _row("row-2", "Apple Juice", "1.00", "B", category="Beverages"),
+        ]
+    )
+
+    assert "Apple Juice" not in suggest_pos_names(session, "row-2")
 
 
 def test_pos_preferences_allow_context_specific_token_shortening() -> None:

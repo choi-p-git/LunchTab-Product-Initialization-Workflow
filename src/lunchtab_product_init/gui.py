@@ -32,7 +32,7 @@ from lunchtab_product_init.session_workflow import (
     save_edit,
     save_venue_profile,
     suggest_pos_names,
-    validate_pos_name,
+    validate_pos_name_for_row,
 )
 from lunchtab_product_init.ui_helpers import size_and_center
 
@@ -65,6 +65,7 @@ class ProductInitializationApp:
         self.is_orderable = tk.BooleanVar(value=False)
         self.category_name = tk.StringVar()
         self.category_filter = tk.StringVar()
+        self.name_filter = tk.StringVar(value="Any")
         self.old_category_filter = tk.StringVar()
         self.barcode_filter = tk.StringVar(value="Any")
         self.category_assignment_filter = tk.StringVar(value="Any")
@@ -235,6 +236,16 @@ class ProductInitializationApp:
         self.category_assignment_filter_combo.bind(
             "<<ComboboxSelected>>", lambda _event: self._refresh_category_rows()
         )
+        ttk.Label(tools, text="Name filter").grid(row=2, column=4, sticky="w", pady=(8, 0))
+        self.name_filter_combo = ttk.Combobox(
+            tools,
+            textvariable=self.name_filter,
+            values=("Any", "Duplicate name"),
+            state="readonly",
+            width=16,
+        )
+        self.name_filter_combo.grid(row=2, column=5, padx=(6, 8), sticky="w", pady=(8, 0))
+        self.name_filter_combo.bind("<<ComboboxSelected>>", lambda _event: self._refresh_category_rows())
 
         self.category_tree = self._tree(
             body,
@@ -362,7 +373,11 @@ class ProductInitializationApp:
         ttk.Label(editor, textvariable=self.pos_validation, foreground="#8a1f11").grid(
             row=1, column=0, sticky="w", pady=(6, 0)
         )
-        self.replace_pos_button = ttk.Button(editor, text="Replace", command=self._replace_pos)
+        self.replace_pos_button = ttk.Button(
+            editor,
+            text="Replace",
+            command=lambda: self._replace_pos(advance=True),
+        )
         self.replace_pos_button.grid(row=2, column=0, sticky="ew", pady=(8, 0))
         ttk.Label(editor, text="Suggestions").grid(row=3, column=0, sticky="w", pady=(14, 4))
         self.suggestion_frame = ttk.Frame(editor)
@@ -1296,6 +1311,7 @@ class ProductInitializationApp:
         rows = filter_rows(
             session,
             keyword=self.category_filter.get(),
+            name_filter=self._selected_name_filter(),
             old_category=self.old_category_filter.get(),
             barcode_filter=self._selected_barcode_filter(),
             category_assignment=self._selected_category_assignment_filter(),
@@ -1363,6 +1379,10 @@ class ProductInitializationApp:
 
     def _selected_category_assignment_filter(self) -> str:
         value = self.category_assignment_filter.get()
+        return "" if value == "Any" else value
+
+    def _selected_name_filter(self) -> str:
+        value = self.name_filter.get()
         return "" if value == "Any" else value
 
     def _selected_pos_reason_filter(self) -> str:
@@ -1453,10 +1473,10 @@ class ProductInitializationApp:
         session = self.controller.state.session
         if session is None or self.current_pos_row_id is None:
             return ["select a row"]
-        return validate_pos_name(
-            self._clean_edit_text(self.pos_name.get()),
+        return validate_pos_name_for_row(
+            session,
             self.current_pos_row_id,
-            session.rows,
+            self._clean_edit_text(self.pos_name.get()),
         )
 
     def _update_pos_action_state(self) -> None:

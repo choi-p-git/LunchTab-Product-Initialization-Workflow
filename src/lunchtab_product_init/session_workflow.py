@@ -41,6 +41,7 @@ RowStatus = Literal[
 ]
 PriceFilterOperator = Literal["=", "<", ">", "<=", ">=", "range", "no_price", "any"]
 CategoryAssignmentFilter = Literal["any", "assigned", "unassigned"]
+NameFilter = Literal["any", "duplicate_name"]
 
 DELETED_AUDIT_NAME = "Deleted Product Audit.csv"
 SESSION_AUDIT_NAME = "Session Review Audit.csv"
@@ -204,6 +205,7 @@ def filter_rows(
     session: ImportSession,
     *,
     keyword: str = "",
+    name_filter: NameFilter | str = "any",
     old_category: str = "",
     barcode_filter: str = "",
     category_assignment: CategoryAssignmentFilter | str = "any",
@@ -215,6 +217,7 @@ def filter_rows(
     include_deleted: bool = False,
 ) -> tuple[SessionRow, ...]:
     keyword_norm = normalize_text(keyword)
+    name_filter = _normalize_name_filter(name_filter)
     old_category_norm = normalize_text(old_category)
     barcode_norm = normalize_text(barcode_filter)
     category_assignment = _normalize_category_assignment_filter(category_assignment)
@@ -226,9 +229,13 @@ def filter_rows(
     target_price = _decimal_or_none(price_value)
     upper_price = _decimal_or_none(price_upper)
     rows = session.rows if include_deleted else session.active_rows
+    duplicate_names = _duplicate_item_names(rows) if name_filter == "duplicate_name" else set()
     filtered = []
     for row in rows:
         if keyword_norm and keyword_norm not in normalize_text(row.item_name):
+            continue
+        item_name_norm = normalize_text(row.item_name)
+        if name_filter == "duplicate_name" and item_name_norm not in duplicate_names:
             continue
         if not _old_category_filter_matches(row.old_category, old_category_norm):
             continue
@@ -242,6 +249,8 @@ def filter_rows(
         if not _price_matches(price, price_operator, target_price, upper_price):
             continue
         filtered.append(row)
+    if name_filter == "duplicate_name":
+        filtered.sort(key=lambda row: normalize_text(row.item_name))
     return tuple(filtered)
 
 
@@ -510,6 +519,15 @@ def validate_pos_name(pos_name: str, row_id: str, rows: tuple[SessionRow, ...]) 
     return reasons
 
 
+def validate_pos_name_for_row(session: ImportSession, row_id: str, pos_name: str) -> list[str]:
+    cleaned = _clean_text(pos_name)
+    rows = tuple(
+        replace(row, pos_name=cleaned) if row.row_id == row_id and row.status != "deleted" else row
+        for row in session.rows
+    )
+    return validate_pos_name(cleaned, row_id, rows)
+
+
 def suggest_pos_names(session: ImportSession, row_id: str) -> tuple[str, ...]:
     row = _row_by_id(session, row_id)
     if row is None:
@@ -519,7 +537,11 @@ def suggest_pos_names(session: ImportSession, row_id: str) -> tuple[str, ...]:
     compact = "".join(token[:4].title() for token in normalize_text(row.item_name).split())
     suggestions = []
     for value in (*preferred, base, compact[:MAX_POS_NAME_LENGTH]):
-        if value and value not in suggestions:
+        if (
+            value
+            and value not in suggestions
+            and not validate_pos_name_for_row(session, row_id, value)
+        ):
             suggestions.append(value)
     return tuple(suggestions[:3])
 
@@ -1441,6 +1463,18 @@ def _normalize_category_assignment_filter(value: str) -> CategoryAssignmentFilte
     if normalized in {"no category", "unassigned", "category unassigned", "no category assigned"}:
         return "unassigned"
     return "any"
+
+
+def _normalize_name_filter(value: str) -> NameFilter:
+    normalized = normalize_text(value)
+    if normalized in {"duplicate name", "duplicate names", "duplicates", "duplicated name"}:
+        return "duplicate_name"
+    return "any"
+
+
+def _duplicate_item_names(rows) -> set[str]:
+    counts = Counter(normalize_text(row.item_name) for row in rows if normalize_text(row.item_name))
+    return {name for name, count in counts.items() if count > 1}
 
 
 def _old_category_filter_matches(old_category: str, old_category_filter: str) -> bool:
