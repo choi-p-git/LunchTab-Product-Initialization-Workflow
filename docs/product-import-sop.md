@@ -54,7 +54,9 @@ Complete this checklist before running the app.
 - [ ] For seasonal updates, export the current live sales items report from Lunchtab.
 - [ ] Create all needed product categories in Lunchtab before import.
 - [ ] Confirm category names to be entered in the app exactly match Lunchtab category names.
+- [ ] Confirm whether `IsPublished` should stay false or be set true for this run.
 - [ ] Confirm whether `IsOrderable` should stay false. Normal setting is false.
+- [ ] Confirm whether any rows should be included in the Core Catalogue export.
 - [ ] Confirm whether Odin inventory or generic inventory will be used, not both.
 
 ## Create Product Categories in Lunchtab
@@ -83,8 +85,9 @@ Category names entered in the app must exactly match the names created in Luncht
    - generic inventory CSV.
 5. Optionally load a venue profile JSON.
 6. Confirm the output folder.
-7. Leave `IsOrderable` false unless the FSD or menu/pricing owner decides otherwise.
-8. Click `Parse sources`.
+7. Leave `IsPublished` false unless the FSD or menu/pricing owner decides otherwise.
+8. Leave `IsOrderable` false unless the FSD or menu/pricing owner decides otherwise.
+9. Click `Parse sources`.
 
 ## Assign Categories
 
@@ -180,9 +183,12 @@ The FSD or menu/pricing owner must manually review the final CSV before upload.
 5. Confirm prices.
 6. Confirm barcodes.
 7. Confirm POS button names are visible and understandable.
-8. Use `Edit selected row...` for final corrections if needed.
-9. Save the venue profile again if the categories or POS-name preferences should be reused.
-10. Click `Confirm and export`.
+8. Confirm `IsPublished`.
+9. Confirm `IsOrderable`.
+10. Confirm Core Catalogue selections if the venue uses that output.
+11. Use `Edit selected row...` for final corrections if needed.
+12. Save the venue profile again if the categories or POS-name preferences should be reused.
+13. Click `Confirm and export`.
 
 ## Upload to Lunchtab
 
@@ -195,6 +201,8 @@ The FSD or menu/pricing owner must manually review the final CSV before upload.
 
 Important: the upload replaces the existing Base Product database.
 
+The Core Catalogue CSV is a separate app output. Do not upload it as the ProductData import file.
+
 ## Post-Upload Checks
 
 After upload, check:
@@ -202,7 +210,8 @@ After upload, check:
 - item-to-category assignment,
 - pricing,
 - barcode accuracy,
-- POS button name visibility.
+- POS button name visibility,
+- published/orderable status where applicable.
 
 ## If Upload Fails
 

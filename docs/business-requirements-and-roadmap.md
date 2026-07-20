@@ -29,7 +29,9 @@ assignment is limited to category names the operator enters or loads through a v
 - Comma-separated barcode fields represent multiple barcodes for one product and must be split for
   duplicate validation.
 - Final-row `Handle` should mirror `BaseProductName`.
-- Final-row `IsOrderable` is operator-configurable and defaults to `false`.
+- Final-row `IsPublished` and `IsOrderable` are operator-configurable and default to `false`.
+- `IsPublished`, `IsOrderable`, and Core Catalogue flags can be corrected by row during final
+  review.
 - `ProductCategories` must contain operator-created Lunchtab category names only.
 - Category assignment must be fast enough for bulk operator work: keyword, old category, barcode,
   category status, price/no-price, and inventory-stock filters are part of the core workflow.
@@ -48,14 +50,15 @@ assignment is limited to category names the operator enters or loads through a v
 - Final import CSV rows are grouped by `ProductCategories` and sorted by `BaseProductName`
   ascending within each category.
 - Audit artifacts preserve session/row-id order for traceability.
-- Every export must emit final CSV, category audit, POS-name audit, session audit, deleted-row
-  audit, run manifest, and run summary.
+- Every export must emit final CSV, Core Catalogue CSV, category audit, POS-name audit, session
+  audit, deleted-row audit, run manifest, and run summary.
 
 ## Current Guided Workflow
 
 1. **Parse Sources**
    - Operator selects ProductData template, recipe list, optional Odin inventory workbook,
-     optional generic inventory CSV, optional venue profile, output folder, and `IsOrderable`.
+     optional generic inventory CSV, optional venue profile, output folder, `IsPublished`, and
+     `IsOrderable`.
    - Selecting an Odin inventory workbook clears any generic inventory CSV selection, and selecting
      a generic inventory CSV clears any Odin inventory workbook selection.
    - App parses and merges candidate rows into a working session.
@@ -105,7 +108,8 @@ assignment is limited to category names the operator enters or loads through a v
    - Initial final review order matches final export order: category ascending, then item name
      ascending.
    - Operator can select a row, open an edit dialog with a full-row preview, and adjust final
-     item name, POS name, price, barcode, or category before export.
+     item name, POS name, price, barcode, category, published flag, orderable flag, or Core
+     Catalogue flag before export.
    - Final-review edits are prevalidated before save and require confirmation before updating the
      working session.
    - Export remains disabled until active rows pass required-field, barcode, category, POS-name
@@ -113,8 +117,8 @@ assignment is limited to category names the operator enters or loads through a v
    - Operator can save the venue profile again before export.
 
 6. **Export Complete**
-   - App writes the category/name-sorted final import CSV, category audit, POS-name audit, session
-     audit, deleted-row audit, manifest, and run summary.
+   - App writes the category/name-sorted final import CSV, Core Catalogue CSV, category audit,
+     POS-name audit, session audit, deleted-row audit, manifest, and run summary.
    - Category, POS-name, session, and deleted-row audits retain session/row-id order.
    - Operator can open the output folder and major artifacts from the complete tab.
 
@@ -124,8 +128,8 @@ assignment is limited to category names the operator enters or loads through a v
    - Final review now shows selected source filenames with short SHA-256 hashes.
    - Final review shows active duplicate-check status for barcodes and POS names.
    - Final review shows category counts by category.
-   - Final review shows edit count, POS override count, deleted count, merge count, and
-     `IsOrderable`.
+   - Final review shows edit count, POS override count, deleted count, merge count, published
+     rows, orderable rows, and Core Catalogue rows.
    - Keep the table focused on upload columns while metadata is displayed in a separate summary
      area.
 
@@ -175,7 +179,8 @@ assignment is limited to category names the operator enters or loads through a v
 
 3. **Operator Documentation**
    - Operator quick-start is available in `docs/operator-quick-start.md` for running the app,
-     preparing source files, completing the six-step workflow, and checking output artifacts.
+     preparing source files, completing the six-step workflow, checking upload flags, and checking
+     output artifacts.
    - Internal SOP first draft is available in `docs/product-import-sop.md`, including source
      export prerequisites, Lunchtab category setup, category/profile preparation, import
      execution, approval, upload, post-import checks, escalation, and output retention.
@@ -206,8 +211,8 @@ assignment is limited to category names the operator enters or loads through a v
   upload behavior may replace rather than append the product library.
 - Venue category creation rules and whether category names differ by location.
 - How barcodes are assigned, combined, or retired in Lunchtab before and after import.
-- How `IsOrderable`, product publication, tax categories, requirement categories, and restriction
-  categories are configured outside this app.
+- How `IsPublished`, `IsOrderable`, Core Catalogue usage, tax categories, requirement categories,
+  and restriction categories are configured outside this app.
 - Expected operator role, approval checkpoints, and escalation path for ambiguous rows.
 - Current manual workflow duration by step, error rate, and target time savings.
 - Post-import validation steps in Lunchtab POS/admin screens.

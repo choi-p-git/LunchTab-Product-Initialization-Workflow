@@ -1124,7 +1124,7 @@ def test_raw_data_guided_session_profile_subset_exports_with_audits(tmp_path: Pa
     raw_row_count = len(session.rows)
 
     assert raw_row_count > 1000
-    assert len(session.category_names) >= 20
+    assert session.category_names == profile.category_names
     assert "Bread" in session.category_names
     assert "Vendor Beverages" in session.category_names
     assert len(no_barcode_rows(session)) > 300

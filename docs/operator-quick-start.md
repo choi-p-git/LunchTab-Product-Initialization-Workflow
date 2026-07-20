@@ -35,8 +35,11 @@ new folder for that run.
 2. Select the SAGE recipe list.
 3. Optionally select one inventory file.
 4. Optionally load a venue profile.
-5. Confirm the output folder and `IsOrderable` setting.
-6. Click `Parse sources`.
+5. Confirm the output folder.
+6. Confirm whether rows should default to `IsPublished` or `IsOrderable`.
+7. Click `Parse sources`.
+
+Normal starting setting: leave `IsOrderable` false unless the venue owner decides otherwise.
 
 ## Step 2: Categories
 
@@ -88,6 +91,7 @@ Review the final upload before export.
 - The initial final table is grouped by category and then item name.
 - Click column headers to sort the displayed preview temporarily.
 - Select a row and click `Edit selected row...` for a final correction.
+- Confirm `IsPublished`, `IsOrderable`, and Core Catalogue values.
 - Save the venue profile again if category names or POS-name preferences should be reused.
 - Click `Confirm and export` when the file is ready.
 
@@ -97,6 +101,7 @@ Use the buttons on the complete tab to open:
 
 - Output folder.
 - Final import CSV.
+- Core Catalogue CSV.
 - Category audit.
 - POS-name audit.
 - Deleted-row audit.
@@ -109,5 +114,7 @@ Before uploading to Lunchtab, check:
 - The final import CSV has the expected rows.
 - Product categories are correct.
 - POS names look correct and are short enough.
+- `IsPublished` matches the intended run setting.
 - `IsOrderable` matches the intended run setting.
+- Core Catalogue rows are expected if that output is used for the venue.
 - Deleted and merged rows are expected.

@@ -4,11 +4,12 @@ This Windows desktop utility builds an audited Lunchtab product import CSV from:
 
 - the Lunchtab `ProductData...csv` template;
 - the corporate menu-builder `recipeList...csv` export;
-- the Odin `Cafeteria Inventory Stock and Prices Report...xlsx` export.
+- optional inventory enrichment from either the Odin `Cafeteria Inventory Stock and Prices
+  Report...xlsx` export or a generic inventory CSV.
 
 The application never edits selected source files. Each export writes a timestamped run folder
 containing the final import CSV, category audit, POS-name audit, session audit, deleted-row audit,
-run manifest, and run summary.
+Core Catalogue export, run manifest, and run summary.
 
 ## Development
 
@@ -50,15 +51,18 @@ uv run lt-pos-name --smoke-test
 2. Select the recipe-list CSV exported from Menu Builder -> Recipe List.
 3. Optionally select either the Odin cafeteria inventory workbook or a generic inventory CSV.
 4. Choose an output folder, or keep the default `Documents\Lunchtab Product Initialization`.
-5. Parse the source files to build the working set.
-6. Add valid Lunchtab category names, filter rows by keyword or price, assign categories, delete
+5. Confirm whether imported rows should default to published and/or orderable.
+6. Parse the source files to build the working set.
+7. Add valid Lunchtab category names, filter rows by keyword or price, assign categories, delete
    rows that should not be imported, or mark rows for edit review.
-7. Review queued rows in the edit tab. Use the no-barcode filter and select-all action for fast
+8. Review queued rows in the edit tab. Use the no-barcode filter and select-all action for fast
    deletion of unneeded no-barcode rows, or edit name, price, barcode, and category.
-8. Review generated `BaseProductPosName` values, replace invalid or unwanted names, and use the
+9. Review generated `BaseProductPosName` values, replace invalid or unwanted names, and use the
    suggestions generated from the base algorithm plus session preference learning.
-9. Review the final upload data and audit counts, then export the finalized Lunchtab CSV.
-10. Open the final import, audits, summary, or output folder from the export-complete tab.
+10. Review final upload data, audit counts, row-level published/orderable flags, and Core Catalogue
+    selections.
+11. Open the final import, Core Catalogue export, audits, summary, or output folder from the
+    export-complete tab.
 
 ## Current Automation Rules
 
@@ -66,6 +70,9 @@ Rows now move through a guided session before export. Rows with a usable item na
 category assignment; missing or duplicate barcode issues are flagged for edit review before export.
 Final export is blocked until every non-deleted row has a usable item name, valid price, barcode,
 category, and unique `BaseProductPosName` of 15 characters or fewer.
+
+`IsPublished` and `IsOrderable` default from Step 1 and can be corrected by row in final review.
+Rows can also be marked for the separate Core Catalogue export.
 
 Product categories are assigned in the category tab from operator-entered Lunchtab category names.
 The target CSV's `ProductCategories` column contains only category names that the operator created
@@ -89,6 +96,7 @@ or non-food rows and are routed to review instead of the final import.
 Each guided export folder contains:
 
 - `Lunchtab Product Import.csv` - final upload-ready import file;
+- `Core Catalogue.csv` - rows marked for the Core Catalogue reference output;
 - `Product Category Audit.csv` - row-level category assignment status;
 - `BaseProductPosName Audit.csv` - generated or overridden POS-name status;
 - `Session Review Audit.csv` - row-level source, edit, deletion, category, and POS-name decisions;
