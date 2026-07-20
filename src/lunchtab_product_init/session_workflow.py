@@ -47,6 +47,7 @@ NameFilter = Literal["any", "duplicate_name"]
 
 DELETED_AUDIT_NAME = "Deleted Product Audit.csv"
 SESSION_AUDIT_NAME = "Session Review Audit.csv"
+CORE_CATALOGUE_NAME = "Core Catalogue.csv"
 POS_NAME_STOP_WORDS = {"a", "an", "and", "of", "the", "with"}
 POS_NAME_PHRASE_REPLACEMENTS = {("english", "muffin"): "Muff"}
 
@@ -103,6 +104,9 @@ class SessionRow:
     merge_action_timestamp: str = ""
     edited: bool = False
     pos_overridden: bool = False
+    is_published: bool = False
+    is_orderable: bool = False
+    core_catalogue: bool = False
 
     @property
     def item_name(self) -> str:
@@ -158,6 +162,7 @@ class ImportSession:
 @dataclass(frozen=True)
 class SessionOutputPaths:
     final_import: Path
+    core_catalogue: Path
     category_audit: Path
     naming_audit: Path
     session_audit: Path
@@ -176,6 +181,7 @@ class SessionBuildSummary:
     pos_overrides: int
     duplicate_barcodes: int
     duplicate_pos_names: int
+    core_catalogue_rows: int
     output_paths: SessionOutputPaths
 
 
@@ -193,6 +199,9 @@ class FinalReviewMetadata:
     edited_rows: int
     merge_rows: int
     pos_overrides: int
+    published_rows: int
+    orderable_rows: int
+    core_catalogue_rows: int
     duplicate_barcodes: int
     duplicate_pos_names: int
     category_counts: tuple[tuple[str, int], ...]
@@ -215,7 +224,13 @@ def parse_sources(inputs: BuildInputs) -> ImportSession:
     candidates = merge_candidates(recipes, inventory)
     barcode_duplicates = duplicate_barcodes(candidate.barcode for candidate in candidates)
     rows = tuple(
-        _session_row(index, candidate, barcode_duplicates)
+        _session_row(
+            index,
+            candidate,
+            barcode_duplicates,
+            is_published=inputs.is_published,
+            is_orderable=inputs.is_orderable,
+        )
         for index, candidate in enumerate(candidates, start=1)
     )
     return ImportSession(headers=headers, rows=rows)
@@ -325,9 +340,7 @@ def assign_category(session: ImportSession, row_ids: set[str], category: str) ->
     )
 
 
-def _refresh_after_category_assignment(
-    session: ImportSession, row_ids: set[str]
-) -> ImportSession:
+def _refresh_after_category_assignment(session: ImportSession, row_ids: set[str]) -> ImportSession:
     barcode_duplicates = duplicate_barcodes(row.barcode for row in session.active_rows)
     rows = []
     for row in session.rows:
@@ -357,11 +370,15 @@ def _refresh_after_category_assignment(
     )
 
 
-def mark_for_edit(session: ImportSession, row_ids: set[str], reason: str = "operator review") -> ImportSession:
+def mark_for_edit(
+    session: ImportSession, row_ids: set[str], reason: str = "operator review"
+) -> ImportSession:
     return replace(
         session,
         rows=tuple(
-            replace(row, status="needs_edit", review_reason=_append_reason(row.review_reason, reason))
+            replace(
+                row, status="needs_edit", review_reason=_append_reason(row.review_reason, reason)
+            )
             if row.row_id in row_ids and row.status != "deleted"
             else row
             for row in session.rows
@@ -369,7 +386,9 @@ def mark_for_edit(session: ImportSession, row_ids: set[str], reason: str = "oper
     )
 
 
-def delete_rows(session: ImportSession, row_ids: set[str], reason: str = "operator deleted") -> ImportSession:
+def delete_rows(
+    session: ImportSession, row_ids: set[str], reason: str = "operator deleted"
+) -> ImportSession:
     return _refresh_after_delete(
         replace(
             session,
@@ -394,7 +413,9 @@ def _refresh_after_delete(session: ImportSession) -> ImportSession:
         edit_reasons = _core_review_reasons(row.candidate, barcode_duplicates)
         if not row.category and row.status != "active":
             edit_reasons.append("missing category")
-        pos_reasons = validate_pos_name(row.pos_name, row.row_id, session.rows) if pos_started else []
+        pos_reasons = (
+            validate_pos_name(row.pos_name, row.row_id, session.rows) if pos_started else []
+        )
         if _is_unedited_operator_review(row):
             reasons = sorted(set((*edit_reasons, *pos_reasons, row.review_reason)))
             rows.append(replace(row, status="needs_edit", review_reason="; ".join(reasons)))
@@ -412,7 +433,9 @@ def _refresh_after_delete(session: ImportSession) -> ImportSession:
     return replace(session, rows=tuple(rows))
 
 
-def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[str]) -> ImportSession:
+def merge_rows(
+    session: ImportSession, target_row_id: str, source_row_ids: set[str]
+) -> ImportSession:
     source_row_ids = {row_id for row_id in source_row_ids if row_id != target_row_id}
     if not source_row_ids:
         raise ValueError("Select at least one source row to merge.")
@@ -420,9 +443,7 @@ def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[s
     if target is None or target.status == "deleted":
         raise ValueError("Select an active target row for merge.")
     source_rows = [
-        row
-        for row in session.rows
-        if row.row_id in source_row_ids and row.status != "deleted"
+        row for row in session.rows if row.row_id in source_row_ids and row.status != "deleted"
     ]
     if len(source_rows) != len(source_row_ids):
         raise ValueError("All source rows selected for merge must be active.")
@@ -430,7 +451,10 @@ def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[s
     target_barcode_before = target.barcode
     merge_action_timestamp = datetime.now().isoformat(timespec="seconds")
     merged_barcode = format_barcodes(
-        (*parse_barcodes(target.barcode), *(barcode for row in source_rows for barcode in parse_barcodes(row.barcode)))
+        (
+            *parse_barcodes(target.barcode),
+            *(barcode for row in source_rows for barcode in parse_barcodes(row.barcode)),
+        )
     )
     rows = []
     for row in session.rows:
@@ -440,7 +464,9 @@ def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[s
                     row,
                     candidate=replace(row.candidate, barcode=merged_barcode),
                     edited=True,
-                    review_reason=_append_reason(row.review_reason, "merged barcode from selected row"),
+                    review_reason=_append_reason(
+                        row.review_reason, "merged barcode from selected row"
+                    ),
                 )
             )
         elif row.row_id in source_row_ids:
@@ -454,7 +480,9 @@ def merge_rows(session: ImportSession, target_row_id: str, source_row_ids: set[s
                     merge_target_barcode_after=merged_barcode,
                     merge_transferred_barcodes=format_barcodes(parse_barcodes(row.barcode)),
                     merge_action_timestamp=merge_action_timestamp,
-                    review_reason=_append_reason(row.review_reason, f"barcode transferred to {target_row_id}"),
+                    review_reason=_append_reason(
+                        row.review_reason, f"barcode transferred to {target_row_id}"
+                    ),
                 )
             )
         else:
@@ -490,9 +518,7 @@ def prepare_edit_review(session: ImportSession) -> ImportSession:
             rows.append(row)
             continue
         reasons = [
-            reason
-            for reason in _reason_parts(row.review_reason)
-            if reason != "duplicate name"
+            reason for reason in _reason_parts(row.review_reason) if reason != "duplicate name"
         ]
         if normalize_text(row.item_name) in duplicate_names:
             reasons.append("duplicate name")
@@ -610,7 +636,11 @@ def run_pos_generation(session: ImportSession) -> ImportSession:
         refreshed.append(replace(row, status=status, review_reason="; ".join(reasons)))
     if duplicates:
         refreshed = [
-            replace(row, status="pos_needs_review", review_reason=_append_reason(row.review_reason, "duplicate POS name"))
+            replace(
+                row,
+                status="pos_needs_review",
+                review_reason=_append_reason(row.review_reason, "duplicate POS name"),
+            )
             if row.pos_name in duplicates and row.status != "deleted"
             else row
             for row in refreshed
@@ -648,6 +678,9 @@ def validate_final_review_edit(
     barcode: str,
     category: str,
     pos_name: str,
+    is_published: bool = False,
+    is_orderable: bool = False,
+    core_catalogue: bool = False,
 ) -> list[str]:
     row = _row_by_id(session, row_id)
     if row is None or row.status == "deleted":
@@ -673,7 +706,9 @@ def validate_final_review_edit(
         else current
         for current in session.rows
     )
-    barcode_duplicates = duplicate_barcodes(current.barcode for current in proposed_rows if current.status != "deleted")
+    barcode_duplicates = duplicate_barcodes(
+        current.barcode for current in proposed_rows if current.status != "deleted"
+    )
     reasons = _core_review_reasons(candidate, barcode_duplicates)
     if not cleaned_category:
         reasons.append("missing category")
@@ -691,6 +726,9 @@ def save_final_review_edit(
     barcode: str,
     category: str,
     pos_name: str,
+    is_published: bool = False,
+    is_orderable: bool = False,
+    core_catalogue: bool = False,
 ) -> ImportSession:
     reasons = validate_final_review_edit(
         session,
@@ -700,6 +738,9 @@ def save_final_review_edit(
         barcode=barcode,
         category=category,
         pos_name=pos_name,
+        is_published=is_published,
+        is_orderable=is_orderable,
+        core_catalogue=core_catalogue,
     )
     if reasons:
         raise ValueError("; ".join(reasons))
@@ -726,6 +767,9 @@ def save_final_review_edit(
                 status="pos_ready",
                 review_reason="",
                 edited=True,
+                is_published=is_published,
+                is_orderable=is_orderable,
+                core_catalogue=core_catalogue,
             )
         )
     return replace(session, rows=tuple(rows))
@@ -786,6 +830,46 @@ def filter_pos_rows(session: ImportSession, reason_filter: str = "") -> tuple[Se
         if normalized in normalize_text(row.review_reason)
         or normalized in normalize_text(row.status.replace("_", " "))
     )
+
+
+def filter_final_rows(
+    session: ImportSession,
+    *,
+    keyword: str = "",
+    flag_filter: str = "",
+) -> tuple[SessionRow, ...]:
+    normalized_keyword = normalize_text(keyword)
+    normalized_flag = normalize_text(flag_filter)
+    rows = ordered_final_session_rows(session)
+    if normalized_keyword:
+        rows = tuple(
+            row
+            for row in rows
+            if any(
+                normalized_keyword in normalize_text(value)
+                for value in (
+                    row.item_name,
+                    row.pos_name,
+                    row.price,
+                    row.barcode,
+                    row.category,
+                    row.review_reason,
+                )
+            )
+        )
+    if normalized_flag in {"published", "published rows"}:
+        return tuple(row for row in rows if row.is_published)
+    if normalized_flag in {"unpublished", "not published"}:
+        return tuple(row for row in rows if not row.is_published)
+    if normalized_flag in {"orderable", "orderable rows"}:
+        return tuple(row for row in rows if row.is_orderable)
+    if normalized_flag in {"not orderable", "not orderable rows"}:
+        return tuple(row for row in rows if not row.is_orderable)
+    if normalized_flag in {"core catalogue", "core catalog", "core"}:
+        return tuple(row for row in rows if row.core_catalogue)
+    if normalized_flag in {"not core catalogue", "not core catalog"}:
+        return tuple(row for row in rows if not row.core_catalogue)
+    return rows
 
 
 def generate_pos_name_with_preferences(item_name: str, preferences: PosNamePreferenceProfile):
@@ -860,7 +944,7 @@ def ordered_final_session_rows(session: ImportSession) -> tuple[SessionRow, ...]
     )
 
 
-def final_rows(session: ImportSession, is_orderable: bool) -> list[dict[str, str]]:
+def final_rows(session: ImportSession) -> list[dict[str, str]]:
     rows = []
     for row in ordered_final_session_rows(session):
         errors = validate_export_ready(row)
@@ -872,17 +956,24 @@ def final_rows(session: ImportSession, is_orderable: bool) -> list[dict[str, str
                 replace(row.candidate, category=row.category),
                 row.pos_name,
                 _category_result(row.category),
-                is_orderable,
+                row.is_published,
+                row.is_orderable,
             )
         )
     return rows
 
 
+def core_catalogue_rows(session: ImportSession) -> list[dict[str, str]]:
+    marked = replace(
+        session,
+        rows=tuple(row for row in session.rows if row.core_catalogue and row.status != "deleted"),
+    )
+    return final_rows(marked)
+
+
 def export_session(
     session: ImportSession,
     inputs: BuildInputs,
-    *,
-    is_orderable: bool,
 ) -> SessionExportResult:
     if not session.can_export:
         raise ValueError("All active rows must be complete before export.")
@@ -890,6 +981,7 @@ def export_session(
     run_dir = inputs.output_root / timestamp
     paths = SessionOutputPaths(
         final_import=run_dir / FINAL_OUTPUT_NAME,
+        core_catalogue=run_dir / CORE_CATALOGUE_NAME,
         category_audit=run_dir / CATEGORY_AUDIT_NAME,
         naming_audit=run_dir / NAMING_AUDIT_NAME,
         session_audit=run_dir / SESSION_AUDIT_NAME,
@@ -897,14 +989,17 @@ def export_session(
         manifest=run_dir / "run-manifest.json",
         summary=run_dir / "run-summary.md",
     )
-    write_csv(paths.final_import, session.headers, final_rows(session, is_orderable))
+    write_csv(paths.final_import, session.headers, final_rows(session))
+    write_csv(paths.core_catalogue, session.headers, core_catalogue_rows(session))
     write_csv(paths.category_audit, _category_audit_headers(), _category_audit_rows(session))
     write_csv(paths.naming_audit, _naming_audit_headers(), _naming_audit_rows(session))
     write_csv(paths.session_audit, _session_audit_headers(), _session_audit_rows(session))
-    write_csv(paths.deleted_audit, _session_audit_headers(), _session_audit_rows(session.deleted_rows))
+    write_csv(
+        paths.deleted_audit, _session_audit_headers(), _session_audit_rows(session.deleted_rows)
+    )
     summary = _summary(session, paths)
     _write_manifest(inputs, session, paths, summary)
-    _write_summary(paths.summary, summary, run_dir, is_orderable)
+    _write_summary(paths.summary, summary, run_dir)
     return SessionExportResult(run_dir=run_dir, summary=summary)
 
 
@@ -1016,8 +1111,13 @@ def final_review_metadata(session: ImportSession) -> FinalReviewMetadata:
         active_rows=len(session.active_rows),
         deleted_rows=len(session.deleted_rows),
         edited_rows=sum(1 for row in session.rows if row.edited),
-        merge_rows=sum(1 for row in session.deleted_rows if row.deleted_reason.startswith("merged into ")),
+        merge_rows=sum(
+            1 for row in session.deleted_rows if row.deleted_reason.startswith("merged into ")
+        ),
         pos_overrides=sum(1 for row in session.rows if row.pos_overridden),
+        published_rows=sum(1 for row in session.active_rows if row.is_published),
+        orderable_rows=sum(1 for row in session.active_rows if row.is_orderable),
+        core_catalogue_rows=sum(1 for row in session.active_rows if row.core_catalogue),
         duplicate_barcodes=len(barcode_duplicates),
         duplicate_pos_names=len(pos_duplicates),
         category_counts=tuple(sorted(category_counts.items(), key=lambda item: item[0].casefold())),
@@ -1025,7 +1125,14 @@ def final_review_metadata(session: ImportSession) -> FinalReviewMetadata:
     )
 
 
-def _session_row(index: int, candidate: ProductCandidate, barcode_duplicates: set[str]) -> SessionRow:
+def _session_row(
+    index: int,
+    candidate: ProductCandidate,
+    barcode_duplicates: set[str],
+    *,
+    is_published: bool = False,
+    is_orderable: bool = False,
+) -> SessionRow:
     reasons = _core_review_reasons(candidate, barcode_duplicates)
     status: RowStatus = "active" if candidate.item_name and candidate.price else "needs_edit"
     return SessionRow(
@@ -1034,6 +1141,8 @@ def _session_row(index: int, candidate: ProductCandidate, barcode_duplicates: se
         old_category=candidate.category,
         status=status if not reasons else "needs_edit",
         review_reason="; ".join(reasons),
+        is_published=is_published,
+        is_orderable=is_orderable,
     )
 
 
@@ -1069,10 +1178,7 @@ def _refresh_barcode_review(
             reasons.append("missing category")
         duplicate_name = normalize_text(row.item_name) in duplicate_names
         duplicate_name_review_approved = (
-            duplicate_name
-            and row.row_id == saved_row_id
-            and not saved_name_changed
-            and row.edited
+            duplicate_name and row.row_id == saved_row_id and not saved_name_changed and row.edited
         )
         duplicate_name_already_approved = (
             duplicate_name
@@ -1080,7 +1186,11 @@ def _refresh_barcode_review(
             and "duplicate name" not in _reason_parts(row.review_reason)
             and row.row_id != saved_row_id
         )
-        if duplicate_name and not duplicate_name_review_approved and not duplicate_name_already_approved:
+        if (
+            duplicate_name
+            and not duplicate_name_review_approved
+            and not duplicate_name_already_approved
+        ):
             reasons.append("duplicate name")
         if not reasons and _is_unedited_operator_review(row):
             rows.append(row)
@@ -1091,11 +1201,7 @@ def _refresh_barcode_review(
 
 
 def _is_unedited_operator_review(row: SessionRow) -> bool:
-    return (
-        row.status == "needs_edit"
-        and not row.edited
-        and "operator review" in row.review_reason
-    )
+    return row.status == "needs_edit" and not row.edited and "operator review" in row.review_reason
 
 
 def _refresh_pos_status(session: ImportSession) -> ImportSession:
@@ -1123,8 +1229,12 @@ def _preferred_pos_name_candidates(
             values = [value for value, _score in choice_group]
             token_score = sum(score for _value, score in choice_group)
             for candidate, style_score in _format_pos_candidates(values, preferences):
-                scored_candidates.append((candidate, token_score + style_score + _length_score(candidate)))
-    ordered = sorted(scored_candidates, key=lambda item: (-item[1], len(item[0]), item[0].casefold()))
+                scored_candidates.append(
+                    (candidate, token_score + style_score + _length_score(candidate))
+                )
+    ordered = sorted(
+        scored_candidates, key=lambda item: (-item[1], len(item[0]), item[0].casefold())
+    )
     candidates = []
     for candidate, _score in ordered:
         if len(candidate) > MAX_POS_NAME_LENGTH or candidate in candidates:
@@ -1153,9 +1263,13 @@ def _pos_choice_sequences(
     for pattern in preferences.acronym_patterns:
         if not _acronym_pattern_matches(tokens, start_index, pattern):
             continue
-        value = "".join(token[0].upper() for token in tokens[start_index : start_index + pattern.span_length])
+        value = "".join(
+            token[0].upper() for token in tokens[start_index : start_index + pattern.span_length]
+        )
         score = pattern.count * 55
-        for tail in _pos_choice_sequences(tokens, preferences, start_index + pattern.span_length, limit):
+        for tail in _pos_choice_sequences(
+            tokens, preferences, start_index + pattern.span_length, limit
+        ):
             sequences.append([((value, score),), *tail])
             if len(sequences) >= limit:
                 return sequences
@@ -1330,7 +1444,9 @@ def _append_limited(values: tuple[str, ...], value: str, limit: int = 5) -> tupl
 
 
 def _meaningful_pos_tokens(item_name: str) -> list[str]:
-    return [token for token in normalize_text(item_name).split() if token not in POS_NAME_STOP_WORDS]
+    return [
+        token for token in normalize_text(item_name).split() if token not in POS_NAME_STOP_WORDS
+    ]
 
 
 def _pos_preference_rules_payload(profile: PosNamePreferenceProfile) -> dict[str, list[dict]]:
@@ -1362,7 +1478,9 @@ def _pos_acronym_rules_payload(profile: PosNamePreferenceProfile) -> list[dict]:
     ]
 
 
-def _load_pos_preference_rules(payload: dict) -> dict[str, tuple[PosNameAbbreviationPreference, ...]]:
+def _load_pos_preference_rules(
+    payload: dict,
+) -> dict[str, tuple[PosNameAbbreviationPreference, ...]]:
     rules = {}
     for raw_token, raw_options in payload.items():
         token = normalize_text(str(raw_token))
@@ -1391,7 +1509,9 @@ def _load_pos_preference_rules(payload: dict) -> dict[str, tuple[PosNameAbbrevia
                 )
             )
         if options:
-            rules[token] = tuple(sorted(options, key=lambda option: (-option.count, option.value.casefold())))
+            rules[token] = tuple(
+                sorted(options, key=lambda option: (-option.count, option.value.casefold()))
+            )
     return rules
 
 
@@ -1437,7 +1557,10 @@ def _merge_pos_preferences(
     options = {}
     for token in option_tokens:
         merged: tuple[PosNameAbbreviationPreference, ...] = ()
-        for option in (*left.abbreviation_options.get(token, ()), *right.abbreviation_options.get(token, ())):
+        for option in (
+            *left.abbreviation_options.get(token, ()),
+            *right.abbreviation_options.get(token, ()),
+        ):
             merged = _merge_abbreviation_option(merged, option)
         options[token] = merged
     return PosNamePreferenceProfile(
@@ -1528,9 +1651,7 @@ def _category_result(category: str):
 def _summary(session: ImportSession, paths: SessionOutputPaths) -> SessionBuildSummary:
     active = session.active_rows
     barcode_counts = Counter(
-        barcode.casefold()
-        for row in active
-        for barcode in parse_barcodes(row.barcode)
+        barcode.casefold() for row in active for barcode in parse_barcodes(row.barcode)
     )
     pos_counts = Counter(row.pos_name for row in active if row.pos_name)
     return SessionBuildSummary(
@@ -1542,6 +1663,7 @@ def _summary(session: ImportSession, paths: SessionOutputPaths) -> SessionBuildS
         pos_overrides=sum(1 for row in session.rows if row.pos_overridden),
         duplicate_barcodes=sum(1 for _, count in barcode_counts.items() if count > 1),
         duplicate_pos_names=sum(1 for _, count in pos_counts.items() if count > 1),
+        core_catalogue_rows=sum(1 for row in active if row.core_catalogue),
         output_paths=paths,
     )
 
@@ -1600,6 +1722,9 @@ def _session_audit_headers() -> list[str]:
         "OldCategory",
         "Category",
         "BaseProductPosName",
+        "IsPublished",
+        "IsOrderable",
+        "CoreCatalogue",
         "Status",
         "Edited",
         "DeletedReason",
@@ -1625,6 +1750,9 @@ def _session_audit_rows(rows_or_session):
             "OldCategory": row.old_category,
             "Category": row.category,
             "BaseProductPosName": row.pos_name,
+            "IsPublished": "true" if row.is_published else "false",
+            "IsOrderable": "true" if row.is_orderable else "false",
+            "CoreCatalogue": "true" if row.core_catalogue else "false",
             "Status": row.status,
             "Edited": "true" if row.edited else "false",
             "DeletedReason": row.deleted_reason,
@@ -1645,6 +1773,7 @@ def _write_manifest(
 ) -> None:
     artifacts = [
         paths.final_import,
+        paths.core_catalogue,
         paths.category_audit,
         paths.naming_audit,
         paths.session_audit,
@@ -1669,6 +1798,7 @@ def _write_manifest(
             "pos_overrides": summary.pos_overrides,
             "duplicate_barcodes": summary.duplicate_barcodes,
             "duplicate_pos_names": summary.duplicate_pos_names,
+            "core_catalogue_rows": summary.core_catalogue_rows,
         },
         "categories": list(session.category_names),
         "pos_name_preferences": session.pos_preferences.abbreviations,
@@ -1678,9 +1808,7 @@ def _write_manifest(
             "spaced_overrides": session.pos_preferences.spaced_overrides,
             "compact_overrides": session.pos_preferences.compact_overrides,
         },
-        "artifacts": {
-            path.name: {"sha256": _sha256(path)} for path in artifacts if path.is_file()
-        },
+        "artifacts": {path.name: {"sha256": _sha256(path)} for path in artifacts if path.is_file()},
     }
     paths.manifest.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -1689,7 +1817,6 @@ def _write_summary(
     path: Path,
     summary: SessionBuildSummary,
     run_dir: Path,
-    is_orderable: bool,
 ) -> None:
     path.write_text(
         "\n".join(
@@ -1705,7 +1832,7 @@ def _write_summary(
                 f"- POS-name overrides: {summary.pos_overrides}",
                 f"- Duplicate barcodes: {summary.duplicate_barcodes}",
                 f"- Duplicate POS names: {summary.duplicate_pos_names}",
-                f"- IsOrderable: {'true' if is_orderable else 'false'}",
+                f"- Core Catalogue rows: {summary.core_catalogue_rows}",
             ]
         )
         + "\n",

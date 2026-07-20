@@ -112,6 +112,7 @@ class BuildInputs:
     odin_inventory_path: Path | None = None
     generic_inventory_path: Path | None = None
     category_profile_path: Path | None = None
+    is_published: bool = False
     is_orderable: bool = False
 
 

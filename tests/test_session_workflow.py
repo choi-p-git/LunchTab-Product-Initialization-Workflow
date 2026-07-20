@@ -16,6 +16,7 @@ from lunchtab_product_init.session_workflow import (
     delete_rows,
     duplicate_name_edit_rows,
     export_session,
+    filter_final_rows,
     filter_rows,
     filter_pos_rows,
     final_rows,
@@ -50,7 +51,9 @@ def test_category_assignment_filters_and_marks_rows() -> None:
         ]
     )
 
-    filtered = filter_rows(session, keyword="chicken", price_operator="range", price_value="5", price_upper="7")
+    filtered = filter_rows(
+        session, keyword="chicken", price_operator="range", price_value="5", price_upper="7"
+    )
     assert [row.row_id for row in filtered] == ["row-1"]
 
     session = assign_category(session, {"row-1"}, "Sandwiches")
@@ -197,12 +200,8 @@ def test_old_category_is_preserved_and_filterable() -> None:
 
     assert session.rows[0].old_category == "Entrees"
     assert session.rows[0].category == "Sandwiches"
-    assert [
-        row.row_id for row in filter_rows(session, old_category="bev")
-    ] == ["row-2"]
-    assert [
-        row.row_id for row in filter_rows(session, old_category="No category")
-    ] == ["row-3"]
+    assert [row.row_id for row in filter_rows(session, old_category="bev")] == ["row-2"]
+    assert [row.row_id for row in filter_rows(session, old_category="No category")] == ["row-3"]
 
 
 def test_category_filter_can_group_duplicate_item_names() -> None:
@@ -216,9 +215,12 @@ def test_category_filter_can_group_duplicate_item_names() -> None:
         ]
     )
 
-    assert [
-        row.row_id for row in filter_rows(session, name_filter="Duplicate name")
-    ] == ["row-2", "row-5", "row-1", "row-3"]
+    assert [row.row_id for row in filter_rows(session, name_filter="Duplicate name")] == [
+        "row-2",
+        "row-5",
+        "row-1",
+        "row-3",
+    ]
 
 
 def test_category_filters_compose_for_duplicate_vendor_uncategorized_rows() -> None:
@@ -257,12 +259,11 @@ def test_category_filter_can_select_sagemb_or_vendor_barcodes() -> None:
         ]
     )
 
-    assert [
-        row.row_id for row in filter_rows(session, barcode_filter="SAGEMB")
-    ] == ["row-1"]
-    assert [
-        row.row_id for row in filter_rows(session, barcode_filter="Vendor")
-    ] == ["row-2", "row-3"]
+    assert [row.row_id for row in filter_rows(session, barcode_filter="SAGEMB")] == ["row-1"]
+    assert [row.row_id for row in filter_rows(session, barcode_filter="Vendor")] == [
+        "row-2",
+        "row-3",
+    ]
 
 
 def test_duplicate_barcode_validation_splits_comma_separated_values() -> None:
@@ -283,9 +284,10 @@ def test_duplicate_barcode_validation_splits_comma_separated_values() -> None:
         category="Snacks",
     )
 
-    assert [
-        row.row_id for row in session.rows if "duplicate barcode" in row.review_reason
-    ] == ["row-1", "row-2"]
+    assert [row.row_id for row in session.rows if "duplicate barcode" in row.review_reason] == [
+        "row-1",
+        "row-2",
+    ]
 
 
 def test_deleting_duplicate_barcode_row_refreshes_surviving_rows() -> None:
@@ -344,10 +346,7 @@ def test_delete_refresh_preserves_operator_review_rows_in_edit_queue() -> None:
 
     session = delete_rows(session, {"row-3"})
 
-    assert [
-        (row.row_id, row.status, row.review_reason)
-        for row in session.edit_queue
-    ] == [
+    assert [(row.row_id, row.status, row.review_reason) for row in session.edit_queue] == [
         ("row-1", "needs_edit", "operator review"),
         ("row-2", "needs_edit", "operator review"),
     ]
@@ -362,9 +361,7 @@ def test_category_filter_can_select_rows_without_barcode() -> None:
         ]
     )
 
-    assert [
-        row.row_id for row in filter_rows(session, barcode_filter="No barcode")
-    ] == ["row-1"]
+    assert [row.row_id for row in filter_rows(session, barcode_filter="No barcode")] == ["row-1"]
 
 
 def test_category_filter_can_select_assigned_or_unassigned_rows() -> None:
@@ -376,12 +373,13 @@ def test_category_filter_can_select_assigned_or_unassigned_rows() -> None:
         ]
     )
 
-    assert [
-        row.row_id for row in filter_rows(session, category_assignment="Has category")
-    ] == ["row-1"]
-    assert [
-        row.row_id for row in filter_rows(session, category_assignment="No category")
-    ] == ["row-2", "row-3"]
+    assert [row.row_id for row in filter_rows(session, category_assignment="Has category")] == [
+        "row-1"
+    ]
+    assert [row.row_id for row in filter_rows(session, category_assignment="No category")] == [
+        "row-2",
+        "row-3",
+    ]
 
 
 def test_category_price_filter_supports_exact_comparison_and_range() -> None:
@@ -393,9 +391,15 @@ def test_category_price_filter_supports_exact_comparison_and_range() -> None:
         ]
     )
 
-    assert [row.row_id for row in filter_rows(session, price_operator="=", price_value="2.00")] == ["row-2"]
-    assert [row.row_id for row in filter_rows(session, price_operator="<", price_value="2.00")] == ["row-1"]
-    assert [row.row_id for row in filter_rows(session, price_operator=">=", price_value="2.00")] == ["row-2", "row-3"]
+    assert [row.row_id for row in filter_rows(session, price_operator="=", price_value="2.00")] == [
+        "row-2"
+    ]
+    assert [row.row_id for row in filter_rows(session, price_operator="<", price_value="2.00")] == [
+        "row-1"
+    ]
+    assert [
+        row.row_id for row in filter_rows(session, price_operator=">=", price_value="2.00")
+    ] == ["row-2", "row-3"]
     assert [
         row.row_id
         for row in filter_rows(
@@ -416,10 +420,10 @@ def test_category_price_filter_can_show_rows_without_price() -> None:
         ]
     )
 
-    assert [
-        row.row_id
-        for row in filter_rows(session, price_operator="no_price")
-    ] == ["row-1", "row-2"]
+    assert [row.row_id for row in filter_rows(session, price_operator="no_price")] == [
+        "row-1",
+        "row-2",
+    ]
 
 
 def test_category_stock_filter_supports_inventory_stock_values_only() -> None:
@@ -433,21 +437,22 @@ def test_category_stock_filter_supports_inventory_stock_values_only() -> None:
         ]
     )
 
-    assert [
-        row.row_id for row in filter_rows(session, stock_operator="no_stock")
-    ] == ["row-2"]
-    assert [
-        row.row_id for row in filter_rows(session, stock_operator="=", stock_value="0")
-    ] == ["row-3"]
-    assert [
-        row.row_id for row in filter_rows(session, stock_operator="<", stock_value="5")
-    ] == ["row-3", "row-4"]
-    assert [
-        row.row_id for row in filter_rows(session, stock_operator="<=", stock_value="3")
-    ] == ["row-3", "row-4"]
-    assert [
-        row.row_id for row in filter_rows(session, stock_operator=">=", stock_value="3")
-    ] == ["row-4", "row-5"]
+    assert [row.row_id for row in filter_rows(session, stock_operator="no_stock")] == ["row-2"]
+    assert [row.row_id for row in filter_rows(session, stock_operator="=", stock_value="0")] == [
+        "row-3"
+    ]
+    assert [row.row_id for row in filter_rows(session, stock_operator="<", stock_value="5")] == [
+        "row-3",
+        "row-4",
+    ]
+    assert [row.row_id for row in filter_rows(session, stock_operator="<=", stock_value="3")] == [
+        "row-3",
+        "row-4",
+    ]
+    assert [row.row_id for row in filter_rows(session, stock_operator=">=", stock_value="3")] == [
+        "row-4",
+        "row-5",
+    ]
     assert [
         row.row_id
         for row in filter_rows(
@@ -500,9 +505,12 @@ def test_edit_review_duplicate_name_filter_groups_duplicate_names() -> None:
         ]
     )
 
-    assert [
-        row.row_id for row in duplicate_name_edit_rows(session)
-    ] == ["row-2", "row-5", "row-1", "row-3"]
+    assert [row.row_id for row in duplicate_name_edit_rows(session)] == [
+        "row-2",
+        "row-5",
+        "row-1",
+        "row-3",
+    ]
 
 
 def test_prepare_edit_review_marks_duplicate_names_for_manual_review() -> None:
@@ -516,10 +524,7 @@ def test_prepare_edit_review_marks_duplicate_names_for_manual_review() -> None:
 
     session = prepare_edit_review(session)
 
-    assert [
-        (row.row_id, row.status, row.review_reason)
-        for row in session.rows
-    ] == [
+    assert [(row.row_id, row.status, row.review_reason) for row in session.rows] == [
         ("row-1", "needs_edit", "duplicate name"),
         ("row-2", "needs_edit", "duplicate name"),
         ("row-3", "active", ""),
@@ -573,10 +578,7 @@ def test_duplicate_name_review_rename_rechecks_and_clears_resolved_pair() -> Non
         category="Beverages",
     )
 
-    assert [
-        (row.row_id, row.item_name, row.status, row.review_reason)
-        for row in session.rows
-    ] == [
+    assert [(row.row_id, row.item_name, row.status, row.review_reason) for row in session.rows] == [
         ("row-1", "Apple Juice", "edit_complete", ""),
         ("row-2", "orange juice", "edit_complete", ""),
     ]
@@ -602,10 +604,7 @@ def test_duplicate_name_review_rename_rechecks_and_flags_new_collision() -> None
         category="Beverages",
     )
 
-    assert [
-        (row.row_id, row.item_name, row.status, row.review_reason)
-        for row in session.rows
-    ] == [
+    assert [(row.row_id, row.item_name, row.status, row.review_reason) for row in session.rows] == [
         ("row-1", "Apple Juice", "needs_edit", "duplicate name"),
         ("row-2", "orange juice", "edit_complete", ""),
         ("row-3", "Apple Juice", "needs_edit", "duplicate name"),
@@ -624,9 +623,7 @@ def test_edit_name_validation_rejects_new_duplicate_but_allows_unchanged_duplica
     session = prepare_edit_review(session)
 
     assert validate_edit_name_for_row(session, "row-1", "Orange Juice") == []
-    assert validate_edit_name_for_row(session, "row-1", "Apple Juice") == [
-        "duplicate item name"
-    ]
+    assert validate_edit_name_for_row(session, "row-1", "Apple Juice") == ["duplicate item name"]
 
 
 def test_merge_rows_transfers_barcodes_deletes_sources_and_revalidates() -> None:
@@ -662,7 +659,9 @@ def test_saving_one_edit_row_does_not_complete_other_operator_review_rows() -> N
             _row("row-1", "Missing Price", "", "ABC", category="Snacks", status="needs_edit"),
             _row("row-2", "Missing Barcode", "2.00", "", category="Snacks", status="needs_edit"),
             *[
-                _row(f"row-{index}", f"Review Item {index}", "1.00", f"BAR{index}", category="Snacks")
+                _row(
+                    f"row-{index}", f"Review Item {index}", "1.00", f"BAR{index}", category="Snacks"
+                )
                 for index in range(3, 13)
             ],
         ]
@@ -680,9 +679,10 @@ def test_saving_one_edit_row_does_not_complete_other_operator_review_rows() -> N
 
     saved_row = next(row for row in session.rows if row.row_id == "row-1")
     assert saved_row.status == "edit_complete"
-    assert [
-        row.row_id for row in session.rows if row.status == "needs_edit"
-    ] == ["row-2", *[f"row-{index}" for index in range(3, 13)]]
+    assert [row.row_id for row in session.rows if row.status == "needs_edit"] == [
+        "row-2",
+        *[f"row-{index}" for index in range(3, 13)],
+    ]
     assert len(session.edit_queue) == 11
 
 
@@ -822,12 +822,8 @@ def test_pos_rows_can_filter_to_review_reason() -> None:
     session = replace_pos_name(session, "row-1", "Duplicate")
     session = replace_pos_name(session, "row-2", "Duplicate")
 
-    assert [
-        row.row_id for row in filter_pos_rows(session, "Needs review")
-    ] == ["row-1", "row-2"]
-    assert [
-        row.row_id for row in filter_pos_rows(session, "duplicate")
-    ] == ["row-1", "row-2"]
+    assert [row.row_id for row in filter_pos_rows(session, "Needs review")] == ["row-1", "row-2"]
+    assert [row.row_id for row in filter_pos_rows(session, "duplicate")] == ["row-1", "row-2"]
 
 
 def test_deleting_duplicate_pos_row_refreshes_surviving_rows() -> None:
@@ -854,8 +850,20 @@ def test_back_edit_merge_delete_preserves_reviewed_pos_names_and_refreshes_expor
     session = _session(
         [
             _row("row-1", "Bacon, Egg, and Cheese Bagel", "5.25", "111", category="Breakfast"),
-            _row("row-2", "Sausage Egg and Cheese English Muffin", "5.25", "222", category="Breakfast"),
-            _row("row-3", "Sausage Egg and Cheese English Muffin", "5.25", "333", category="Breakfast"),
+            _row(
+                "row-2",
+                "Sausage Egg and Cheese English Muffin",
+                "5.25",
+                "222",
+                category="Breakfast",
+            ),
+            _row(
+                "row-3",
+                "Sausage Egg and Cheese English Muffin",
+                "5.25",
+                "333",
+                category="Breakfast",
+            ),
             _row("row-4", "Duplicate POS Source", "1.00", "444", category="Snacks"),
         ],
         categories=("Breakfast", "Snacks"),
@@ -917,14 +925,14 @@ def test_export_excludes_deleted_rows_and_writes_audits(tmp_path: Path) -> None:
             odin_inventory_path=odin,
             output_root=tmp_path / "out",
         ),
-        is_orderable=True,
     )
 
     with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
     assert len(rows) == 1
     assert rows[0]["BaseProductName"] == "Apple Juice"
-    assert rows[0]["IsOrderable"] == "true"
+    assert rows[0]["IsPublished"] == "false"
+    assert rows[0]["IsOrderable"] == "false"
     assert rows[0]["ProductCategories"] == "Beverages;"
 
     with result.summary.output_paths.deleted_audit.open(encoding="utf-8-sig", newline="") as file:
@@ -941,8 +949,12 @@ def test_final_rows_are_grouped_by_category_then_name() -> None:
     session = _session(
         [
             _row("row-1", "Zebra Snack", "1.25", "111", category="Snacks", pos_name="ZebraSnack"),
-            _row("row-2", "Apple Drink", "1.50", "222", category="Beverages", pos_name="AppleDrink"),
-            _row("row-3", "Banana Drink", "1.75", "333", category="Beverages", pos_name="BananaDrink"),
+            _row(
+                "row-2", "Apple Drink", "1.50", "222", category="Beverages", pos_name="AppleDrink"
+            ),
+            _row(
+                "row-3", "Banana Drink", "1.75", "333", category="Beverages", pos_name="BananaDrink"
+            ),
             _row("row-4", "Apple Snack", "2.00", "444", category="Snacks", pos_name="AppleSnack"),
         ],
         categories=("Beverages", "Snacks"),
@@ -954,10 +966,7 @@ def test_final_rows_are_grouped_by_category_then_name() -> None:
         "row-4",
         "row-1",
     ]
-    assert [
-        (row["ProductCategories"], row["BaseProductName"])
-        for row in final_rows(session, is_orderable=False)
-    ] == [
+    assert [(row["ProductCategories"], row["BaseProductName"]) for row in final_rows(session)] == [
         ("Beverages;", "Apple Drink"),
         ("Beverages;", "Banana Drink"),
         ("Snacks;", "Apple Snack"),
@@ -970,7 +979,9 @@ def test_export_sorts_final_import_but_preserves_session_audit_order(tmp_path: P
     session = _session(
         [
             _row("row-1", "Zebra Snack", "1.25", "111", category="Snacks", pos_name="ZebraSnack"),
-            _row("row-2", "Apple Drink", "1.50", "222", category="Beverages", pos_name="AppleDrink"),
+            _row(
+                "row-2", "Apple Drink", "1.50", "222", category="Beverages", pos_name="AppleDrink"
+            ),
             _row("row-3", "Apple Snack", "2.00", "333", category="Snacks", pos_name="AppleSnack"),
         ],
         categories=("Beverages", "Snacks"),
@@ -984,7 +995,6 @@ def test_export_sorts_final_import_but_preserves_session_audit_order(tmp_path: P
             odin_inventory_path=odin,
             output_root=tmp_path / "out",
         ),
-        is_orderable=False,
     )
 
     with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
@@ -1034,7 +1044,6 @@ def test_deleted_audit_includes_merge_transfer_details(tmp_path: Path) -> None:
             odin_inventory_path=odin,
             output_root=tmp_path / "out",
         ),
-        is_orderable=False,
     )
 
     with result.summary.output_paths.deleted_audit.open(encoding="utf-8-sig", newline="") as file:
@@ -1091,6 +1100,9 @@ def test_final_review_metadata_summarizes_counts_and_validation() -> None:
     assert metadata.deleted_rows == 1
     assert metadata.merge_rows == 1
     assert metadata.pos_overrides == 1
+    assert metadata.published_rows == 0
+    assert metadata.orderable_rows == 0
+    assert metadata.core_catalogue_rows == 0
     assert metadata.duplicate_barcodes == 1
     assert metadata.category_counts == (("Beverages", 2),)
     assert not metadata.export_ready
@@ -1139,7 +1151,7 @@ def test_raw_data_guided_session_profile_subset_exports_with_audits(tmp_path: Pa
     assert metadata.pos_overrides == 5
     assert metadata.category_counts == (("Bread", 5),)
 
-    result = export_session(session, inputs, is_orderable=True)
+    result = export_session(session, inputs)
 
     with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
         final_rows = list(csv.DictReader(file))
@@ -1157,7 +1169,8 @@ def test_raw_data_guided_session_profile_subset_exports_with_audits(tmp_path: Pa
     assert len(final_rows) == 5
     assert len(deleted_rows) == raw_row_count - 5
     assert len(session_audit_rows) == raw_row_count
-    assert {row["IsOrderable"] for row in final_rows} == {"true"}
+    assert {row["IsPublished"] for row in final_rows} == {"false"}
+    assert {row["IsOrderable"] for row in final_rows} == {"false"}
     assert {row["ProductCategories"] for row in final_rows} == {"Bread;"}
     assert [row["BaseProductPosName"] for row in final_rows] == [
         f"RawPOS{index:02d}" for index in range(1, 6)
@@ -1178,7 +1191,9 @@ def test_raw_data_guided_session_profile_subset_exports_with_audits(tmp_path: Pa
 
 
 def test_venue_profile_saves_categories_and_pos_preferences(tmp_path: Path) -> None:
-    preferences = learn_pos_preferences(_session([]).pos_preferences, "Chicken Caesar Salad", "Chick Cae Sal")
+    preferences = learn_pos_preferences(
+        _session([]).pos_preferences, "Chicken Caesar Salad", "Chick Cae Sal"
+    )
     session = _session([], categories=("Salads",), preferences=preferences)
 
     path = tmp_path / "venue-profile.json"
@@ -1228,8 +1243,24 @@ def test_venue_profile_saves_breakfast_acronym_rules(tmp_path: Path) -> None:
 def test_final_review_edit_validation_checks_export_blockers() -> None:
     session = _session(
         [
-            _row("row-1", "Apple Juice", "1.25", "111", category="Beverages", pos_name="Apple Juice", status="pos_ready"),
-            _row("row-2", "Orange Juice", "1.50", "222", category="Beverages", pos_name="OrangeJuice", status="pos_ready"),
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Apple Juice",
+                status="pos_ready",
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="pos_ready",
+            ),
         ],
         categories=("Beverages",),
     )
@@ -1250,8 +1281,24 @@ def test_final_review_edit_validation_checks_export_blockers() -> None:
 def test_save_final_review_edit_updates_row_and_keeps_export_ready() -> None:
     session = _session(
         [
-            _row("row-1", "Apple Juice", "1.25", "111", category="Beverages", pos_name="Apple Juice", status="pos_ready"),
-            _row("row-2", "Orange Juice", "1.50", "222", category="Beverages", pos_name="OrangeJuice", status="pos_ready"),
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Apple Juice",
+                status="pos_ready",
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="pos_ready",
+            ),
         ],
         categories=("Beverages",),
     )
@@ -1264,6 +1311,9 @@ def test_save_final_review_edit_updates_row_and_keeps_export_ready() -> None:
         barcode="111, 333",
         category="Drinks",
         pos_name="Apple Bottle",
+        is_published=True,
+        is_orderable=True,
+        core_catalogue=True,
     )
 
     row = next(row for row in session.rows if row.row_id == "row-1")
@@ -1272,10 +1322,102 @@ def test_save_final_review_edit_updates_row_and_keeps_export_ready() -> None:
     assert row.barcode == "111,333"
     assert row.category == "Drinks"
     assert row.pos_name == "Apple Bottle"
+    assert row.is_published is True
+    assert row.is_orderable is True
+    assert row.core_catalogue is True
     assert row.status == "pos_ready"
     assert row.edited is True
     assert session.category_names == ("Beverages", "Drinks")
     assert session.can_export is True
+
+
+def test_final_rows_use_row_level_publish_order_flags_and_core_catalogue_export(
+    tmp_path: Path,
+) -> None:
+    source_template, recipe, odin = _source_files(tmp_path)
+    session = _session(
+        [
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Apple Juice",
+                status="pos_ready",
+                is_published=True,
+                is_orderable=True,
+                core_catalogue=True,
+            ),
+            _row(
+                "row-2",
+                "Orange Juice",
+                "1.50",
+                "222",
+                category="Beverages",
+                pos_name="OrangeJuice",
+                status="pos_ready",
+            ),
+        ],
+        categories=("Beverages",),
+    )
+
+    result = export_session(
+        session,
+        BuildInputs(
+            product_template_path=source_template,
+            recipe_list_path=recipe,
+            odin_inventory_path=odin,
+            output_root=tmp_path / "out",
+        ),
+    )
+
+    with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
+        rows = list(csv.DictReader(file))
+    with result.summary.output_paths.core_catalogue.open(encoding="utf-8-sig", newline="") as file:
+        core_rows = list(csv.DictReader(file))
+
+    assert [(row["BaseProductName"], row["IsPublished"], row["IsOrderable"]) for row in rows] == [
+        ("Apple Juice", "true", "true"),
+        ("Orange Juice", "false", "false"),
+    ]
+    assert [row["BaseProductName"] for row in core_rows] == ["Apple Juice"]
+    assert result.summary.core_catalogue_rows == 1
+    assert result.summary.output_paths.core_catalogue.name == "Core Catalogue.csv"
+
+
+def test_filter_final_rows_finds_text_and_flagged_rows() -> None:
+    session = _session(
+        [
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Apple Juice",
+                status="pos_ready",
+                is_published=True,
+            ),
+            _row(
+                "row-2",
+                "Orange Snack",
+                "1.50",
+                "222",
+                category="Snacks",
+                pos_name="OrangeSnack",
+                status="pos_ready",
+                core_catalogue=True,
+            ),
+        ],
+        categories=("Beverages", "Snacks"),
+    )
+
+    assert [row.row_id for row in filter_final_rows(session, keyword="snack")] == ["row-2"]
+    assert [row.row_id for row in filter_final_rows(session, flag_filter="Published")] == ["row-1"]
+    assert [row.row_id for row in filter_final_rows(session, flag_filter="Core Catalogue")] == [
+        "row-2"
+    ]
 
 
 def _session(
@@ -1287,7 +1429,12 @@ def _session(
     kwargs = {}
     if preferences is not None:
         kwargs["pos_preferences"] = preferences
-    return ImportSession(headers=list(LUNCHTAB_TEMPLATE_HEADERS), rows=tuple(rows), category_names=categories, **kwargs)
+    return ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=tuple(rows),
+        category_names=categories,
+        **kwargs,
+    )
 
 
 def _row(
@@ -1303,6 +1450,9 @@ def _row(
     review_reason: str = "",
     deleted_reason: str = "",
     pos_overridden: bool = False,
+    is_published: bool = False,
+    is_orderable: bool = False,
+    core_catalogue: bool = False,
     source: str = "test",
     stock: str = "",
 ) -> SessionRow:
@@ -1324,6 +1474,9 @@ def _row(
         review_reason=review_reason,
         deleted_reason=deleted_reason,
         pos_overridden=pos_overridden,
+        is_published=is_published,
+        is_orderable=is_orderable,
+        core_catalogue=core_catalogue,
     )
 
 

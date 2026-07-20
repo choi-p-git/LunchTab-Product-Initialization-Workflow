@@ -329,8 +329,7 @@ def test_go_to_edit_marks_duplicate_names_for_review(app) -> None:
 
     assert list(tree.get_children("")) == ["row-1", "row-2"]
     assert [
-        (row.row_id, row.status, row.review_reason)
-        for row in app.controller.state.session.rows
+        (row.row_id, row.status, row.review_reason) for row in app.controller.state.session.rows
     ] == [
         ("row-1", "needs_edit", "duplicate name"),
         ("row-2", "needs_edit", "duplicate name"),
@@ -370,9 +369,7 @@ def test_save_edit_confirms_unchanged_valid_review_row(app, monkeypatch) -> None
 
     row_1 = app.controller.state.session.rows[0]
 
-    assert prompts == [
-        (gui_module.APP_TITLE, "Save this valid row without changing any fields?")
-    ]
+    assert prompts == [(gui_module.APP_TITLE, "Save this valid row without changing any fields?")]
     assert row_1.status == "edit_complete"
     assert row_1.review_reason == ""
     assert row_1.edited
@@ -518,7 +515,9 @@ def test_edit_duplicate_name_precheck_disables_save_and_enter(app) -> None:
 
 def test_inventory_file_selection_clears_alternate_inventory_source(app, monkeypatch) -> None:
     selections = iter(("C:/source/inventory.xlsx", "C:/source/inventory.csv"))
-    monkeypatch.setattr(gui_module.filedialog, "askopenfilename", lambda **_kwargs: next(selections))
+    monkeypatch.setattr(
+        gui_module.filedialog, "askopenfilename", lambda **_kwargs: next(selections)
+    )
 
     app.generic_inventory_text.set("C:/source/old-inventory.csv")
     app._choose_odin()
@@ -685,6 +684,47 @@ def test_final_review_primary_actions_remain_visible_at_1366x768(app) -> None:
     assert app.final_audit_label.cget("wraplength") >= 320
 
 
+def test_final_review_filters_rows_by_text_and_flags(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Apple Juice",
+                "1.25",
+                "111",
+                category="Beverages",
+                pos_name="Apple Juice",
+                status="pos_ready",
+                is_published=True,
+            ),
+            _row(
+                "row-2",
+                "Orange Snack",
+                "1.50",
+                "222",
+                category="Snacks",
+                pos_name="OrangeSnack",
+                status="pos_ready",
+                core_catalogue=True,
+            ),
+        ),
+        category_names=("Beverages", "Snacks"),
+    )
+    _set_final_session(app, session)
+    app.final_filter.set("snack")
+    app._render()
+    tree = app._tree_widget(app.final_tree)
+
+    assert list(tree.get_children("")) == ["row-2"]
+
+    app.final_filter.set("")
+    app.final_flag_filter.set("Published")
+    app._populate_final_rows()
+
+    assert list(tree.get_children("")) == ["row-1"]
+
+
 def test_pos_reason_filter_shows_rows_requiring_attention(app) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),
@@ -743,7 +783,9 @@ def test_pos_reason_filter_shows_rows_requiring_attention(app) -> None:
     assert list(tree.get_children("")) == ["row-1"]
 
 
-def test_pos_replace_button_advances_within_filtered_rows_and_focuses_input(app, monkeypatch) -> None:
+def test_pos_replace_button_advances_within_filtered_rows_and_focuses_input(
+    app, monkeypatch
+) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),
         rows=(
@@ -780,7 +822,9 @@ def test_pos_replace_button_advances_within_filtered_rows_and_focuses_input(app,
     focus_calls = []
     selection_calls = []
     monkeypatch.setattr(app.pos_entry, "focus_set", lambda: focus_calls.append("focus"))
-    monkeypatch.setattr(app.pos_entry, "selection_range", lambda start, end: selection_calls.append((start, end)))
+    monkeypatch.setattr(
+        app.pos_entry, "selection_range", lambda start, end: selection_calls.append((start, end))
+    )
 
     _set_pos_session(app, session)
     app.current_pos_row_id = None
@@ -931,6 +975,9 @@ def test_final_review_edit_dialog_confirms_and_saves_valid_edit(app, monkeypatch
     app.final_edit_vars["barcode"].set("111, 333")
     app.final_edit_vars["category"].set("Drinks")
     app.final_edit_vars["pos_name"].set("Apple Bottle")
+    app.final_edit_vars["is_published"].set(True)
+    app.final_edit_vars["is_orderable"].set(True)
+    app.final_edit_vars["core_catalogue"].set(True)
     app.root.update()
 
     assert str(app.final_edit_save_button.cget("state")) == "normal"
@@ -945,8 +992,14 @@ def test_final_review_edit_dialog_confirms_and_saves_valid_edit(app, monkeypatch
     assert row.barcode == "111,333"
     assert row.category == "Drinks"
     assert row.pos_name == "Apple Bottle"
+    assert row.is_published is True
+    assert row.is_orderable is True
+    assert row.core_catalogue is True
     assert row.edited is True
     assert tree.set("row-1", "name") == "Apple Bottle"
+    assert tree.set("row-1", "published") == "true"
+    assert tree.set("row-1", "orderable") == "true"
+    assert tree.set("row-1", "core") == "true"
 
 
 class _Event:
@@ -985,6 +1038,8 @@ def _set_final_session(app: ProductInitializationApp, session: ImportSession) ->
     app.controller = gui_module.AppController()
     app.odin_inventory_text.set("")
     app.generic_inventory_text.set("")
+    app.final_filter.set("")
+    app.final_flag_filter.set("Any")
     app.controller.set_session(session, phase=gui_module.AppPhase.FINAL_REVIEW)
 
 
@@ -1015,6 +1070,9 @@ def _row(
     pos_name: str = "",
     status: str = "active",
     review_reason: str = "",
+    is_published: bool = False,
+    is_orderable: bool = False,
+    core_catalogue: bool = False,
     source: str = "test",
     stock: str = "",
 ) -> SessionRow:
@@ -1034,4 +1092,7 @@ def _row(
         pos_name=pos_name,
         status=status,  # type: ignore[arg-type]
         review_reason=review_reason,
+        is_published=is_published,
+        is_orderable=is_orderable,
+        core_catalogue=core_catalogue,
     )

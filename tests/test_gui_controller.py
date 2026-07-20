@@ -52,9 +52,10 @@ def test_controller_inventory_inputs_are_mutually_exclusive() -> None:
     assert state.generic_inventory_path is None
 
 
-def test_controller_tracks_is_orderable_setting() -> None:
+def test_controller_tracks_import_flag_settings() -> None:
     controller = AppController()
-    state = controller.set_is_orderable(True)
+    state = controller.set_import_flags(is_published=True, is_orderable=True)
+    assert state.is_published
     assert state.is_orderable
 
 
@@ -116,12 +117,15 @@ def test_undo_button_text_shows_next_undo_action() -> None:
     session = ImportSession(headers=list(LUNCHTAB_TEMPLATE_HEADERS), rows=())
 
     assert undo_button_text([]) == "Undo"
-    assert undo_button_text(
-        [
-            UndoEntry(session=session, label="Assign 2 rows"),
-            UndoEntry(session=session, label="Delete 1 row"),
-        ]
-    ) == "Undo: Delete 1 row"
+    assert (
+        undo_button_text(
+            [
+                UndoEntry(session=session, label="Assign 2 rows"),
+                UndoEntry(session=session, label="Delete 1 row"),
+            ]
+        )
+        == "Undo: Delete 1 row"
+    )
 
 
 def test_source_file_audits_hash_selected_inputs(tmp_path: Path) -> None:
@@ -162,6 +166,9 @@ def test_final_review_audit_text_includes_source_filenames_and_short_hashes() ->
         edited_rows=1,
         merge_rows=1,
         pos_overrides=3,
+        published_rows=2,
+        orderable_rows=1,
+        core_catalogue_rows=4,
         duplicate_barcodes=0,
         duplicate_pos_names=1,
         category_counts=(("Bread", 4), ("Snacks", 4)),
@@ -170,7 +177,6 @@ def test_final_review_audit_text_includes_source_filenames_and_short_hashes() ->
 
     text = final_review_audit_text(
         metadata,
-        is_orderable=True,
         source_files=(
             SourceFileAudit("Template", "ProductData.csv", "abcdef1234567890"),
             SourceFileAudit("Recipe", "recipeList.csv", "123456abcdef7890"),
@@ -180,8 +186,13 @@ def test_final_review_audit_text_includes_source_filenames_and_short_hashes() ->
     assert "Rows: parsed 10 | active 8 | deleted 2 | edited 1 | merged 1" in text
     assert "Validation: export 1 blocker(s) | duplicate barcodes 0 | duplicate POS names 1" in text
     assert "Categories: Bread: 4, Snacks: 4" in text
-    assert "POS overrides: 3 | IsOrderable: true" in text
-    assert "Sources: Template: ProductData.csv (abcdef123456); Recipe: recipeList.csv (123456abcdef)" in text
+    assert (
+        "POS overrides: 3 | Published rows: 2 | Orderable rows: 1 | Core Catalogue rows: 4" in text
+    )
+    assert (
+        "Sources: Template: ProductData.csv (abcdef123456); Recipe: recipeList.csv (123456abcdef)"
+        in text
+    )
 
 
 def test_category_action_rows_prefer_checked_rows_over_highlighted_rows() -> None:
@@ -214,7 +225,10 @@ def test_category_selection_helpers_toggle_select_and_deselect_shown_rows() -> N
 
 
 def test_next_displayed_pos_row_advances_within_current_filtered_rows() -> None:
-    assert next_displayed_pos_row_id("row-1", ["row-1", "row-2", "row-3"], ["row-1", "row-2"]) == "row-2"
+    assert (
+        next_displayed_pos_row_id("row-1", ["row-1", "row-2", "row-3"], ["row-1", "row-2"])
+        == "row-2"
+    )
 
 
 def test_next_displayed_pos_row_keeps_last_visible_row_when_current_is_last() -> None:
@@ -222,11 +236,14 @@ def test_next_displayed_pos_row_keeps_last_visible_row_when_current_is_last() ->
 
 
 def test_next_displayed_pos_row_uses_next_surviving_row_when_current_leaves_filter() -> None:
-    assert next_displayed_pos_row_id(
-        "row-2",
-        ["row-1", "row-2", "row-3", "row-4"],
-        ["row-1", "row-4"],
-    ) == "row-4"
+    assert (
+        next_displayed_pos_row_id(
+            "row-2",
+            ["row-1", "row-2", "row-3", "row-4"],
+            ["row-1", "row-4"],
+        )
+        == "row-4"
+    )
 
 
 def test_next_displayed_pos_row_uses_stable_fallback_without_previous_context() -> None:

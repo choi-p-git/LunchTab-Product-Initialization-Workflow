@@ -7,7 +7,11 @@ from enum import Enum
 from pathlib import Path
 
 from lunchtab_product_init.models import BuildInputs
-from lunchtab_product_init.session_workflow import FinalReviewMetadata, ImportSession, SessionExportResult
+from lunchtab_product_init.session_workflow import (
+    FinalReviewMetadata,
+    ImportSession,
+    SessionExportResult,
+)
 from lunchtab_product_init.workflow import default_output_root
 
 _UNCHANGED = object()
@@ -33,6 +37,7 @@ class AppState:
     odin_inventory_path: Path | None = None
     generic_inventory_path: Path | None = None
     output_root: Path = default_output_root()
+    is_published: bool = False
     is_orderable: bool = False
     phase: AppPhase = AppPhase.EMPTY
     session: ImportSession | None = None
@@ -117,16 +122,21 @@ def source_file_audits(state: AppState) -> tuple[SourceFileAudit, ...]:
 def final_review_audit_text(
     metadata: FinalReviewMetadata,
     *,
-    is_orderable: bool,
     source_files: Iterable[SourceFileAudit] = (),
 ) -> str:
-    category_counts = ", ".join(
-        f"{category}: {count}" for category, count in metadata.category_counts
-    ) or "(none)"
-    export_status = "ready" if metadata.export_ready else f"{len(metadata.export_errors)} blocker(s)"
-    source_text = "; ".join(
-        f"{source.label}: {source.filename} ({source.short_sha256})" for source in source_files
-    ) or "(none)"
+    category_counts = (
+        ", ".join(f"{category}: {count}" for category, count in metadata.category_counts)
+        or "(none)"
+    )
+    export_status = (
+        "ready" if metadata.export_ready else f"{len(metadata.export_errors)} blocker(s)"
+    )
+    source_text = (
+        "; ".join(
+            f"{source.label}: {source.filename} ({source.short_sha256})" for source in source_files
+        )
+        or "(none)"
+    )
     return (
         f"Rows: parsed {metadata.parsed_rows} | active {metadata.active_rows} | "
         f"deleted {metadata.deleted_rows} | edited {metadata.edited_rows} | "
@@ -134,8 +144,8 @@ def final_review_audit_text(
         f"Validation: export {export_status} | duplicate barcodes {metadata.duplicate_barcodes} | "
         f"duplicate POS names {metadata.duplicate_pos_names}\n"
         f"Categories: {category_counts}\n"
-        f"POS overrides: {metadata.pos_overrides} | "
-        f"IsOrderable: {'true' if is_orderable else 'false'}\n"
+        f"POS overrides: {metadata.pos_overrides} | Published rows: {metadata.published_rows} | "
+        f"Orderable rows: {metadata.orderable_rows} | Core Catalogue rows: {metadata.core_catalogue_rows}\n"
         f"Sources: {source_text}"
     )
 
@@ -152,7 +162,9 @@ def select_category_action_rows(
 
 
 def toggle_category_row_selection(selected_row_ids: Iterable[str], row_id: str) -> frozenset[str]:
-    selected = set(str(selected_row_id) for selected_row_id in selected_row_ids if str(selected_row_id))
+    selected = set(
+        str(selected_row_id) for selected_row_id in selected_row_ids if str(selected_row_id)
+    )
     row_id = str(row_id)
     if not row_id:
         return frozenset(selected)
@@ -177,7 +189,9 @@ def deselect_shown_category_rows(
     shown_row_ids: Iterable[str],
 ) -> frozenset[str]:
     shown = {str(row_id) for row_id in shown_row_ids if str(row_id)}
-    return frozenset(str(row_id) for row_id in selected_row_ids if str(row_id) and str(row_id) not in shown)
+    return frozenset(
+        str(row_id) for row_id in selected_row_ids if str(row_id) and str(row_id) not in shown
+    )
 
 
 def next_displayed_row_id(
@@ -193,13 +207,11 @@ def next_displayed_row_id(
     if previous_row_id in displayed:
         start_index = displayed.index(previous_row_id) + 1
         return displayed[start_index] if start_index < len(displayed) else displayed[-1]
-    old_index = previous_displayed.index(previous_row_id) if previous_row_id in previous_displayed else -1
+    old_index = (
+        previous_displayed.index(previous_row_id) if previous_row_id in previous_displayed else -1
+    )
     return next(
-        (
-            row_id
-            for row_id in previous_displayed[old_index + 1 :]
-            if row_id in displayed
-        ),
+        (row_id for row_id in previous_displayed[old_index + 1 :] if row_id in displayed),
         displayed[min(max(old_index, 0), len(displayed) - 1)],
     )
 
@@ -236,28 +248,35 @@ class AppController:
         self.state = replace(self.state, output_root=path, result=None)
         return self.state
 
-    def set_is_orderable(self, value: bool) -> AppState:
-        self.state = replace(self.state, is_orderable=value, result=None)
+    def set_import_flags(self, *, is_published: bool, is_orderable: bool) -> AppState:
+        self.state = replace(
+            self.state,
+            is_published=is_published,
+            is_orderable=is_orderable,
+            result=None,
+        )
         return self.state
 
     def build_inputs(self) -> BuildInputs:
-        if (
-            self.state.product_template_path is None
-            or self.state.recipe_list_path is None
-        ):
-            raise RuntimeError("ProductData template and recipe list must be selected before parsing.")
+        if self.state.product_template_path is None or self.state.recipe_list_path is None:
+            raise RuntimeError(
+                "ProductData template and recipe list must be selected before parsing."
+            )
         return BuildInputs(
             product_template_path=self.state.product_template_path,  # type: ignore[arg-type]
             recipe_list_path=self.state.recipe_list_path,  # type: ignore[arg-type]
             output_root=self.state.output_root,
             odin_inventory_path=self.state.odin_inventory_path,
             generic_inventory_path=self.state.generic_inventory_path,
+            is_published=self.state.is_published,
             is_orderable=self.state.is_orderable,
         )
 
     def begin_parse(self) -> AppState:
         if not self.state.can_parse:
-            raise RuntimeError("ProductData template and recipe list must be selected before parsing.")
+            raise RuntimeError(
+                "ProductData template and recipe list must be selected before parsing."
+            )
         self.state = replace(
             self.state,
             phase=AppPhase.PARSING,
@@ -322,7 +341,9 @@ class AppController:
     def begin_export(self) -> AppState:
         if not self.state.can_export:
             raise RuntimeError("All active rows must be complete before export.")
-        self.state = replace(self.state, phase=AppPhase.EXPORTING, message="Writing export files...")
+        self.state = replace(
+            self.state, phase=AppPhase.EXPORTING, message="Writing export files..."
+        )
         return self.state
 
     def export_succeeded(self, result: SessionExportResult) -> AppState:
@@ -351,7 +372,9 @@ class AppController:
             if product_template_path is _UNCHANGED
             else product_template_path
         )
-        recipe_list = self.state.recipe_list_path if recipe_list_path is _UNCHANGED else recipe_list_path
+        recipe_list = (
+            self.state.recipe_list_path if recipe_list_path is _UNCHANGED else recipe_list_path
+        )
         odin_inventory = (
             self.state.odin_inventory_path
             if odin_inventory_path is _UNCHANGED
@@ -371,8 +394,7 @@ class AppController:
             "result": None,
         }
         ready = all(
-            values[key] is not None
-            for key in ("product_template_path", "recipe_list_path")
+            values[key] is not None for key in ("product_template_path", "recipe_list_path")
         )
         values["phase"] = AppPhase.READY_TO_PARSE if ready else AppPhase.EMPTY
         values["message"] = (

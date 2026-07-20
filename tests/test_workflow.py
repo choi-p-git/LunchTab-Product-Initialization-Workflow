@@ -87,6 +87,7 @@ def test_build_product_import_accepts_complete_matched_row(tmp_path: Path) -> No
     with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
     assert rows[0]["Handle"] == "Assorted Cold Cereals"
+    assert rows[0]["IsPublished"] == "false"
     assert rows[0]["IsOrderable"] == "false"
     assert rows[0]["BaseProductPosName"] == "AsstColdCereals"
     assert rows[0]["ProductCategories"] == "Breakfast;"
@@ -126,7 +127,7 @@ def test_build_product_import_rejects_multiple_inventory_sources(tmp_path: Path)
         )
 
 
-def test_build_product_import_can_mark_rows_orderable(tmp_path: Path) -> None:
+def test_build_product_import_can_mark_rows_published_and_orderable(tmp_path: Path) -> None:
     template, recipe, inventory = _build_basic_files(tmp_path, stock="5")
     result = build_product_import(
         BuildInputs(
@@ -134,11 +135,13 @@ def test_build_product_import_can_mark_rows_orderable(tmp_path: Path) -> None:
             recipe_list_path=recipe,
             odin_inventory_path=inventory,
             output_root=tmp_path / "out",
+            is_published=True,
             is_orderable=True,
         )
     )
     with result.summary.output_paths.final_import.open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
+    assert rows[0]["IsPublished"] == "true"
     assert rows[0]["IsOrderable"] == "true"
 
 

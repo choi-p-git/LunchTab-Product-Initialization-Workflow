@@ -151,7 +151,9 @@ def read_generic_inventory_candidates(path: Path) -> list[ProductCandidate]:
     headers, rows = read_csv(path)
     missing = sorted(set(GENERIC_INVENTORY_HEADERS) - set(headers))
     if missing:
-        raise ValueError(f"Generic inventory list is missing required columns: {', '.join(missing)}")
+        raise ValueError(
+            f"Generic inventory list is missing required columns: {', '.join(missing)}"
+        )
     candidates = []
     for index, row in enumerate(rows, start=2):
         item = row.get("Item Name", "").strip()
@@ -277,6 +279,7 @@ def product_row(
     candidate: ProductCandidate,
     pos_name: str,
     category_result: CategoryResult,
+    is_published: bool,
     is_orderable: bool,
 ) -> dict[str, str]:
     row = {header: "" for header in headers}
@@ -289,7 +292,7 @@ def product_row(
             "BaseProductName": candidate.item_name,
             "BaseProductPosName": pos_name,
             "ShortDescription": candidate.item_name,
-            "IsPublished": "true",
+            "IsPublished": "true" if is_published else "false",
             "IsOrderable": "true" if is_orderable else "false",
             "ProductCategories": format_product_categories(category_result.categories),
         }
@@ -376,6 +379,7 @@ def build_product_import(inputs: BuildInputs) -> BuildResult:
             candidate,
             names[candidate.source_key].value,
             category_results[candidate.source_key],
+            inputs.is_published,
             inputs.is_orderable,
         )
         for candidate in accepted
@@ -602,6 +606,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--generic-inventory", type=Path)
     parser.add_argument("--output-root", type=Path, default=default_output_root())
     parser.add_argument("--category-profile", type=Path)
+    parser.add_argument("--is-published", action="store_true")
     parser.add_argument("--is-orderable", action="store_true")
     return parser
 
@@ -616,6 +621,7 @@ def main() -> None:
             odin_inventory_path=args.odin_inventory,
             generic_inventory_path=args.generic_inventory,
             category_profile_path=args.category_profile,
+            is_published=args.is_published,
             is_orderable=args.is_orderable,
         )
     )
