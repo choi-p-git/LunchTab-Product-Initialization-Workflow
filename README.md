@@ -96,7 +96,9 @@ Each guided export folder contains:
 - `run-manifest.json` - source and artifact hashes, timestamps, and counts;
 - `run-summary.md` - human-readable build summary.
 
-See `docs/business-requirements-and-roadmap.md` for the tracked roadmap summary.
+See `docs/operator-quick-start.md` for the current operator quick-start,
+`docs/product-import-sop.md` for the internal SOP, and
+`docs/business-requirements-and-roadmap.md` for the tracked roadmap summary.
 
 ## BaseProductPosName-only App
 

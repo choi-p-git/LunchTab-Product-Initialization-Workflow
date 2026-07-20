@@ -174,12 +174,13 @@ assignment is limited to category names the operator enters or loads through a v
      testable helpers.
 
 3. **Operator Documentation**
-   - Build an operator quick-start for running the app from source or packaged builds.
-   - Build a formal SOP for the full import workflow, including source export prerequisites,
-     Lunchtab admin setup, category/profile preparation, import execution, validation, and
-     post-import checks.
-   - Interview the operator before finalizing SOP sections that depend on off-app Lunchtab
-     configuration or local administrative policy.
+   - Operator quick-start is available in `docs/operator-quick-start.md` for running the app,
+     preparing source files, completing the six-step workflow, and checking output artifacts.
+   - Internal SOP first draft is available in `docs/product-import-sop.md`, including source
+     export prerequisites, Lunchtab category setup, category/profile preparation, import
+     execution, approval, upload, post-import checks, escalation, and output retention.
+   - Review the SOP with an FSD or menu/pricing owner before treating it as final controlled
+     procedure.
 
 4. **Business Analysis Package**
    - After the SOP interview, run a full BA analysis package in the private untracked
