@@ -102,6 +102,13 @@ assignment is limited to category names the operator enters or loads through a v
    - Operator can filter by reason, select a row, type an override, press Enter to replace, and
      advance through the displayed list.
    - Manual overrides update token and acronym preference rules used for future suggestions.
+   - Step 4 remains the largest measured operator-effort stage because the operator must compare
+     full item-name shape to POS-name readability, choose which letters or spaces to keep, and fit
+     recognizable names within the 15-character rule.
+   - POS-name replacement now records both edit amount and edit effort: characters changed, spaces
+     changed, token/acronym changes, active edit actions, and light/moderate/heavy effort band.
+     Row-level elapsed time should not be used as a primary effort metric because operators may be
+     interrupted by calls or other duties.
 
 5. **Final Review**
    - Operator reviews target output fields in a scrollable table.
@@ -216,6 +223,9 @@ assignment is limited to category names the operator enters or loads through a v
   and restriction categories are configured outside this app.
 - Expected operator role, approval checkpoints, and escalation path for ambiguous rows.
 - Current manual workflow duration by step, error rate, and target time savings.
+- Step 4 POS-name refinement now distinguishes light edits, moderate edits, and heavy overrides,
+  and records edit amount so future algorithm work can target the actual effort driver rather than
+  only counting overrides.
 - Post-import validation steps in Lunchtab POS/admin screens.
 
 ## Out of Scope for Current Refined Workflow

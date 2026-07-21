@@ -708,6 +708,56 @@ def test_pos_generation_validation_override_learning_and_suggestions() -> None:
     assert suggest_pos_names(session, "row-2")[0] == "Chick Cae Sal"
 
 
+def test_pos_override_tracks_edit_amount_and_effort_bands() -> None:
+    session = _session(
+        [
+            _row("row-1", "Light Edit", "1.00", "111", category="Snacks", pos_name="AppleJuic"),
+            _row(
+                "row-2",
+                "Moderate Edit",
+                "1.00",
+                "222",
+                category="Snacks",
+                pos_name="Chik Caesr",
+            ),
+            _row(
+                "row-3",
+                "Heavy Edit",
+                "1.00",
+                "333",
+                category="Snacks",
+                pos_name="LongGenerated",
+            ),
+        ],
+        categories=("Snacks",),
+    )
+
+    session = replace_pos_name(session, "row-1", "AppleJuice")
+    session = replace_pos_name(session, "row-2", "Chick Cae Sal")
+    session = replace_pos_name(session, "row-3", "Manual Name")
+
+    row_1 = next(row for row in session.rows if row.row_id == "row-1")
+    row_2 = next(row for row in session.rows if row.row_id == "row-2")
+    row_3 = next(row for row in session.rows if row.row_id == "row-3")
+
+    assert row_1.pos_name_before_override == "AppleJuic"
+    assert row_1.pos_edit_distance == 1
+    assert row_1.pos_character_delta == 1
+    assert row_1.pos_spaces_changed == 0
+    assert row_1.pos_token_changes == 1
+    assert row_1.pos_active_edit_actions == 1
+    assert row_1.pos_edit_effort == "light"
+
+    assert row_2.pos_edit_distance == 5
+    assert row_2.pos_character_delta == 3
+    assert row_2.pos_spaces_changed == 1
+    assert row_2.pos_token_changes == 3
+    assert row_2.pos_edit_effort == "moderate"
+
+    assert row_3.pos_edit_distance > 5
+    assert row_3.pos_edit_effort == "heavy"
+
+
 def test_pos_suggestions_exclude_names_that_fail_validation() -> None:
     session = _session(
         [
@@ -1008,6 +1058,60 @@ def test_export_sorts_final_import_but_preserves_session_audit_order(tmp_path: P
         "Zebra Snack",
     ]
     assert [row["RowId"] for row in session_audit] == ["row-1", "row-2", "row-3"]
+
+
+def test_export_includes_pos_edit_effort_metrics(tmp_path: Path) -> None:
+    source_template, recipe, odin = _source_files(tmp_path)
+    session = _session(
+        [
+            _row("row-1", "Apple Juice", "1.25", "111", category="Beverages", pos_name="AppleJuic"),
+            _row(
+                "row-2",
+                "Chicken Caesar Salad",
+                "5.25",
+                "222",
+                category="Salads",
+                pos_name="GeneratedName",
+            ),
+        ],
+        categories=("Beverages", "Salads"),
+    )
+    session = replace_pos_name(session, "row-1", "AppleJuice")
+    session = replace_pos_name(session, "row-2", "Chick Cae Sal")
+
+    result = export_session(
+        session,
+        BuildInputs(
+            product_template_path=source_template,
+            recipe_list_path=recipe,
+            odin_inventory_path=odin,
+            output_root=tmp_path / "out",
+        ),
+    )
+
+    with result.summary.output_paths.naming_audit.open(encoding="utf-8-sig", newline="") as file:
+        naming_audit = list(csv.DictReader(file))
+    with result.summary.output_paths.session_audit.open(encoding="utf-8-sig", newline="") as file:
+        session_audit = list(csv.DictReader(file))
+    manifest = json.loads(result.summary.output_paths.manifest.read_text(encoding="utf-8"))
+    summary_text = result.summary.output_paths.summary.read_text(encoding="utf-8")
+
+    assert naming_audit[0]["PosNameBeforeOverride"] == "AppleJuic"
+    assert naming_audit[0]["PosEditDistance"] == "1"
+    assert naming_audit[0]["PosCharacterDelta"] == "1"
+    assert naming_audit[0]["PosSpacesChanged"] == "0"
+    assert naming_audit[0]["PosTokenChanges"] == "1"
+    assert naming_audit[0]["PosActiveEditActions"] == "1"
+    assert naming_audit[0]["PosEditEffort"] == "light"
+    assert naming_audit[1]["PosEditEffort"] == "heavy"
+    assert session_audit[0]["PosEditEffort"] == "light"
+    assert result.summary.pos_light_edits == 1
+    assert result.summary.pos_moderate_edits == 0
+    assert result.summary.pos_heavy_overrides == 1
+    assert manifest["counts"]["pos_light_edits"] == 1
+    assert manifest["counts"]["pos_heavy_overrides"] == 1
+    assert "- POS-name light edits: 1" in summary_text
+    assert "- POS-name heavy overrides: 1" in summary_text
 
 
 def test_deleted_audit_includes_merge_transfer_details(tmp_path: Path) -> None:

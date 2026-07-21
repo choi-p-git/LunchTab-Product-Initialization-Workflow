@@ -107,6 +107,13 @@ class SessionRow:
     is_published: bool = False
     is_orderable: bool = False
     core_catalogue: bool = False
+    pos_name_before_override: str = ""
+    pos_edit_distance: int = 0
+    pos_character_delta: int = 0
+    pos_spaces_changed: int = 0
+    pos_token_changes: int = 0
+    pos_active_edit_actions: int = 0
+    pos_edit_effort: str = ""
 
     @property
     def item_name(self) -> str:
@@ -179,6 +186,9 @@ class SessionBuildSummary:
     edited_rows: int
     category_count: int
     pos_overrides: int
+    pos_light_edits: int
+    pos_moderate_edits: int
+    pos_heavy_overrides: int
     duplicate_barcodes: int
     duplicate_pos_names: int
     core_catalogue_rows: int
@@ -659,7 +669,19 @@ def replace_pos_name(session: ImportSession, row_id: str, pos_name: str) -> Impo
     preferences = session.pos_preferences
     for row in session.rows:
         if row.row_id == row_id:
-            candidate = replace(row, pos_name=cleaned, pos_overridden=True)
+            metrics = _pos_name_edit_metrics(row.pos_name, cleaned)
+            candidate = replace(
+                row,
+                pos_name=cleaned,
+                pos_overridden=True,
+                pos_name_before_override=row.pos_name,
+                pos_edit_distance=metrics["edit_distance"],
+                pos_character_delta=metrics["character_delta"],
+                pos_spaces_changed=metrics["spaces_changed"],
+                pos_token_changes=metrics["token_changes"],
+                pos_active_edit_actions=metrics["active_edit_actions"],
+                pos_edit_effort=metrics["effort"],
+            )
         else:
             candidate = row
         rows.append(candidate)
@@ -1654,6 +1676,7 @@ def _summary(session: ImportSession, paths: SessionOutputPaths) -> SessionBuildS
         barcode.casefold() for row in active for barcode in parse_barcodes(row.barcode)
     )
     pos_counts = Counter(row.pos_name for row in active if row.pos_name)
+    pos_effort_counts = Counter(row.pos_edit_effort for row in session.rows if row.pos_overridden)
     return SessionBuildSummary(
         parsed_rows=len(session.rows),
         exported_rows=len(active),
@@ -1661,6 +1684,9 @@ def _summary(session: ImportSession, paths: SessionOutputPaths) -> SessionBuildS
         edited_rows=sum(1 for row in session.rows if row.edited),
         category_count=len(session.category_names),
         pos_overrides=sum(1 for row in session.rows if row.pos_overridden),
+        pos_light_edits=pos_effort_counts["light"],
+        pos_moderate_edits=pos_effort_counts["moderate"],
+        pos_heavy_overrides=pos_effort_counts["heavy"],
         duplicate_barcodes=sum(1 for _, count in barcode_counts.items() if count > 1),
         duplicate_pos_names=sum(1 for _, count in pos_counts.items() if count > 1),
         core_catalogue_rows=sum(1 for row in active if row.core_catalogue),
@@ -1696,7 +1722,21 @@ def _category_audit_rows(session: ImportSession):
 
 
 def _naming_audit_headers() -> list[str]:
-    return ["RowId", "ItemName", "BaseProductPosName", "Overridden", "Status", "ReviewReason"]
+    return [
+        "RowId",
+        "ItemName",
+        "BaseProductPosName",
+        "Overridden",
+        "PosNameBeforeOverride",
+        "PosEditDistance",
+        "PosCharacterDelta",
+        "PosSpacesChanged",
+        "PosTokenChanges",
+        "PosActiveEditActions",
+        "PosEditEffort",
+        "Status",
+        "ReviewReason",
+    ]
 
 
 def _naming_audit_rows(session: ImportSession):
@@ -1706,6 +1746,13 @@ def _naming_audit_rows(session: ImportSession):
             "ItemName": row.item_name,
             "BaseProductPosName": row.pos_name,
             "Overridden": "true" if row.pos_overridden else "false",
+            "PosNameBeforeOverride": row.pos_name_before_override,
+            "PosEditDistance": str(row.pos_edit_distance) if row.pos_overridden else "",
+            "PosCharacterDelta": str(row.pos_character_delta) if row.pos_overridden else "",
+            "PosSpacesChanged": str(row.pos_spaces_changed) if row.pos_overridden else "",
+            "PosTokenChanges": str(row.pos_token_changes) if row.pos_overridden else "",
+            "PosActiveEditActions": str(row.pos_active_edit_actions) if row.pos_overridden else "",
+            "PosEditEffort": row.pos_edit_effort,
             "Status": row.status,
             "ReviewReason": row.review_reason,
         }
@@ -1722,6 +1769,13 @@ def _session_audit_headers() -> list[str]:
         "OldCategory",
         "Category",
         "BaseProductPosName",
+        "PosNameBeforeOverride",
+        "PosEditDistance",
+        "PosCharacterDelta",
+        "PosSpacesChanged",
+        "PosTokenChanges",
+        "PosActiveEditActions",
+        "PosEditEffort",
         "IsPublished",
         "IsOrderable",
         "CoreCatalogue",
@@ -1750,6 +1804,13 @@ def _session_audit_rows(rows_or_session):
             "OldCategory": row.old_category,
             "Category": row.category,
             "BaseProductPosName": row.pos_name,
+            "PosNameBeforeOverride": row.pos_name_before_override,
+            "PosEditDistance": str(row.pos_edit_distance) if row.pos_overridden else "",
+            "PosCharacterDelta": str(row.pos_character_delta) if row.pos_overridden else "",
+            "PosSpacesChanged": str(row.pos_spaces_changed) if row.pos_overridden else "",
+            "PosTokenChanges": str(row.pos_token_changes) if row.pos_overridden else "",
+            "PosActiveEditActions": str(row.pos_active_edit_actions) if row.pos_overridden else "",
+            "PosEditEffort": row.pos_edit_effort,
             "IsPublished": "true" if row.is_published else "false",
             "IsOrderable": "true" if row.is_orderable else "false",
             "CoreCatalogue": "true" if row.core_catalogue else "false",
@@ -1796,6 +1857,9 @@ def _write_manifest(
             "edited_rows": summary.edited_rows,
             "category_count": summary.category_count,
             "pos_overrides": summary.pos_overrides,
+            "pos_light_edits": summary.pos_light_edits,
+            "pos_moderate_edits": summary.pos_moderate_edits,
+            "pos_heavy_overrides": summary.pos_heavy_overrides,
             "duplicate_barcodes": summary.duplicate_barcodes,
             "duplicate_pos_names": summary.duplicate_pos_names,
             "core_catalogue_rows": summary.core_catalogue_rows,
@@ -1830,6 +1894,9 @@ def _write_summary(
                 f"- Edited rows: {summary.edited_rows}",
                 f"- Category count: {summary.category_count}",
                 f"- POS-name overrides: {summary.pos_overrides}",
+                f"- POS-name light edits: {summary.pos_light_edits}",
+                f"- POS-name moderate edits: {summary.pos_moderate_edits}",
+                f"- POS-name heavy overrides: {summary.pos_heavy_overrides}",
                 f"- Duplicate barcodes: {summary.duplicate_barcodes}",
                 f"- Duplicate POS names: {summary.duplicate_pos_names}",
                 f"- Core Catalogue rows: {summary.core_catalogue_rows}",
@@ -1852,6 +1919,51 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: file.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _pos_name_edit_metrics(before: str, after: str) -> dict[str, int | str]:
+    before = _clean_text(before)
+    after = _clean_text(after)
+    edit_distance = _levenshtein_distance(before, after)
+    return {
+        "edit_distance": edit_distance,
+        "character_delta": abs(len(after) - len(before)),
+        "spaces_changed": abs(after.count(" ") - before.count(" ")),
+        "token_changes": _levenshtein_distance(tuple(before.split()), tuple(after.split())),
+        "active_edit_actions": edit_distance,
+        "effort": _pos_edit_effort(edit_distance),
+    }
+
+
+def _pos_edit_effort(edit_distance: int) -> str:
+    if edit_distance <= 0:
+        return "none"
+    if edit_distance <= 2:
+        return "light"
+    if edit_distance <= 5:
+        return "moderate"
+    return "heavy"
+
+
+def _levenshtein_distance(left, right) -> int:
+    if left == right:
+        return 0
+    if len(left) < len(right):
+        left, right = right, left
+    previous = list(range(len(right) + 1))
+    for left_index, left_value in enumerate(left, start=1):
+        current = [left_index]
+        for right_index, right_value in enumerate(right, start=1):
+            substitution_cost = 0 if left_value == right_value else 1
+            current.append(
+                min(
+                    previous[right_index] + 1,
+                    current[right_index - 1] + 1,
+                    previous[right_index - 1] + substitution_cost,
+                )
+            )
+        previous = current
+    return previous[-1]
 
 
 def _decimal_or_none(value: str):

@@ -21,11 +21,16 @@ Apply the global `manage-git-workflows` skill first, then enforce these project 
 ```powershell
 uv run --locked pytest -q
 uv run --locked ruff check .
-uv run --locked ruff format --check .
+uv run --locked lt-prod-init --smoke-test
+uv run --locked lt-pos-name --smoke-test
 uv lock --check
 ```
 
-- Add `uv sync --locked`, frozen smoke tests, and installer checks when dependencies, packaging,
-  or release inputs change.
+Run `uv run --locked ruff format --check <changed-python-files>` for Python files changed in the
+slice. Use `uv run --locked ruff format --check .` only after the repository-wide formatting
+baseline is clean.
+
+- Add `uv sync --locked` and installer checks when dependencies, packaging, or release inputs
+  change.
 - Preserve unrelated work. Require explicit authorization before branch creation, staging,
   committing, history rewriting, or pushing.
