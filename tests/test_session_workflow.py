@@ -1196,6 +1196,77 @@ def test_export_includes_pos_edit_effort_metrics(tmp_path: Path) -> None:
     assert "- POS-name heavy overrides: 1" in summary_text
 
 
+def test_export_writes_pos_preference_profile_audit(tmp_path: Path) -> None:
+    source_template, recipe, odin = _source_files(tmp_path)
+    session = _session(
+        [
+            _row("row-1", "Chicken Caesar Salad", "5.25", "111", category="Salads"),
+            _row(
+                "row-2",
+                "Bacon, Egg, and Cheese Bagel",
+                "5.25",
+                "222",
+                category="Breakfast",
+            ),
+        ],
+        categories=("Breakfast", "Salads"),
+    )
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "Chick Cae Sal")
+    session = replace_pos_name(session, "row-1", "Chk Cae Sal")
+    session = replace_pos_name(session, "row-2", "BEC Bagel")
+
+    result = export_session(
+        session,
+        BuildInputs(
+            product_template_path=source_template,
+            recipe_list_path=recipe,
+            odin_inventory_path=odin,
+            output_root=tmp_path / "out",
+        ),
+    )
+
+    with result.summary.output_paths.pos_profile_audit.open(
+        encoding="utf-8-sig", newline=""
+    ) as file:
+        profile_rows = list(csv.DictReader(file))
+    manifest = json.loads(result.summary.output_paths.manifest.read_text(encoding="utf-8"))
+
+    chicken_rows = [
+        row
+        for row in profile_rows
+        if row["RuleType"] == "abbreviation" and row["Token"] == "chicken"
+    ]
+    acronym_rows = [row for row in profile_rows if row["RuleType"] == "acronym"]
+    style_rows = [row for row in profile_rows if row["RuleType"] == "style"]
+
+    assert result.summary.output_paths.pos_profile_audit.name == "POS Preference Profile.csv"
+    assert [(row["Rank"], row["Replacement"], row["Count"]) for row in chicken_rows] == [
+        ("1", "Chk", "1")
+    ]
+    assert chicken_rows[0]["SourceTokenCounts"] == "3"
+    assert "Chk Cae Sal" in chicken_rows[0]["Examples"]
+    assert acronym_rows[0]["SuffixTokens"] == "egg, cheese"
+    assert acronym_rows[0]["SpanLength"] == "3"
+    assert style_rows == [
+        {
+            "RuleType": "style",
+            "Token": "",
+            "Rank": "",
+            "Replacement": "",
+            "Count": "",
+            "SourceTokenCounts": "",
+            "OverrideLengths": "",
+            "SuffixTokens": "",
+            "SpanLength": "",
+            "Examples": "",
+            "SpacedOverrides": "3",
+            "CompactOverrides": "0",
+        }
+    ]
+    assert "POS Preference Profile.csv" in manifest["artifacts"]
+
+
 def test_deleted_audit_includes_merge_transfer_details(tmp_path: Path) -> None:
     source_template, recipe, odin = _source_files(tmp_path)
     session = _session(

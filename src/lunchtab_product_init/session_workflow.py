@@ -48,6 +48,7 @@ NameFilter = Literal["any", "duplicate_name"]
 DELETED_AUDIT_NAME = "Deleted Product Audit.csv"
 SESSION_AUDIT_NAME = "Session Review Audit.csv"
 CORE_CATALOGUE_NAME = "Core Catalogue.csv"
+POS_PROFILE_AUDIT_NAME = "POS Preference Profile.csv"
 POS_NAME_STOP_WORDS = {"a", "an", "and", "of", "the", "with"}
 POS_NAME_PHRASE_REPLACEMENTS = {("english", "muffin"): "Muff"}
 
@@ -172,6 +173,7 @@ class SessionOutputPaths:
     core_catalogue: Path
     category_audit: Path
     naming_audit: Path
+    pos_profile_audit: Path
     session_audit: Path
     deleted_audit: Path
     manifest: Path
@@ -1018,6 +1020,7 @@ def export_session(
         core_catalogue=run_dir / CORE_CATALOGUE_NAME,
         category_audit=run_dir / CATEGORY_AUDIT_NAME,
         naming_audit=run_dir / NAMING_AUDIT_NAME,
+        pos_profile_audit=run_dir / POS_PROFILE_AUDIT_NAME,
         session_audit=run_dir / SESSION_AUDIT_NAME,
         deleted_audit=run_dir / DELETED_AUDIT_NAME,
         manifest=run_dir / "run-manifest.json",
@@ -1027,6 +1030,11 @@ def export_session(
     write_csv(paths.core_catalogue, session.headers, core_catalogue_rows(session))
     write_csv(paths.category_audit, _category_audit_headers(), _category_audit_rows(session))
     write_csv(paths.naming_audit, _naming_audit_headers(), _naming_audit_rows(session))
+    write_csv(
+        paths.pos_profile_audit,
+        _pos_profile_audit_headers(),
+        _pos_profile_audit_rows(session.pos_preferences),
+    )
     write_csv(paths.session_audit, _session_audit_headers(), _session_audit_rows(session))
     write_csv(
         paths.deleted_audit, _session_audit_headers(), _session_audit_rows(session.deleted_rows)
@@ -1914,6 +1922,71 @@ def _naming_audit_rows(session: ImportSession):
         }
 
 
+def _pos_profile_audit_headers() -> list[str]:
+    return [
+        "RuleType",
+        "Token",
+        "Rank",
+        "Replacement",
+        "Count",
+        "SourceTokenCounts",
+        "OverrideLengths",
+        "SuffixTokens",
+        "SpanLength",
+        "Examples",
+        "SpacedOverrides",
+        "CompactOverrides",
+    ]
+
+
+def _pos_profile_audit_rows(profile: PosNamePreferenceProfile):
+    for token, options in sorted(profile.abbreviation_options.items()):
+        for rank, option in enumerate(options, start=1):
+            yield {
+                "RuleType": "abbreviation",
+                "Token": token,
+                "Rank": str(rank),
+                "Replacement": option.value,
+                "Count": str(option.count),
+                "SourceTokenCounts": _join_ints(option.source_token_counts),
+                "OverrideLengths": _join_ints(option.override_lengths),
+                "SuffixTokens": "",
+                "SpanLength": "",
+                "Examples": " | ".join(option.examples),
+                "SpacedOverrides": "",
+                "CompactOverrides": "",
+            }
+    for rank, pattern in enumerate(profile.acronym_patterns, start=1):
+        yield {
+            "RuleType": "acronym",
+            "Token": "",
+            "Rank": str(rank),
+            "Replacement": "",
+            "Count": str(pattern.count),
+            "SourceTokenCounts": "",
+            "OverrideLengths": "",
+            "SuffixTokens": ", ".join(pattern.suffix_tokens),
+            "SpanLength": str(pattern.span_length),
+            "Examples": " | ".join(pattern.examples),
+            "SpacedOverrides": "",
+            "CompactOverrides": "",
+        }
+    yield {
+        "RuleType": "style",
+        "Token": "",
+        "Rank": "",
+        "Replacement": "",
+        "Count": "",
+        "SourceTokenCounts": "",
+        "OverrideLengths": "",
+        "SuffixTokens": "",
+        "SpanLength": "",
+        "Examples": "",
+        "SpacedOverrides": str(profile.spaced_overrides),
+        "CompactOverrides": str(profile.compact_overrides),
+    }
+
+
 def _session_audit_headers() -> list[str]:
     return [
         "RowId",
@@ -1993,6 +2066,7 @@ def _write_manifest(
         paths.core_catalogue,
         paths.category_audit,
         paths.naming_audit,
+        paths.pos_profile_audit,
         paths.session_audit,
         paths.deleted_audit,
         paths.summary,
@@ -2075,6 +2149,10 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: file.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _join_ints(values: tuple[int, ...]) -> str:
+    return ", ".join(str(value) for value in values)
 
 
 def _pos_name_edit_metrics(before: str, after: str) -> dict[str, int | str]:
