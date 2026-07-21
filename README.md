@@ -117,8 +117,8 @@ To infer a reviewable venue profile proposal from an accepted final import CSV, 
 uv run lt-pos-profile-infer "path\to\Lunchtab Product Import.csv" --profile "path\to\venue-profile.json"
 ```
 
-The command writes a proposed profile JSON plus inference and profile audits. It does not overwrite
-the active venue profile.
+The command writes a proposed profile JSON plus inference and profile audits. The inference audit
+flags competing token rules for review, and the command does not overwrite the active venue profile.
 
 ## BaseProductPosName-only App
 

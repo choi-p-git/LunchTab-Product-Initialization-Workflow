@@ -205,6 +205,10 @@ def _inference_audit_headers() -> list[str]:
         "ExistingRank",
         "InferredRank",
         "ProposedRank",
+        "ExistingTopReplacement",
+        "InferredTopReplacement",
+        "ProposedTopReplacement",
+        "ReviewRecommended",
         "Action",
         "Examples",
     ]
@@ -224,6 +228,8 @@ def _comparison_rows(
         inferred_option = inferred_options.get(key)
         proposed_option = proposed_options.get(key)
         token, replacement = key
+        token_has_existing = token in existing.abbreviation_options
+        token_has_inferred = token in inferred.abbreviation_options
         rows.append(
             {
                 "SourceRow": "",
@@ -242,7 +248,18 @@ def _comparison_rows(
                 "ExistingRank": _rank(existing_option),
                 "InferredRank": _rank(inferred_option),
                 "ProposedRank": _rank(proposed_option),
-                "Action": _action(existing_option, inferred_option),
+                "ExistingTopReplacement": _top_replacement(existing, token),
+                "InferredTopReplacement": _top_replacement(inferred, token),
+                "ProposedTopReplacement": _top_replacement(proposed, token),
+                "ReviewRecommended": _review_recommended(
+                    existing, inferred, proposed, token, replacement
+                ),
+                "Action": _action(
+                    existing_option,
+                    inferred_option,
+                    token_has_existing=token_has_existing,
+                    token_has_inferred=token_has_inferred,
+                ),
                 "Examples": " | ".join(
                     dict.fromkeys(
                         (
@@ -272,6 +289,10 @@ def _comparison_rows(
                 "ExistingRank": "",
                 "InferredRank": "",
                 "ProposedRank": str(index),
+                "ExistingTopReplacement": "",
+                "InferredTopReplacement": "",
+                "ProposedTopReplacement": "",
+                "ReviewRecommended": "",
                 "Action": "proposed",
                 "Examples": " | ".join(pattern.examples),
             }
@@ -301,14 +322,45 @@ def _rank(option: tuple[PosNameAbbreviationPreference, int] | None) -> str:
     return str(option[1])
 
 
+def _top_replacement(profile: PosNamePreferenceProfile, token: str) -> str:
+    options = profile.abbreviation_options.get(token, ())
+    if not options:
+        return ""
+    return options[0].value
+
+
+def _review_recommended(
+    existing: PosNamePreferenceProfile,
+    inferred: PosNamePreferenceProfile,
+    proposed: PosNamePreferenceProfile,
+    token: str,
+    replacement: str,
+) -> str:
+    existing_top = _top_replacement(existing, token).casefold()
+    inferred_top = _top_replacement(inferred, token).casefold()
+    proposed_top = _top_replacement(proposed, token).casefold()
+    if existing_top and inferred_top and existing_top != inferred_top:
+        return "true"
+    if replacement == proposed_top and existing_top and proposed_top != existing_top:
+        return "true"
+    return "false"
+
+
 def _action(
     existing_option: tuple[PosNameAbbreviationPreference, int] | None,
     inferred_option: tuple[PosNameAbbreviationPreference, int] | None,
+    *,
+    token_has_existing: bool,
+    token_has_inferred: bool,
 ) -> str:
     if existing_option is None and inferred_option is not None:
+        if token_has_existing:
+            return "new competing rule"
         return "new inferred rule"
     if existing_option is not None and inferred_option is not None:
         return "reinforced existing rule"
+    if existing_option is not None and token_has_inferred:
+        return "existing competing rule"
     return "existing only"
 
 

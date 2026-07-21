@@ -76,6 +76,44 @@ def test_inference_merges_existing_profile_and_preserves_categories(tmp_path: Pa
     assert any(row["Action"] == "new inferred rule" for row in audit_rows)
 
 
+def test_inference_audit_flags_competing_token_preferences(tmp_path: Path) -> None:
+    existing_preferences = learn_pos_preferences(
+        PosNamePreferenceProfile(abbreviations={}), "Chicken Caesar Salad", "Chk Cae Sal"
+    )
+    existing_profile = tmp_path / "venue-profile.json"
+    save_venue_profile(
+        ImportSession(
+            headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+            rows=(),
+            pos_preferences=existing_preferences,
+        ),
+        existing_profile,
+        name="Test Venue",
+    )
+    final_import = _final_import_csv(
+        tmp_path,
+        [_final_row("Chicken Caesar Salad", "Chick Cae Sal")],
+    )
+
+    result = infer_pos_profile_from_final_import(
+        final_import,
+        existing_profile_path=existing_profile,
+        output_root=tmp_path / "out",
+    )
+
+    audit_rows = _read_csv(result.summary.output_paths.inference_audit)
+    chicken_rows = [
+        row for row in audit_rows if row["RuleType"] == "abbreviation" and row["Token"] == "chicken"
+    ]
+    assert {row["Action"] for row in chicken_rows} == {
+        "existing competing rule",
+        "new competing rule",
+    }
+    assert all(row["ReviewRecommended"] == "true" for row in chicken_rows)
+    assert {row["ExistingTopReplacement"] for row in chicken_rows} == {"Chk"}
+    assert {row["InferredTopReplacement"] for row in chicken_rows} == {"Chick"}
+
+
 def test_inference_skips_missing_or_invalid_pos_names(tmp_path: Path) -> None:
     final_import = _final_import_csv(
         tmp_path,
