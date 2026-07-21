@@ -5,9 +5,10 @@
 Use this SOP to create and upload a Lunchtab product import CSV for a venue during initial
 inventory/menu setup or a seasonal menu update.
 
-The upload replaces the venue's existing Base Product database. Before upload, confirm the final
-CSV includes every item that should exist after the update, including existing items that should
-reappear in the new cycle.
+Testing confirmed the ProductData upload updates matching existing items when uploaded values
+change, leaves existing items in place when they are omitted from the CSV, and appends new items
+that do not already exist. Before upload, confirm the final CSV contains the rows intended for this
+upload.
 
 ## Scope
 
@@ -199,7 +200,8 @@ The FSD or menu/pricing owner must manually review the final CSV before upload.
 5. Select `Upload Product Data`.
 6. Upload the final import CSV from the app output folder.
 
-Important: the upload replaces the existing Base Product database.
+Important: tested upload behavior updates matching existing items, keeps omitted existing items in
+place, and appends new items that do not already exist.
 
 The Core Catalogue CSV is a separate app output. Do not upload it as the ProductData import file.
 

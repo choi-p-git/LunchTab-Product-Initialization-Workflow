@@ -207,8 +207,9 @@ assignment is limited to category names the operator enters or loads through a v
   inventory or generic inventory CSV.
 - SOP should instruct operators to manually transfer Odin rows into the generic inventory CSV when
   a venue needs consolidated data from Odin and another inventory source in the same run.
-- Whether repeat ProductData uploads should preserve existing product-library rows, since Lunchtab
-  upload behavior may replace rather than append the product library.
+- Tested ProductData upload behavior updates matching existing items, keeps omitted existing items
+  in place, and appends new items; seasonal-update planning should focus on match/update,
+  duplicate, and new-item handling.
 - Venue category creation rules and whether category names differ by location.
 - How barcodes are assigned, combined, or retired in Lunchtab before and after import.
 - How `IsPublished`, `IsOrderable`, Core Catalogue usage, tax categories, requirement categories,
