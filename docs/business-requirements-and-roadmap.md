@@ -112,6 +112,8 @@ assignment is limited to category names the operator enters or loads through a v
    - Accepted final import CSVs can be used with an optional existing venue profile to infer a
      proposed POS-name preference profile. This offline inference writes a proposal JSON plus audit
      files, flags competing token rules for review, and does not overwrite the active venue profile.
+   - The Export Complete tab can create and open the proposed POS-name preference profile artifacts
+     from the just-written final import CSV.
    - Step 4 remains the largest measured operator-effort stage because the operator must compare
      full item-name shape to POS-name readability, choose which letters or spaces to keep, and fit
      recognizable names within the 15-character rule.
@@ -188,6 +190,8 @@ assignment is limited to category names the operator enters or loads through a v
      with widget coverage confirming primary controls remain visible at 1366x768.
    - Reduce unnecessary clicks in high-volume work paths: category assignment, edit review,
      no-barcode deletion, row merge, and POS-name override.
+   - Export Complete now provides a one-click POS profile proposal workflow and direct open buttons
+     for the proposal, inference audit, and proposal folder.
    - Final-review metadata and edit actions are split into a wrapped summary row and a
      right-aligned action bar, with widget coverage confirming primary actions remain visible at
      1366x768.

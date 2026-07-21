@@ -61,8 +61,8 @@ uv run lt-pos-name --smoke-test
    suggestions generated from the base algorithm plus session preference learning.
 10. Review final upload data, audit counts, row-level published/orderable flags, and Core Catalogue
     selections.
-11. Open the final import, Core Catalogue export, audits, summary, or output folder from the
-    export-complete tab.
+11. Open the final import, Core Catalogue export, audits, summary, output folder, or a POS profile
+    proposal from the export-complete tab.
 
 ## Current Automation Rules
 
@@ -119,6 +119,7 @@ uv run lt-pos-profile-infer "path\to\Lunchtab Product Import.csv" --profile "pat
 
 The command writes a proposed profile JSON plus inference and profile audits. The inference audit
 flags competing token rules for review, and the command does not overwrite the active venue profile.
+The same proposal workflow is also available after export from the app's Export Complete tab.
 
 ## BaseProductPosName-only App
 

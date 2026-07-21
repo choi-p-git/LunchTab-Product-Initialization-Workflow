@@ -311,6 +311,10 @@ class AppController:
         self.state = replace(self.state, **values)
         return self.state
 
+    def set_message(self, message: str) -> AppState:
+        self.state = replace(self.state, message=message)
+        return self.state
+
     def go_to_edit_review(self) -> AppState:
         self._require_session()
         self.state = replace(

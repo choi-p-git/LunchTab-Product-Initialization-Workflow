@@ -24,6 +24,10 @@ from lunchtab_product_init.gui_controller import (
     toggle_category_row_selection,
     undo_button_text,
 )
+from lunchtab_product_init.pos_profile_inference import (
+    PosProfileInferenceResult,
+    infer_pos_profile_from_final_import,
+)
 from lunchtab_product_init.session_workflow import (
     ImportSession,
     VenueProfile,
@@ -116,6 +120,8 @@ class ProductInitializationApp:
         self.audit_text = tk.StringVar()
         self.inline_category_combo: ttk.Combobox | None = None
         self.venue_profile: VenueProfile | None = None
+        self.profile_inference_result: PosProfileInferenceResult | None = None
+        self.profile_inference_running = False
 
         for variable in (self.edit_name, self.edit_price, self.edit_barcode, self.edit_category):
             variable.trace_add("write", lambda *_args: self._update_edit_action_state())
@@ -625,6 +631,34 @@ class ProductInitializationApp:
         for index, button in enumerate(self.open_buttons.values()):
             button.grid(row=index // 2, column=index % 2, sticky="ew", padx=6, pady=5)
             panel.columnconfigure(index % 2, weight=1)
+        profile_panel = ttk.LabelFrame(parent, text="Venue profile proposal", padding=14)
+        profile_panel.grid(row=1, column=0, sticky="new", pady=(12, 0))
+        profile_panel.columnconfigure(0, weight=1)
+        profile_panel.columnconfigure(1, weight=1)
+        self.infer_profile_button = ttk.Button(
+            profile_panel,
+            text="Create POS profile proposal",
+            command=self._start_profile_inference_from_export,
+        )
+        self.infer_profile_button.grid(row=0, column=0, sticky="ew", padx=6, pady=5)
+        self.open_profile_proposal_button = ttk.Button(
+            profile_panel,
+            text="Open proposed profile",
+            command=lambda: self._open_profile_inference_result("profile"),
+        )
+        self.open_profile_proposal_button.grid(row=0, column=1, sticky="ew", padx=6, pady=5)
+        self.open_profile_inference_audit_button = ttk.Button(
+            profile_panel,
+            text="Open inference audit",
+            command=lambda: self._open_profile_inference_result("audit"),
+        )
+        self.open_profile_inference_audit_button.grid(row=1, column=0, sticky="ew", padx=6, pady=5)
+        self.open_profile_inference_folder_button = ttk.Button(
+            profile_panel,
+            text="Open proposal folder",
+            command=lambda: self._open_profile_inference_result("folder"),
+        )
+        self.open_profile_inference_folder_button.grid(row=1, column=1, sticky="ew", padx=6, pady=5)
 
     @staticmethod
     def _file_row(
@@ -829,6 +863,8 @@ class ProductInitializationApp:
 
     def _start_parse(self) -> None:
         self.controller.begin_parse()
+        self.profile_inference_result = None
+        self.profile_inference_running = False
         inputs = self.controller.build_inputs()
         venue_profile = self.venue_profile
 
@@ -843,6 +879,8 @@ class ProductInitializationApp:
 
     def _start_export(self) -> None:
         state = self.controller.begin_export()
+        self.profile_inference_result = None
+        self.profile_inference_running = False
         inputs = self.controller.build_inputs()
         session = state.session
         if session is None:
@@ -869,7 +907,17 @@ class ProductInitializationApp:
                     self.edit_undo_stack.clear()
                 elif name == "exported":
                     self.controller.export_succeeded(payload)  # type: ignore[arg-type]
+                elif name == "profile_inferred":
+                    self.profile_inference_running = False
+                    self.profile_inference_result = payload  # type: ignore[assignment]
+                    self.controller.set_message("POS profile proposal export complete.")
+                    result = payload  # type: ignore[assignment]
+                    messagebox.showinfo(
+                        APP_TITLE,
+                        f"POS profile proposal written to {result.run_dir}",
+                    )
                 else:
+                    self.profile_inference_running = False
                     message = friendly_error(payload)
                     self.controller.failed(message)
                     messagebox.showerror(APP_TITLE, message)
@@ -1688,6 +1736,31 @@ class ProductInitializationApp:
             return
         messagebox.showinfo(APP_TITLE, f"Venue profile saved to {selected}")
 
+    def _start_profile_inference_from_export(self) -> None:
+        result = self.controller.state.result
+        if result is None or self.profile_inference_running:
+            return
+        final_import = result.summary.output_paths.final_import
+        profile_path = self._loaded_profile_path()
+        output_root = result.run_dir / "POS Profile Inference"
+        self.profile_inference_running = True
+        self._render()
+        self._run_worker(
+            "profile_inferred",
+            lambda: infer_pos_profile_from_final_import(
+                final_import,
+                existing_profile_path=profile_path,
+                output_root=output_root,
+            ),
+        )
+
+    def _loaded_profile_path(self) -> Path | None:
+        value = self.venue_profile_text.get().strip()
+        if not value:
+            return None
+        path = Path(value)
+        return path if path.exists() else None
+
     def _open_result(self, target: str) -> None:
         result = self.controller.state.result
         if result is None:
@@ -1701,6 +1774,20 @@ class ProductInitializationApp:
             "naming": paths.naming_audit,
             "deleted": paths.deleted_audit,
             "summary": paths.summary,
+        }
+        try:
+            open_path(targets[target])
+        except Exception as error:
+            messagebox.showerror(APP_TITLE, friendly_error(error))
+
+    def _open_profile_inference_result(self, target: str) -> None:
+        result = self.profile_inference_result
+        if result is None:
+            return
+        targets = {
+            "folder": result.run_dir,
+            "profile": result.summary.output_paths.proposed_profile,
+            "audit": result.summary.output_paths.inference_audit,
         }
         try:
             open_path(targets[target])
@@ -1724,6 +1811,15 @@ class ProductInitializationApp:
             state="normal" if state.session is not None else "disabled"
         )
         self.export_button.configure(state="normal" if state.can_export else "disabled")
+        self.infer_profile_button.configure(
+            state="normal"
+            if state.result is not None and not self.profile_inference_running
+            else "disabled"
+        )
+        profile_result_state = "normal" if self.profile_inference_result is not None else "disabled"
+        self.open_profile_proposal_button.configure(state=profile_result_state)
+        self.open_profile_inference_audit_button.configure(state=profile_result_state)
+        self.open_profile_inference_folder_button.configure(state=profile_result_state)
         self._update_pos_action_state()
         self._update_undo_buttons()
         self._sync_notebook_tab_states()

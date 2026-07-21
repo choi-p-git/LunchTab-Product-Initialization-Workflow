@@ -7,7 +7,19 @@ import pytest
 from lunchtab_product_init import gui as gui_module
 from lunchtab_product_init.gui import ProductInitializationApp
 from lunchtab_product_init.models import LUNCHTAB_TEMPLATE_HEADERS, ProductCandidate
-from lunchtab_product_init.session_workflow import ImportSession, SessionRow
+from lunchtab_product_init.pos_profile_inference import (
+    PosProfileInferencePaths,
+    PosProfileInferenceResult,
+    PosProfileInferenceSummary,
+)
+from lunchtab_product_init.session_workflow import (
+    ImportSession,
+    PosNamePreferenceProfile,
+    SessionBuildSummary,
+    SessionExportResult,
+    SessionOutputPaths,
+    SessionRow,
+)
 
 
 @pytest.fixture(scope="module")
@@ -725,6 +737,91 @@ def test_final_review_filters_rows_by_text_and_flags(app) -> None:
     assert list(tree.get_children("")) == ["row-1"]
 
 
+def test_complete_tab_creates_pos_profile_proposal_from_export(
+    app,
+    monkeypatch,
+    tmp_path,
+) -> None:
+    export_result = _export_result(tmp_path)
+    profile_path = tmp_path / "venue-profile.json"
+    profile_path.write_text("{}", encoding="utf-8")
+    app.controller = gui_module.AppController()
+    app.controller.export_succeeded(export_result)
+    app.venue_profile_text.set(str(profile_path))
+    app.profile_inference_result = None
+    app.profile_inference_running = False
+    app._render()
+
+    calls = []
+
+    def infer_profile(final_import, *, existing_profile_path=None, output_root=None):
+        calls.append((final_import, existing_profile_path, output_root))
+        paths = PosProfileInferencePaths(
+            proposed_profile=tmp_path / "profile-out" / "proposal.json",
+            inference_audit=tmp_path / "profile-out" / "audit.csv",
+            proposed_profile_audit=tmp_path / "profile-out" / "profile-audit.csv",
+            manifest=tmp_path / "profile-out" / "manifest.json",
+            summary=tmp_path / "profile-out" / "summary.md",
+        )
+        summary = PosProfileInferenceSummary(
+            source_rows=2,
+            inferred_rows=2,
+            skipped_rows=0,
+            proposed_abbreviation_rules=3,
+            proposed_acronym_rules=1,
+            output_paths=paths,
+        )
+        return PosProfileInferenceResult(
+            run_dir=tmp_path / "profile-out",
+            summary=summary,
+            inferred_preferences=PosNamePreferenceProfile(abbreviations={}),
+            proposed_preferences=PosNamePreferenceProfile(abbreviations={}),
+        )
+
+    monkeypatch.setattr(gui_module, "infer_pos_profile_from_final_import", infer_profile)
+    monkeypatch.setattr(
+        app,
+        "_run_worker",
+        lambda event_name, operation: app.events.put((event_name, operation())),
+    )
+    messages = []
+    monkeypatch.setattr(
+        gui_module.messagebox,
+        "showinfo",
+        lambda title, message: messages.append((title, message)),
+    )
+    opened_paths = []
+    monkeypatch.setattr(gui_module, "open_path", opened_paths.append)
+
+    app._start_profile_inference_from_export()
+    app._poll_events()
+    app.root.update()
+
+    assert calls == [
+        (
+            export_result.summary.output_paths.final_import,
+            profile_path,
+            export_result.run_dir / "POS Profile Inference",
+        )
+    ]
+    assert app.profile_inference_result is not None
+    assert app.controller.state.message == "POS profile proposal export complete."
+    assert str(app.open_profile_proposal_button.cget("state")) == "normal"
+    assert messages == [
+        (gui_module.APP_TITLE, f"POS profile proposal written to {tmp_path / 'profile-out'}")
+    ]
+
+    app._open_profile_inference_result("profile")
+    app._open_profile_inference_result("audit")
+    app._open_profile_inference_result("folder")
+
+    assert opened_paths == [
+        tmp_path / "profile-out" / "proposal.json",
+        tmp_path / "profile-out" / "audit.csv",
+        tmp_path / "profile-out",
+    ]
+
+
 def test_pos_reason_filter_shows_rows_requiring_attention(app) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),
@@ -1041,6 +1138,37 @@ def _set_final_session(app: ProductInitializationApp, session: ImportSession) ->
     app.final_filter.set("")
     app.final_flag_filter.set("Any")
     app.controller.set_session(session, phase=gui_module.AppPhase.FINAL_REVIEW)
+
+
+def _export_result(tmp_path) -> SessionExportResult:
+    run_dir = tmp_path / "export-run"
+    paths = SessionOutputPaths(
+        final_import=run_dir / "Lunchtab Product Import.csv",
+        core_catalogue=run_dir / "Core Catalogue.csv",
+        category_audit=run_dir / "Product Category Audit.csv",
+        naming_audit=run_dir / "BaseProductPosName Audit.csv",
+        pos_profile_audit=run_dir / "POS Preference Profile.csv",
+        session_audit=run_dir / "Session Review Audit.csv",
+        deleted_audit=run_dir / "Deleted Product Audit.csv",
+        manifest=run_dir / "run-manifest.json",
+        summary=run_dir / "run-summary.md",
+    )
+    summary = SessionBuildSummary(
+        parsed_rows=2,
+        exported_rows=2,
+        deleted_rows=0,
+        edited_rows=0,
+        category_count=1,
+        pos_overrides=0,
+        pos_light_edits=0,
+        pos_moderate_edits=0,
+        pos_heavy_overrides=0,
+        duplicate_barcodes=0,
+        duplicate_pos_names=0,
+        core_catalogue_rows=0,
+        output_paths=paths,
+    )
+    return SessionExportResult(run_dir=run_dir, summary=summary)
 
 
 def _assert_widgets_inside_root(root: tk.Tk, widgets: tuple[tk.Widget, ...]) -> None:
