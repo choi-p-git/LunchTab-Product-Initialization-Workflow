@@ -827,10 +827,22 @@ def suggest_pos_names(session: ImportSession, row_id: str) -> tuple[str, ...]:
     if row is None:
         return ()
     base = generate_pos_name(row.item_name).value
+    primary = _primary_pos_name_candidates(row.item_name, session.pos_preferences)
     preferred = _preferred_pos_name_candidates(row.item_name, session.pos_preferences)
+    alternates = _secondary_pos_name_candidates(row.item_name, session.pos_preferences)
+    condensed = _condensed_pos_name_candidates(row.item_name, session.pos_preferences)
     compact = "".join(token[:4].title() for token in normalize_text(row.item_name).split())
     suggestions = []
-    for value in (*preferred, base, compact[:MAX_POS_NAME_LENGTH]):
+    for value in (
+        *primary[:2],
+        *alternates[:1],
+        *preferred,
+        *condensed[:2],
+        *alternates[1:],
+        *condensed[2:],
+        base,
+        compact[:MAX_POS_NAME_LENGTH],
+    ):
         if (
             value
             and value not in suggestions
@@ -1265,6 +1277,114 @@ def _preferred_pos_name_candidates(
     return tuple(candidates[:8])
 
 
+def _primary_pos_name_candidates(
+    item_name: str, preferences: PosNamePreferenceProfile
+) -> tuple[str, ...]:
+    tokens = _meaningful_pos_tokens(item_name)
+    if not tokens:
+        return ()
+    values = []
+    token_score = 0
+    for token in tokens:
+        choices = _pos_token_choices(token, preferences, len(tokens))
+        if not choices:
+            values.append(_title_token(token))
+            continue
+        value, score = choices[0]
+        values.append(value)
+        token_score += score
+    scored_candidates = []
+    for candidate, style_score in _format_pos_candidates(values, preferences):
+        if len(candidate) <= MAX_POS_NAME_LENGTH:
+            scored_candidates.append(
+                (candidate, token_score + style_score + _length_score(candidate))
+            )
+    ordered = sorted(
+        scored_candidates,
+        key=lambda item: (-item[1], len(item[0]), item[0].casefold()),
+    )
+    candidates = []
+    for candidate, _score in ordered:
+        if candidate not in candidates:
+            candidates.append(candidate)
+    return tuple(candidates)
+
+
+def _secondary_pos_name_candidates(
+    item_name: str, preferences: PosNamePreferenceProfile
+) -> tuple[str, ...]:
+    tokens = _meaningful_pos_tokens(item_name)
+    if not tokens:
+        return ()
+    primary_values = []
+    token_choice_sets = []
+    for token in tokens:
+        choices = _pos_token_choices(token, preferences, len(tokens))
+        token_choice_sets.append(choices)
+        primary_values.append(choices[0][0] if choices else _title_token(token))
+    scored_candidates = []
+    for index, choices in enumerate(token_choice_sets):
+        if len(choices) < 2:
+            continue
+        values = [*primary_values]
+        values[index] = choices[1][0]
+        token_score = sum(
+            choices[1][1] if token_index == index and choices else token_choices[0][1]
+            for token_index, token_choices in enumerate(token_choice_sets)
+        )
+        for candidate, style_score in _format_pos_candidates(values, preferences):
+            scored_candidates.append(
+                (candidate, token_score + style_score + _length_score(candidate))
+            )
+    ordered = sorted(
+        scored_candidates, key=lambda item: (-item[1], len(item[0]), item[0].casefold())
+    )
+    candidates = []
+    for candidate, _score in ordered:
+        if len(candidate) > MAX_POS_NAME_LENGTH or candidate in candidates:
+            continue
+        candidates.append(candidate)
+    return tuple(candidates[:4])
+
+
+def _condensed_pos_name_candidates(
+    item_name: str, preferences: PosNamePreferenceProfile
+) -> tuple[str, ...]:
+    tokens = _meaningful_pos_tokens(item_name)
+    if len(tokens) <= 4:
+        return ()
+    choices = [_pos_token_choices(token, preferences, len(tokens)) for token in tokens]
+    primary = [(token_choices[0][0], token_choices[0][1]) for token_choices in choices]
+    scored_candidates = []
+    max_kept = min(4, len(primary))
+    for kept_count in range(max_kept, 1, -1):
+        for indexes in itertools.combinations(range(len(primary)), kept_count):
+            values = [primary[index][0] for index in indexes]
+            token_score = sum(primary[index][1] for index in indexes)
+            keep_score = kept_count * 8
+            edge_score = (8 if 0 in indexes else 0) + (6 if len(primary) - 1 in indexes else 0)
+            for candidate, style_score in _format_pos_candidates(values, preferences):
+                scored_candidates.append(
+                    (
+                        candidate,
+                        token_score
+                        + keep_score
+                        + edge_score
+                        + style_score
+                        + _length_score(candidate),
+                    )
+                )
+    ordered = sorted(
+        scored_candidates, key=lambda item: (-item[1], len(item[0]), item[0].casefold())
+    )
+    candidates = []
+    for candidate, _score in ordered:
+        if len(candidate) > MAX_POS_NAME_LENGTH or candidate in candidates:
+            continue
+        candidates.append(candidate)
+    return tuple(candidates[:4])
+
+
 def _pos_choice_sequences(
     tokens: list[str],
     preferences: PosNamePreferenceProfile,
@@ -1433,9 +1553,20 @@ def _record_abbreviation_preference(
 ) -> tuple[PosNameAbbreviationPreference, ...]:
     rows = []
     matched = False
+    selected_after_count = 1
+    for option in options:
+        if option.value.casefold() == value.casefold():
+            selected_after_count = option.count + 1
+            break
     for option in options:
         if option.value.casefold() != value.casefold():
-            rows.append(option)
+            decayed = _decay_abbreviation_option(
+                option,
+                source_token_count,
+                selected_after_count=selected_after_count,
+            )
+            if decayed is not None:
+                rows.append(decayed)
             continue
         matched = True
         rows.append(
@@ -1457,6 +1588,31 @@ def _record_abbreviation_preference(
             )
         )
     return tuple(sorted(rows, key=lambda option: (-option.count, option.value.casefold())))
+
+
+def _decay_abbreviation_option(
+    option: PosNameAbbreviationPreference,
+    source_token_count: int,
+    *,
+    selected_after_count: int,
+) -> PosNameAbbreviationPreference | None:
+    if not _abbreviation_context_overlaps(option, source_token_count):
+        return option
+    if option.count > selected_after_count:
+        return option
+    new_count = option.count - 1
+    if new_count <= 0:
+        return None
+    return replace(option, count=new_count)
+
+
+def _abbreviation_context_overlaps(
+    option: PosNameAbbreviationPreference,
+    source_token_count: int,
+) -> bool:
+    if not option.source_token_counts:
+        return True
+    return source_token_count in option.source_token_counts
 
 
 def _append_limited(values: tuple[str, ...], value: str, limit: int = 5) -> tuple[str, ...]:

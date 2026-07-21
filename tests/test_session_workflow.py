@@ -798,6 +798,88 @@ def test_pos_preferences_allow_context_specific_token_shortening() -> None:
     assert suggest_pos_names(session, "row-2")[0] == "SW Chk Cobb Cae"
 
 
+def test_pos_preferences_decay_same_context_mistaken_association() -> None:
+    session = _session(
+        [_row("row-1", "Chicken Caesar Salad", "5.25", "ABC", category="Salads")],
+        categories=("Salads",),
+    )
+    session = run_pos_generation(session)
+
+    session = replace_pos_name(session, "row-1", "Chk Cae Sal")
+    session = replace_pos_name(session, "row-1", "Chick Cae Sal")
+
+    chicken_options = session.pos_preferences.abbreviation_options["chicken"]
+
+    assert session.pos_preferences.abbreviations["chicken"] == "Chick"
+    assert [option.value for option in chicken_options] == ["Chick"]
+    assert suggest_pos_names(session, "row-1")[0] == "Chick Cae Sal"
+
+
+def test_pos_preferences_preserve_context_specific_variants() -> None:
+    session = _session(
+        [
+            _row("row-1", "Chicken Caesar Salad", "5.25", "ABC", category="Salads"),
+            _row("row-2", "SW Chicken Cobb Caesar", "6.25", "DEF", category="Sandwiches"),
+        ],
+        categories=("Salads", "Sandwiches"),
+    )
+    session = run_pos_generation(session)
+
+    session = replace_pos_name(session, "row-1", "Chick Cae Sal")
+    session = replace_pos_name(session, "row-2", "SW Chk Cobb Cae")
+
+    chicken_options = session.pos_preferences.abbreviation_options["chicken"]
+
+    assert {option.value for option in chicken_options} == {"Chick", "Chk"}
+    assert suggest_pos_names(session, "row-1")[0] == "Chick Cae Sal"
+    assert suggest_pos_names(session, "row-2")[0] == "SW Chk Cobb Cae"
+
+
+def test_pos_suggestions_reserve_third_slot_for_second_ranked_pattern() -> None:
+    session = _session(
+        [_row("row-1", "Chicken Caesar Salad", "5.25", "ABC", category="Salads")],
+        categories=("Salads",),
+    )
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "Chick Cae Sal")
+    session = replace_pos_name(session, "row-1", "Chick Cae Sal")
+    session = replace_pos_name(session, "row-1", "Chk Cae Sal")
+
+    suggestions = suggest_pos_names(session, "row-1")
+
+    assert suggestions[:3] == ("Chick Cae Sal", "ChickCaeSal", "Chk Cae Sal")
+
+
+def test_pos_suggestions_condense_long_names_to_valid_candidates() -> None:
+    session = _session(
+        [
+            _row(
+                "row-1",
+                "Buffalo Ranch Chicken Sandwich",
+                "6.50",
+                "ABC",
+                category="Sandwiches",
+            ),
+            _row(
+                "row-2",
+                "Southwest Buffalo Ranch Chicken Sandwich Combo Meal",
+                "8.50",
+                "DEF",
+                category="Sandwiches",
+            ),
+        ],
+        categories=("Sandwiches",),
+    )
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "Buff Rch Chk Sd")
+
+    suggestions = suggest_pos_names(session, "row-2")
+
+    assert suggestions
+    assert all(len(suggestion) <= 15 for suggestion in suggestions)
+    assert any("Chk" in suggestion for suggestion in suggestions)
+
+
 def test_pos_preferences_learn_breakfast_sandwich_acronym_pattern() -> None:
     session = _session(
         [

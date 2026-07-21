@@ -102,6 +102,11 @@ assignment is limited to category names the operator enters or loads through a v
    - Operator can filter by reason, select a row, type an override, press Enter to replace, and
      advance through the displayed list.
    - Manual overrides update token and acronym preference rules used for future suggestions.
+   - Learned token preferences keep ranked replacement options. Same-context overrides decay stale
+     lower-confidence associations, while context-specific variants remain available for different
+     item-name lengths.
+   - Suggestion ranking reserves early slots for the top learned pattern and a later slot for a
+     second-ranked pattern when it produces a valid POS name.
    - Step 4 remains the largest measured operator-effort stage because the operator must compare
      full item-name shape to POS-name readability, choose which letters or spaces to keep, and fit
      recognizable names within the 15-character rule.
