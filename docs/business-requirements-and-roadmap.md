@@ -109,6 +109,9 @@ assignment is limited to category names the operator enters or loads through a v
      second-ranked pattern when it produces a valid POS name.
    - Export writes `POS Preference Profile.csv` so learned abbreviation rules, acronym patterns,
      examples, rank, counts, and spacing style can be reviewed before a future profile editor.
+   - Accepted final import CSVs can be used with an optional existing venue profile to infer a
+     proposed POS-name preference profile. This offline inference writes a proposal JSON plus audit
+     files and does not overwrite the active venue profile.
    - Step 4 remains the largest measured operator-effort stage because the operator must compare
      full item-name shape to POS-name readability, choose which letters or spaces to keep, and fit
      recognizable names within the 15-character rule.

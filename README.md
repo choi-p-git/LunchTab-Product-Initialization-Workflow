@@ -99,6 +99,7 @@ Each guided export folder contains:
 - `Core Catalogue.csv` - rows marked for the Core Catalogue reference output;
 - `Product Category Audit.csv` - row-level category assignment status;
 - `BaseProductPosName Audit.csv` - generated or overridden POS-name status;
+- `POS Preference Profile.csv` - learned POS-name preference rules from the session;
 - `Session Review Audit.csv` - row-level source, edit, deletion, category, and POS-name decisions;
 - `Deleted Product Audit.csv` - rows excluded from the final import by the operator;
 - `run-manifest.json` - source and artifact hashes, timestamps, and counts;
@@ -107,6 +108,17 @@ Each guided export folder contains:
 See `docs/operator-quick-start.md` for the current operator quick-start,
 `docs/product-import-sop.md` for the internal SOP, and
 `docs/business-requirements-and-roadmap.md` for the tracked roadmap summary.
+
+## POS Profile Inference
+
+To infer a reviewable venue profile proposal from an accepted final import CSV, run:
+
+```powershell
+uv run lt-pos-profile-infer "path\to\Lunchtab Product Import.csv" --profile "path\to\venue-profile.json"
+```
+
+The command writes a proposed profile JSON plus inference and profile audits. It does not overwrite
+the active venue profile.
 
 ## BaseProductPosName-only App
 

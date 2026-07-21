@@ -1758,6 +1758,12 @@ def _merge_pos_preferences(
     )
 
 
+def merge_pos_preferences(
+    left: PosNamePreferenceProfile, right: PosNamePreferenceProfile
+) -> PosNamePreferenceProfile:
+    return _merge_pos_preferences(left, right)
+
+
 def _merge_abbreviation_option(
     options: tuple[PosNameAbbreviationPreference, ...],
     incoming: PosNameAbbreviationPreference,
