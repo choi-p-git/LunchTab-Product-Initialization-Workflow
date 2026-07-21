@@ -782,7 +782,9 @@ def test_complete_tab_creates_pos_profile_proposal_from_export(
     monkeypatch.setattr(
         app,
         "_run_worker",
-        lambda event_name, operation: app.events.put((event_name, operation())),
+        lambda event_name, operation, *, error_event_name="error": app.events.put(
+            (event_name, operation())
+        ),
     )
     messages = []
     monkeypatch.setattr(
@@ -820,6 +822,70 @@ def test_complete_tab_creates_pos_profile_proposal_from_export(
         tmp_path / "profile-out" / "audit.csv",
         tmp_path / "profile-out",
     ]
+
+
+def test_complete_tab_disables_duplicate_profile_inference_while_running(
+    app,
+    monkeypatch,
+    tmp_path,
+) -> None:
+    export_result = _export_result(tmp_path)
+    app.controller = gui_module.AppController()
+    app.controller.export_succeeded(export_result)
+    app.profile_inference_result = None
+    app.profile_inference_running = False
+    app._render()
+
+    started = []
+
+    def hold_worker(event_name, operation, *, error_event_name="error"):
+        started.append((event_name, error_event_name))
+
+    monkeypatch.setattr(app, "_run_worker", hold_worker)
+
+    app._start_profile_inference_from_export()
+    app.root.update()
+
+    assert started == [("profile_inferred", "profile_inference_error")]
+    assert app.profile_inference_running is True
+    assert app.controller.state.message == "Creating POS profile proposal..."
+    assert str(app.infer_profile_button.cget("state")) == "disabled"
+
+
+def test_complete_tab_profile_inference_failure_preserves_completed_export(
+    app,
+    monkeypatch,
+    tmp_path,
+) -> None:
+    export_result = _export_result(tmp_path)
+    app.controller = gui_module.AppController()
+    app.controller.export_succeeded(export_result)
+    app.profile_inference_result = None
+    app.profile_inference_running = False
+    app._render()
+
+    def fail_worker(event_name, operation, *, error_event_name="error"):
+        app.events.put((error_event_name, RuntimeError("bad final CSV")))
+
+    monkeypatch.setattr(app, "_run_worker", fail_worker)
+    errors = []
+    monkeypatch.setattr(
+        gui_module.messagebox,
+        "showerror",
+        lambda title, message: errors.append((title, message)),
+    )
+
+    app._start_profile_inference_from_export()
+    app._poll_events()
+    app.root.update()
+
+    assert app.controller.state.phase == gui_module.AppPhase.COMPLETE
+    assert app.controller.state.result is export_result
+    assert app.profile_inference_running is False
+    assert app.profile_inference_result is None
+    assert app.controller.state.message == "POS profile proposal failed: bad final CSV"
+    assert str(app.infer_profile_button.cget("state")) == "normal"
+    assert errors == [(gui_module.APP_TITLE, "bad final CSV")]
 
 
 def test_pos_reason_filter_shows_rows_requiring_attention(app) -> None:

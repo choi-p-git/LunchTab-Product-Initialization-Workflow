@@ -888,12 +888,18 @@ class ProductInitializationApp:
         self._run_worker("exported", lambda: export_session(session, inputs))
         self._render()
 
-    def _run_worker(self, event_name: str, operation: Callable[[], object]) -> None:
+    def _run_worker(
+        self,
+        event_name: str,
+        operation: Callable[[], object],
+        *,
+        error_event_name: str = "error",
+    ) -> None:
         def work() -> None:
             try:
                 self.events.put((event_name, operation()))
             except Exception as error:
-                self.events.put(("error", error))
+                self.events.put((error_event_name, error))
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -916,6 +922,11 @@ class ProductInitializationApp:
                         APP_TITLE,
                         f"POS profile proposal written to {result.run_dir}",
                     )
+                elif name == "profile_inference_error":
+                    self.profile_inference_running = False
+                    message = friendly_error(payload)
+                    self.controller.set_message(f"POS profile proposal failed: {message}")
+                    messagebox.showerror(APP_TITLE, message)
                 else:
                     self.profile_inference_running = False
                     message = friendly_error(payload)
@@ -1744,6 +1755,7 @@ class ProductInitializationApp:
         profile_path = self._loaded_profile_path()
         output_root = result.run_dir / "POS Profile Inference"
         self.profile_inference_running = True
+        self.controller.set_message("Creating POS profile proposal...")
         self._render()
         self._run_worker(
             "profile_inferred",
@@ -1752,6 +1764,7 @@ class ProductInitializationApp:
                 existing_profile_path=profile_path,
                 output_root=output_root,
             ),
+            error_event_name="profile_inference_error",
         )
 
     def _loaded_profile_path(self) -> Path | None:
@@ -1796,7 +1809,9 @@ class ProductInitializationApp:
 
     def _render(self) -> None:
         state = self.controller.state
-        busy = state.phase in {AppPhase.PARSING, AppPhase.EXPORTING}
+        busy = (
+            state.phase in {AppPhase.PARSING, AppPhase.EXPORTING} or self.profile_inference_running
+        )
         if busy:
             self.progress.start(10)
         else:
