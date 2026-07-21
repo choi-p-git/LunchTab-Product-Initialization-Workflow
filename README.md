@@ -45,6 +45,18 @@ uv run lt-prod-init --smoke-test
 uv run lt-pos-name --smoke-test
 ```
 
+## Packaging
+
+Build the Windows proof-of-concept installer with:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File scripts\build-release.ps1 -Version 0.4.0
+```
+
+The script creates a PyInstaller `onedir` bundle under `dist\`, plus an Inno Setup installer,
+portable zip, and checksum file under `release\v0.4.0\`. Release binaries stay local and are
+ignored by Git.
+
 ## Operator Workflow
 
 1. Select the Lunchtab product template CSV.
@@ -106,7 +118,8 @@ Each guided export folder contains:
 - `run-summary.md` - human-readable build summary.
 
 See `docs/operator-quick-start.md` for the current operator quick-start,
-`docs/product-import-sop.md` for the internal SOP, and
+`docs/product-import-sop.md` for the internal SOP,
+`docs/operator-acceptance-checklist.md` for v0.4.0 package validation, and
 `docs/business-requirements-and-roadmap.md` for the tracked roadmap summary.
 
 ## POS Profile Inference

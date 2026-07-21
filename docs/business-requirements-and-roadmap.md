@@ -205,6 +205,8 @@ assignment is limited to category names the operator enters or loads through a v
    - Internal SOP first draft is available in `docs/product-import-sop.md`, including source
      export prerequisites, Lunchtab category setup, category/profile preparation, import
      execution, approval, upload, post-import checks, escalation, and output retention.
+   - Operator acceptance checklist is available in `docs/operator-acceptance-checklist.md` for
+     validating v0.4.0 installer, portable, workflow, output, timing, and sign-off readiness.
    - Review the SOP with an FSD or menu/pricing owner before treating it as final controlled
      procedure.
 
@@ -217,9 +219,13 @@ assignment is limited to category names the operator enters or loads through a v
      on explicit operator confirmation.
 
 5. **Packaging and Release Readiness**
-   - Build and smoke test a Windows desktop bundle.
-   - Confirm Tcl/Tk packaging, default output folder behavior, and artifact open actions.
-   - Add release notes once the operator workflow, quick-start, SOP, and BA review are accepted.
+   - v0.4.0 internal POC package has been built with PyInstaller and Inno Setup.
+   - Release outputs include a per-user installer, portable zip, checksum file, and release notes.
+   - Smoke verification covers source entry points, frozen executable, portable zip extract/run,
+     and silent installer install/run/uninstall.
+   - Operator acceptance checklist is available in `docs/operator-acceptance-checklist.md` for
+     manual installer, portable, workflow, output, and sign-off validation.
+   - Remaining release-readiness work is completing operator acceptance, not package creation.
 
 ## Interview Topics for SOP and BA Pass
 
