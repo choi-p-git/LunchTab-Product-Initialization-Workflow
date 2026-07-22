@@ -1051,6 +1051,53 @@ def test_pos_entry_return_replaces_valid_name_and_returns_break(app) -> None:
     assert app.pos_name.get() == ""
 
 
+def test_pos_profile_rules_dialog_updates_suggestions(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Chicken",
+                "5.25",
+                "111",
+                category="Salads",
+                status="pos_needs_review",
+                review_reason="missing POS name",
+            ),
+        ),
+    )
+    _set_pos_session(app, session)
+    app.current_pos_row_id = None
+    app.pos_reason_filter.set("Any")
+    app._render()
+    app.notebook.select(app.tabs["pos"])
+    app._select_pos_tree_row("row-1")
+    app._load_pos_row("row-1")
+    app.root.update()
+
+    app._open_pos_profile_rules_dialog()
+    app.root.update()
+    try:
+        app.pos_profile_token.set("Chicken")
+        app.pos_profile_replacement.set("Chick")
+        app.pos_profile_count.set("4")
+        app.pos_profile_context.set("1")
+        app.pos_profile_example.set("Chick")
+
+        app._save_pos_profile_rule()
+        app.root.update()
+
+        token_tree = app._tree_widget(app.pos_profile_token_tree)
+        suggestions = [child.cget("text") for child in app.suggestion_frame.winfo_children()]
+        profile = app.controller.state.session.pos_preferences
+
+        assert token_tree.get_children("")
+        assert profile.abbreviations["chicken"] == "Chick"
+        assert suggestions[0] == "Chick"
+    finally:
+        app.pos_profile_dialog.destroy()
+
+
 def test_final_review_edit_dialog_disables_save_for_invalid_edit(app) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),

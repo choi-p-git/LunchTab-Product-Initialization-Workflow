@@ -33,6 +33,8 @@ from lunchtab_product_init.session_workflow import (
     VenueProfile,
     assign_category,
     apply_venue_profile,
+    delete_pos_abbreviation_preference,
+    delete_pos_acronym_preference,
     delete_rows,
     export_session,
     duplicate_name_edit_rows,
@@ -49,12 +51,14 @@ from lunchtab_product_init.session_workflow import (
     parse_barcodes,
     parse_sources,
     prepare_edit_review,
+    promote_pos_abbreviation_preference,
     replace_pos_name,
     run_pos_generation,
     save_edit,
     save_final_review_edit,
     save_venue_profile,
     suggest_pos_names,
+    upsert_pos_abbreviation_preference,
     validate_edit_name_for_row,
     validate_final_review_edit,
     validate_pos_name_for_row,
@@ -526,13 +530,19 @@ class ProductInitializationApp:
             command=lambda: self._replace_pos(advance=True),
         )
         self.replace_pos_button.grid(row=2, column=0, sticky="ew", pady=(8, 0))
-        ttk.Label(editor, text="Suggestions").grid(row=3, column=0, sticky="w", pady=(14, 4))
+        self.profile_rules_button = ttk.Button(
+            editor,
+            text="Profile rules...",
+            command=self._open_pos_profile_rules_dialog,
+        )
+        self.profile_rules_button.grid(row=3, column=0, sticky="ew", pady=(8, 0))
+        ttk.Label(editor, text="Suggestions").grid(row=4, column=0, sticky="w", pady=(14, 4))
         self.suggestion_frame = ttk.Frame(editor)
-        self.suggestion_frame.grid(row=4, column=0, sticky="ew")
+        self.suggestion_frame.grid(row=5, column=0, sticky="ew")
         self.to_final_button = ttk.Button(
             editor, text="Next: Final review", command=self._go_to_final
         )
-        self.to_final_button.grid(row=5, column=0, sticky="ew", pady=(20, 0))
+        self.to_final_button.grid(row=6, column=0, sticky="ew", pady=(20, 0))
 
     def _build_final_tab(self) -> None:
         parent = self.tabs["final"]
@@ -1725,6 +1735,255 @@ class ProductInitializationApp:
         self._select_pos_tree_row(next_row_id)
         self._load_pos_row(next_row_id)
 
+    def _open_pos_profile_rules_dialog(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        existing = getattr(self, "pos_profile_dialog", None)
+        if existing is not None and existing.winfo_exists():
+            existing.lift()
+            return
+        dialog = tk.Toplevel(self.root)
+        self.pos_profile_dialog = dialog
+        dialog.title("POS Profile Rules")
+        dialog.transient(self.root)
+        dialog.geometry("900x560")
+        dialog.columnconfigure(0, weight=1)
+        dialog.rowconfigure(0, weight=1)
+        content = ttk.Frame(dialog, padding=12)
+        content.grid(row=0, column=0, sticky="nsew")
+        content.columnconfigure(0, weight=3)
+        content.columnconfigure(1, weight=2)
+        content.rowconfigure(0, weight=1)
+
+        token_panel = ttk.LabelFrame(content, text="Token replacement rules", padding=10)
+        token_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        token_panel.columnconfigure(0, weight=1)
+        token_panel.rowconfigure(0, weight=1)
+        self.pos_profile_token_tree = self._tree(
+            token_panel,
+            ("token", "replacement", "rank", "count", "contexts", "examples"),
+            ("Token", "Replacement", "Rank", "Count", "Source Words", "Examples"),
+        )
+        self.pos_profile_token_tree.grid(row=0, column=0, sticky="nsew")
+        token_tree = self._tree_widget(self.pos_profile_token_tree)
+        token_tree.bind("<<TreeviewSelect>>", lambda _event: self._load_selected_pos_profile_rule())
+
+        form = ttk.Frame(token_panel)
+        form.grid(row=1, column=0, sticky="ew", pady=(10, 0))
+        form.columnconfigure(1, weight=1)
+        self.pos_profile_token = tk.StringVar()
+        self.pos_profile_replacement = tk.StringVar()
+        self.pos_profile_count = tk.StringVar(value="1")
+        self.pos_profile_context = tk.StringVar()
+        self.pos_profile_example = tk.StringVar()
+        ttk.Label(form, text="Token").grid(row=0, column=0, sticky="w", pady=2)
+        ttk.Entry(form, textvariable=self.pos_profile_token).grid(
+            row=0, column=1, sticky="ew", pady=2
+        )
+        ttk.Label(form, text="Replacement").grid(row=1, column=0, sticky="w", pady=2)
+        ttk.Entry(form, textvariable=self.pos_profile_replacement).grid(
+            row=1, column=1, sticky="ew", pady=2
+        )
+        ttk.Label(form, text="Count").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Entry(form, textvariable=self.pos_profile_count, width=10).grid(
+            row=2, column=1, sticky="w", pady=2
+        )
+        ttk.Label(form, text="Source words").grid(row=3, column=0, sticky="w", pady=2)
+        ttk.Entry(form, textvariable=self.pos_profile_context, width=10).grid(
+            row=3, column=1, sticky="w", pady=2
+        )
+        ttk.Label(form, text="Example").grid(row=4, column=0, sticky="w", pady=2)
+        ttk.Entry(form, textvariable=self.pos_profile_example).grid(
+            row=4, column=1, sticky="ew", pady=2
+        )
+        token_actions = ttk.Frame(token_panel)
+        token_actions.grid(row=2, column=0, sticky="ew", pady=(10, 0))
+        for index in range(4):
+            token_actions.columnconfigure(index, weight=1)
+        ttk.Button(token_actions, text="Save rule", command=self._save_pos_profile_rule).grid(
+            row=0, column=0, sticky="ew", padx=(0, 6)
+        )
+        ttk.Button(token_actions, text="Promote", command=self._promote_pos_profile_rule).grid(
+            row=0, column=1, sticky="ew", padx=6
+        )
+        ttk.Button(token_actions, text="Delete rule", command=self._delete_pos_profile_rule).grid(
+            row=0, column=2, sticky="ew", padx=6
+        )
+        ttk.Button(token_actions, text="Reset token", command=self._reset_pos_profile_token).grid(
+            row=0, column=3, sticky="ew", padx=(6, 0)
+        )
+
+        pattern_panel = ttk.LabelFrame(content, text="Acronym patterns", padding=10)
+        pattern_panel.grid(row=0, column=1, sticky="nsew")
+        pattern_panel.columnconfigure(0, weight=1)
+        pattern_panel.rowconfigure(0, weight=1)
+        self.pos_profile_acronym_tree = self._tree(
+            pattern_panel,
+            ("span", "suffix", "count", "examples"),
+            ("Span", "Following Tokens", "Count", "Examples"),
+        )
+        self.pos_profile_acronym_tree.grid(row=0, column=0, sticky="nsew")
+        ttk.Button(
+            pattern_panel,
+            text="Delete acronym pattern",
+            command=self._delete_pos_profile_acronym,
+        ).grid(row=1, column=0, sticky="ew", pady=(10, 0))
+
+        footer = ttk.Frame(content)
+        footer.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(12, 0))
+        footer.columnconfigure(0, weight=1)
+        ttk.Label(
+            footer,
+            text=(
+                "Edits update in-session suggestions only. Save the venue profile to keep them "
+                "for future imports."
+            ),
+        ).grid(row=0, column=0, sticky="w")
+        ttk.Button(footer, text="Close", command=dialog.destroy).grid(row=0, column=1, sticky="e")
+        self._populate_pos_profile_rules()
+        dialog.focus_set()
+
+    def _populate_pos_profile_rules(self) -> None:
+        session = self.controller.state.session
+        if session is None or not hasattr(self, "pos_profile_token_tree"):
+            return
+        token_tree = self._tree_widget(self.pos_profile_token_tree)
+        self._clear(token_tree)
+        for token, options in sorted(session.pos_preferences.abbreviation_options.items()):
+            for rank, option in enumerate(options, start=1):
+                token_tree.insert(
+                    "",
+                    "end",
+                    values=(
+                        token,
+                        option.value,
+                        str(rank),
+                        str(option.count),
+                        ", ".join(str(value) for value in option.source_token_counts),
+                        "; ".join(option.examples),
+                    ),
+                )
+        acronym_tree = self._tree_widget(self.pos_profile_acronym_tree)
+        self._clear(acronym_tree)
+        for pattern in session.pos_preferences.acronym_patterns:
+            acronym_tree.insert(
+                "",
+                "end",
+                values=(
+                    str(pattern.span_length),
+                    ", ".join(pattern.suffix_tokens),
+                    str(pattern.count),
+                    "; ".join(pattern.examples),
+                ),
+            )
+
+    def _load_selected_pos_profile_rule(self) -> None:
+        tree = self._tree_widget(self.pos_profile_token_tree)
+        selected = tree.selection()
+        if not selected:
+            return
+        token, replacement, _rank, count, contexts, examples = tree.item(selected[0], "values")
+        self.pos_profile_token.set(str(token))
+        self.pos_profile_replacement.set(str(replacement))
+        self.pos_profile_count.set(str(count))
+        self.pos_profile_context.set(str(contexts).split(",")[0].strip())
+        self.pos_profile_example.set(str(examples).split(";")[0].strip())
+
+    def _save_pos_profile_rule(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        try:
+            count = int(self.pos_profile_count.get() or "1")
+            context_text = self.pos_profile_context.get().strip()
+            context = int(context_text) if context_text else None
+            updated = upsert_pos_abbreviation_preference(
+                session,
+                token=self.pos_profile_token.get(),
+                value=self.pos_profile_replacement.get(),
+                count=count,
+                source_token_count=context,
+                example=self.pos_profile_example.get(),
+            )
+        except Exception as error:
+            messagebox.showerror(APP_TITLE, friendly_error(error))
+            return
+        self._apply_pos_profile_update(updated)
+
+    def _promote_pos_profile_rule(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        token, replacement = self._selected_pos_profile_token_rule()
+        if token is None or replacement is None:
+            return
+        self._apply_pos_profile_update(
+            promote_pos_abbreviation_preference(session, token=token, value=replacement)
+        )
+
+    def _delete_pos_profile_rule(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        token, replacement = self._selected_pos_profile_token_rule()
+        if token is None or replacement is None:
+            return
+        self._apply_pos_profile_update(
+            delete_pos_abbreviation_preference(session, token=token, value=replacement)
+        )
+
+    def _reset_pos_profile_token(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        token = self.pos_profile_token.get().strip()
+        if not token:
+            token, _replacement = self._selected_pos_profile_token_rule()
+        if not token:
+            return
+        self._apply_pos_profile_update(delete_pos_abbreviation_preference(session, token=token))
+
+    def _delete_pos_profile_acronym(self) -> None:
+        session = self.controller.state.session
+        if session is None:
+            return
+        tree = self._tree_widget(self.pos_profile_acronym_tree)
+        selected = tree.selection()
+        if not selected:
+            return
+        span, suffix, _count, _examples = tree.item(selected[0], "values")
+        try:
+            span_length = int(span)
+        except ValueError:
+            return
+        suffix_tokens = tuple(token.strip() for token in str(suffix).split(",") if token.strip())
+        self._apply_pos_profile_update(
+            delete_pos_acronym_preference(
+                session,
+                suffix_tokens=suffix_tokens,
+                span_length=span_length,
+            )
+        )
+
+    def _selected_pos_profile_token_rule(self) -> tuple[str | None, str | None]:
+        tree = self._tree_widget(self.pos_profile_token_tree)
+        selected = tree.selection()
+        if not selected:
+            return None, None
+        token, replacement, *_rest = tree.item(selected[0], "values")
+        return str(token), str(replacement)
+
+    def _apply_pos_profile_update(self, session: ImportSession) -> None:
+        self.controller.set_session(
+            session,
+            phase=AppPhase.POS_REVIEW,
+            message="POS profile rules updated.",
+        )
+        self._populate_pos_profile_rules()
+        self._refresh_suggestions()
+        self._update_pos_action_state()
+
     def _go_to_final(self) -> None:
         self.controller.go_to_final_review()
         self._render()
@@ -1836,6 +2095,10 @@ class ProductInitializationApp:
         self.open_profile_inference_audit_button.configure(state=profile_result_state)
         self.open_profile_inference_folder_button.configure(state=profile_result_state)
         self._update_pos_action_state()
+        if hasattr(self, "profile_rules_button"):
+            self.profile_rules_button.configure(
+                state="normal" if state.session is not None else "disabled"
+            )
         self._update_undo_buttons()
         self._sync_notebook_tab_states()
         if state.phase == AppPhase.CATEGORIZING:

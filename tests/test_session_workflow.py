@@ -13,6 +13,8 @@ from lunchtab_product_init.session_workflow import (
     SessionRow,
     apply_venue_profile,
     assign_category,
+    delete_pos_abbreviation_preference,
+    delete_pos_acronym_preference,
     delete_rows,
     duplicate_name_edit_rows,
     export_session,
@@ -32,11 +34,13 @@ from lunchtab_product_init.session_workflow import (
     parse_barcodes,
     parse_sources,
     replace_pos_name,
+    promote_pos_abbreviation_preference,
     run_pos_generation,
     save_edit,
     save_final_review_edit,
     save_venue_profile,
     suggest_pos_names,
+    upsert_pos_abbreviation_preference,
     validate_edit_name_for_row,
     validate_final_review_edit,
     validate_pos_name_for_row,
@@ -848,6 +852,57 @@ def test_pos_suggestions_reserve_third_slot_for_second_ranked_pattern() -> None:
     suggestions = suggest_pos_names(session, "row-1")
 
     assert suggestions[:3] == ("Chick Cae Sal", "ChickCaeSal", "Chk Cae Sal")
+
+
+def test_pos_preference_profile_rules_can_be_edited_and_redirected() -> None:
+    session = _session(
+        [_row("row-1", "Chicken", "5.25", "ABC", category="Salads")],
+        categories=("Salads",),
+    )
+    session = run_pos_generation(session)
+
+    session = upsert_pos_abbreviation_preference(
+        session,
+        token="Chicken",
+        value="Chx",
+        count=3,
+        source_token_count=3,
+        example="Chx Cae Sal",
+    )
+    assert session.pos_preferences.abbreviations["chicken"] == "Chx"
+    assert suggest_pos_names(session, "row-1")[0] == "Chx"
+
+    session = upsert_pos_abbreviation_preference(session, token="Chicken", value="Chick", count=1)
+    session = promote_pos_abbreviation_preference(session, token="chicken", value="Chick")
+    assert session.pos_preferences.abbreviations["chicken"] == "Chick"
+    assert suggest_pos_names(session, "row-1")[0] == "Chick"
+
+    session = delete_pos_abbreviation_preference(session, token="chicken", value="Chick")
+    assert session.pos_preferences.abbreviations["chicken"] == "Chx"
+
+    session = delete_pos_abbreviation_preference(session, token="chicken")
+    assert "chicken" not in session.pos_preferences.abbreviation_options
+    assert "chicken" not in session.pos_preferences.abbreviations
+
+
+def test_pos_profile_acronym_patterns_can_be_removed() -> None:
+    session = _session(
+        [_row("row-1", "Bacon Egg and Cheese Bagel", "5.25", "ABC", category="Breakfast")],
+        categories=("Breakfast",),
+    )
+    session = run_pos_generation(session)
+    session = replace_pos_name(session, "row-1", "BEC Bagel")
+
+    assert session.pos_preferences.acronym_patterns
+
+    pattern = session.pos_preferences.acronym_patterns[0]
+    session = delete_pos_acronym_preference(
+        session,
+        suffix_tokens=pattern.suffix_tokens,
+        span_length=pattern.span_length,
+    )
+
+    assert session.pos_preferences.acronym_patterns == ()
 
 
 def test_pos_suggestions_condense_long_names_to_valid_candidates() -> None:

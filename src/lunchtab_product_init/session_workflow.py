@@ -854,6 +854,153 @@ def suggest_pos_names(session: ImportSession, row_id: str) -> tuple[str, ...]:
     return tuple(suggestions[:3])
 
 
+def upsert_pos_abbreviation_preference(
+    session: ImportSession,
+    *,
+    token: str,
+    value: str,
+    count: int = 1,
+    source_token_count: int | None = None,
+    example: str = "",
+) -> ImportSession:
+    cleaned_token = normalize_text(token)
+    cleaned_value = _clean_text(value)
+    if not cleaned_token:
+        raise ValueError("Token is required.")
+    if not cleaned_value:
+        raise ValueError("Replacement is required.")
+    count = max(1, int(count))
+    source_counts = (source_token_count,) if source_token_count and source_token_count > 0 else ()
+    examples = (_clean_text(example),) if _clean_text(example) else ()
+    options = {
+        existing_token: tuple(existing_options)
+        for existing_token, existing_options in session.pos_preferences.abbreviation_options.items()
+    }
+    updated_options = []
+    matched = False
+    for option in options.get(cleaned_token, ()):
+        if option.value.casefold() != cleaned_value.casefold():
+            updated_options.append(option)
+            continue
+        matched = True
+        updated_options.append(
+            replace(
+                option,
+                value=cleaned_value,
+                count=count,
+                source_token_counts=source_counts,
+                examples=examples or option.examples,
+            )
+        )
+    if not matched:
+        updated_options.append(
+            PosNameAbbreviationPreference(
+                value=cleaned_value,
+                count=count,
+                source_token_counts=source_counts,
+                examples=examples,
+            )
+        )
+    options[cleaned_token] = tuple(
+        sorted(updated_options, key=lambda option: (-option.count, option.value.casefold()))
+    )
+    abbreviations = dict(session.pos_preferences.abbreviations)
+    abbreviations[cleaned_token] = options[cleaned_token][0].value
+    return replace(
+        session,
+        pos_preferences=replace(
+            session.pos_preferences,
+            abbreviations=abbreviations,
+            abbreviation_options=options,
+        ),
+    )
+
+
+def promote_pos_abbreviation_preference(
+    session: ImportSession, *, token: str, value: str
+) -> ImportSession:
+    cleaned_token = normalize_text(token)
+    cleaned_value = _clean_text(value)
+    options = list(session.pos_preferences.abbreviation_options.get(cleaned_token, ()))
+    if not cleaned_token or not cleaned_value or not options:
+        return session
+    highest = max(option.count for option in options)
+    updated = []
+    for option in options:
+        if option.value.casefold() == cleaned_value.casefold():
+            updated.append(replace(option, count=highest + 1))
+        else:
+            updated.append(option)
+    sorted_options = tuple(
+        sorted(updated, key=lambda option: (-option.count, option.value.casefold()))
+    )
+    option_map = dict(session.pos_preferences.abbreviation_options)
+    option_map[cleaned_token] = sorted_options
+    abbreviations = dict(session.pos_preferences.abbreviations)
+    abbreviations[cleaned_token] = sorted_options[0].value
+    return replace(
+        session,
+        pos_preferences=replace(
+            session.pos_preferences,
+            abbreviations=abbreviations,
+            abbreviation_options=option_map,
+        ),
+    )
+
+
+def delete_pos_abbreviation_preference(
+    session: ImportSession, *, token: str, value: str | None = None
+) -> ImportSession:
+    cleaned_token = normalize_text(token)
+    if not cleaned_token:
+        return session
+    option_map = dict(session.pos_preferences.abbreviation_options)
+    abbreviations = dict(session.pos_preferences.abbreviations)
+    if value is None:
+        option_map.pop(cleaned_token, None)
+        abbreviations.pop(cleaned_token, None)
+    else:
+        cleaned_value = _clean_text(value)
+        kept = tuple(
+            option
+            for option in option_map.get(cleaned_token, ())
+            if option.value.casefold() != cleaned_value.casefold()
+        )
+        if kept:
+            option_map[cleaned_token] = kept
+            abbreviations[cleaned_token] = kept[0].value
+        else:
+            option_map.pop(cleaned_token, None)
+            abbreviations.pop(cleaned_token, None)
+    return replace(
+        session,
+        pos_preferences=replace(
+            session.pos_preferences,
+            abbreviations=abbreviations,
+            abbreviation_options=option_map,
+        ),
+    )
+
+
+def delete_pos_acronym_preference(
+    session: ImportSession, *, suffix_tokens: tuple[str, ...], span_length: int
+) -> ImportSession:
+    cleaned_suffix = tuple(
+        cleaned for token in suffix_tokens if (cleaned := normalize_text(token).replace(" ", ""))
+    )
+    if not cleaned_suffix or span_length < 2:
+        return session
+    patterns = tuple(
+        pattern
+        for pattern in session.pos_preferences.acronym_patterns
+        if pattern.suffix_tokens != cleaned_suffix or pattern.span_length != span_length
+    )
+    return replace(
+        session,
+        pos_preferences=replace(session.pos_preferences, acronym_patterns=patterns),
+    )
+
+
 def filter_pos_rows(session: ImportSession, reason_filter: str = "") -> tuple[SessionRow, ...]:
     normalized = normalize_text(reason_filter)
     if normalized in {"", "any"}:

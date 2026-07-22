@@ -109,6 +109,9 @@ assignment is limited to category names the operator enters or loads through a v
      second-ranked pattern when it produces a valid POS name.
    - Export writes `POS Preference Profile.csv` so learned abbreviation rules, acronym patterns,
      examples, rank, counts, and spacing style can be reviewed before a future profile editor.
+   - Step 4 includes an in-session POS profile rules dialog so operators can inspect learned token
+     replacement rules and acronym patterns, promote or delete learned rules, and redirect token
+     replacements without changing already overridden rows.
    - Accepted final import CSVs can be used with an optional existing venue profile to infer a
      proposed POS-name preference profile. This offline inference writes a proposal JSON plus audit
      files, flags competing token rules for review, and does not overwrite the active venue profile.
@@ -190,6 +193,8 @@ assignment is limited to category names the operator enters or loads through a v
      with widget coverage confirming primary controls remain visible at 1366x768.
    - Reduce unnecessary clicks in high-volume work paths: category assignment, edit review,
      no-barcode deletion, row merge, and POS-name override.
+   - Step 4 now includes a POS profile rules dialog for observing learned token/acronym behavior
+     and steering replacement rules during the active session.
    - Export Complete now provides a one-click POS profile proposal workflow and direct open buttons
      for the proposal, inference audit, and proposal folder.
    - Final-review metadata and edit actions are split into a wrapped summary row and a
@@ -207,11 +212,11 @@ assignment is limited to category names the operator enters or loads through a v
      execution, approval, upload, post-import checks, escalation, and output retention.
    - Operator acceptance checklist is available in `docs/operator-acceptance-checklist.md` for
      validating v0.4.0 installer, portable, workflow, output, timing, and sign-off readiness.
-   - Review the SOP with an FSD or menu/pricing owner before treating it as final controlled
-     procedure.
+   - Operator acceptance and SOP validation are on hold while the current tester is also the sole
+     operator; resume when a second FSD or menu/pricing owner is available for review.
 
 4. **Business Analysis Package**
-   - After the SOP interview, run a full BA analysis package in the private untracked
+   - After SOP validation resumes, run a full BA analysis package in the private untracked
      `business analysis/` folder.
    - Capture current-state workflow, future-state workflow, actors, systems, business rules,
      exception paths, time trial estimates, risks, requirements, assumptions, and decision log.
@@ -225,7 +230,8 @@ assignment is limited to category names the operator enters or loads through a v
      and silent installer install/run/uninstall.
    - Operator acceptance checklist is available in `docs/operator-acceptance-checklist.md` for
      manual installer, portable, workflow, output, and sign-off validation.
-   - Remaining release-readiness work is completing operator acceptance, not package creation.
+   - Remaining release-readiness work is completing operator acceptance when manual validation
+     resumes, not package creation.
 
 ## Interview Topics for SOP and BA Pass
 
