@@ -1,0 +1,1153 @@
+RowId,Source,SourceKey,ItemName,Price,Barcode,OldCategory,Category,BaseProductPosName,Status,Edited,DeletedReason,MergeTargetRowId,MergeTransferredBarcodes,MergeTargetBarcodeBefore,MergeTargetBarcodeAfter,MergeActionTimestamp,ReviewReason
+row-1,recipe+odin,debug-source-00001,Assorted Cold Cereals,1.75,DBG00000001,Breakfast,Breakfast,AsstColdCereals,pos_ready,false,,,,,,,
+row-2,recipe,debug-source-00002,Assorted Drinks,,DBG00000002,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-3,recipe+odin,debug-source-00003,Assorted Fresh Whole Fruit,1.25,DBG00000003,Transit,Transit Non-Entree,AsstFrshWhlFrt,pos_ready,false,,,,,,,
+row-4,recipe+odin,debug-source-00004,Assorted Fresh-Cut Fruit,2.75,DBG00000004,Transit,Transit Non-Entree,AsstFreshCutFrt,pos_ready,false,,,,,,,
+row-5,recipe+odin,debug-source-00005,Assorted Powerade Zero™,3.00,DBG00000005,Beverages,,,deleted,false,operator deleted,,,,,,
+row-6,recipe+odin,debug-source-00006,Assorted Powerade®,3.00,DBG00000006,Beverages,Vendor Beverages,Asst Powerade,pos_ready,false,,,,,,,
+row-7,recipe,debug-source-00007,Assorted Yogurt,2.10,DBG00000007,,,,deleted,false,operator deleted,,,,,,
+row-8,recipe+odin,debug-source-00008,Bacon,2.25,DBG00000008,Breakfast,Breakfast,Bcn,pos_ready,false,,,,,,,
+row-9,recipe+odin,debug-source-00009,Bacon Cheeseburgers,4.75,"DBG00000009,DBG00000298",Entrees,Plated Entree,BcnChsbrg,pos_ready,true,,,,,,,
+row-10,recipe+odin,debug-source-00010,Bacon Corn Chowder,2.99,DBG00000010,Soups and Ladles,Soups,BcnCornChowder,pos_ready,false,,,,,,,
+row-11,recipe+odin,debug-source-00011,Bacon Turkey Ranch Wrap,3.25,DBG00000011,Sandwiches,Transit Entree,BcnTrkyRnchWrap,pos_ready,false,,,,,,,
+row-12,recipe+odin,debug-source-00012,"Bacon, Egg, and Cheese Bagel",3.75,DBG00000012,Breakfast,Breakfast,Bcn EC Bagel,pos_ready,false,,,,,,,
+row-13,recipe+odin,debug-source-00013,BBQ Chicken Tender and Cheddar Wrap,3.25,DBG00000013,Sandwiches,Transit Entree,BbqChkTndrChddr,pos_ready,false,,,,,,,
+row-14,recipe+odin,debug-source-00014,Biscuits,1.50,DBG00000014,Breakfast,Breakfast,Biscuits,pos_ready,false,,,,,,,
+row-15,recipe+odin,debug-source-00015,BLT Wrap,3.25,DBG00000015,Sandwiches,Transit Entree,Blt Wrap,pos_ready,false,,,,,,,
+row-16,recipe+odin,debug-source-00016,Blueberry Muffins,3.00,DBG00000016,Breakfast,Breakfast,BlbrryMffns,pos_ready,false,,,,,,,
+row-17,recipe,debug-source-00017,Blueberry Scones,2.50,DBG00000017,,Breakfast,BlueberryScones,pos_ready,false,,,,,,,
+row-18,recipe+odin,debug-source-00018,Breadsticks,0.95,DBG00000018,Bread,Bread,Breadsticks,pos_ready,false,,,,,,,
+row-19,recipe+odin,debug-source-00019,Breakfast Sausage Patties,2.00,DBG00000019,Breakfast,Breakfast,Bfast Ssg Pty,pos_ready,false,,,,,,,
+row-20,recipe+odin,debug-source-00020,Broccoli-Cheddar Soup,2.99,"DBG00000020,DBG00000407",Soups and Ladles,Rice Bowls,Broc Chd Soup,pos_ready,true,,,,,,,
+row-21,recipe+odin,debug-source-00021,Buffalo Ranch Chicken Wrap,3.25,DBG00000021,Sandwiches,Transit Entree,BffRnch ChkWrap,pos_ready,false,,,,,,,
+row-22,recipe+odin,debug-source-00022,Cajun Cheeseburgers,4.75,DBG00000022,Entrees,Plated Entree,Cjn Chs brg,pos_ready,false,,,,,,,
+row-23,recipe+odin,debug-source-00023,Cajun Chicken and Sausage Gumbo,2.99,DBG00000023,Soups and Ladles,Soups,Gumbo,pos_ready,false,,,,,,,
+row-24,recipe+odin,debug-source-00024,Cajun Chicken Fettuccine Alfredo,5.05,DBG00000024,Entrees,Plated Entree,Cjn Chk Ftt Al,pos_ready,false,,,,,,,
+row-25,recipe+odin,debug-source-00025,Cajun Fries,2.70,DBG00000025,Salads and Sides,Plated Sides,Cajun Fries,pos_ready,false,,,,,,,
+row-26,recipe,debug-source-00026,Cajun Pulled Pork Sandwich,4.75,DBG00000026,,Plated Entree,Cjn PldPork Snd,pos_ready,false,,,,,,,
+row-27,recipe+odin,debug-source-00027,Cajun-Roasted Cabbage,2.70,DBG00000027,Salads and Sides,Plated Sides,CajunRoCabbage,pos_ready,false,,,,,,,
+row-28,recipe+odin,debug-source-00028,Caprese Pesto Sandwich,4.50,DBG00000028,Sandwiches,Transit Entree,CprsPstSand,pos_ready,false,,,,,,,
+row-29,recipe,debug-source-00029,Cheddar Cheese,,DBG00000029,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-30,recipe+odin,debug-source-00030,Cheese and Broccoli Quinoa,5.05,DBG00000030,Entrees,Plated Entree,Chz Broc Quinoa,pos_ready,false,,,,,,,
+row-31,recipe+odin,debug-source-00031,Cheese Grits,2.15,DBG00000031,Breakfast,Breakfast,Chz Grits,pos_ready,false,,,,,,,
+row-32,recipe+odin,debug-source-00032,Cheese Pizza,3.00,"DBG00000032,DBG00000324",Entrees,Plated Entree,Chz Pzza,pos_ready,true,,,,,,,
+row-33,recipe+odin,debug-source-00033,Cheese Quesadillas,4.00,DBG00000033,Entrees,,,deleted,false,operator deleted,,,,,,
+row-34,recipe+odin,debug-source-00034,Cheeseburgers,4.75,DBG00000034,Entrees,Plated Entree,Cheeseburgers,pos_ready,false,,,,,,,
+row-35,recipe+odin,debug-source-00035,Chicken and Rice Soup,2.99,DBG00000035,Soups and Ladles,Soups,Chick Rice Soup,pos_ready,false,,,,,,,
+row-36,recipe+odin,debug-source-00036,Chicken and Sausage Jambalaya,5.05,DBG00000036,Entrees,Plated Entree,Jambalaya,pos_ready,false,,,,,,,
+row-37,recipe,debug-source-00037,Chicken and Waffle Sandwich with Sriracha Honey,4.75,DBG00000037,,Plated Entree,ChkWfflSandSrrc,pos_ready,false,,,,,,,
+row-38,recipe+odin,debug-source-00038,Chicken Bites,4.75,DBG00000038,Entrees,Plated Entree,Chick Bites,pos_ready,false,,,,,,,
+row-39,recipe+odin,debug-source-00039,Chicken Caesar Wrap,3.25,DBG00000039,Sandwiches,Transit Entree,Chk Caesar Wrap,pos_ready,false,,,,,,,
+row-40,recipe+odin,debug-source-00040,Chicken Nuggets,4.75,DBG00000040,Entrees,Plated Entree,Chick Nuggets,pos_ready,false,,,,,,,
+row-41,recipe+odin,debug-source-00041,Chicken Parm,5.05,DBG00000041,Entrees,Plated Entree,Chick Parm,pos_ready,false,,,,,,,
+row-42,recipe+odin,debug-source-00042,Chicken Salad Bento Box,5.75,DBG00000042,Entrees,Plated Entree,ChkSldBntBox,pos_ready,false,,,,,,,
+row-43,recipe+odin,debug-source-00043,Chicken Salad on Brioche,4.50,DBG00000043,Sandwiches,Transit Entree,Chk Sld Brch,pos_ready,false,,,,,,,
+row-44,recipe+odin,debug-source-00044,Chicken Salad Sandwich,4.50,DBG00000044,Sandwiches,Transit Entree,Chk Salad Sand,pos_ready,false,,,,,,,
+row-45,recipe,debug-source-00045,Chicken Salad Wrap,3.25,DBG00000045,,Transit Entree,Chk Salad Wrap,pos_ready,false,,,,,,,
+row-46,recipe+odin,debug-source-00046,Chicken Tender and Ranch Wrap,3.25,DBG00000046,Sandwiches,Transit Entree,ChkTndrRnchWrap,pos_ready,false,,,,,,,
+row-47,recipe+odin,debug-source-00047,Chicken Tender Caesar Wrap,3.25,DBG00000047,Sandwiches,Transit Entree,Chk Cae Wrap,pos_ready,false,,,,,,,
+row-48,recipe+odin,debug-source-00048,Chicken Tenders,4.75,DBG00000048,Entrees,Plated Entree,Chick Tenders,pos_ready,false,,,,,,,
+row-49,recipe+odin,debug-source-00049,"Chicken, Bacon, and Ranch Pizza",4.75,DBG00000049,Entrees,Plated Entree,ChkBcnRanchPzza,pos_ready,false,,,,,,,
+row-50,recipe,debug-source-00050,Chipotle Barbecue Sauce,,DBG00000050,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-51,recipe+odin,debug-source-00051,Chocolate Chip Cookie Pudding Parfait,3.75,DBG00000051,Transit,Transit Non-Entree,Choc Cook Pud,pos_ready,false,,,,,,,
+row-52,recipe+odin,debug-source-00052,Chocolate Chip Cookies,2.10,DBG00000052,Desserts/Snacks,Trayed Desserts,ChocChipCookies,pos_ready,false,,,,,,,
+row-53,recipe+odin,debug-source-00053,Cinnamon Rolls,2.75,DBG00000053,Breakfast,Breakfast,Cin Rolls,pos_ready,false,,,,,,,
+row-54,recipe,debug-source-00054,Cornbread Croutons,,DBG00000054,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-55,recipe+odin,debug-source-00055,Cream of Tomato Soup,2.99,DBG00000055,Soups and Ladles,Soups,Cream Tom Soup,pos_ready,false,,,,,,,
+row-56,recipe,debug-source-00056,Cuisine from Cuba,,DBG00000056,,,,deleted,false,operator deleted,,,,,,duplicate barcode; missing category; missing or invalid price
+row-57,recipe,debug-source-00057,Cuisine From the Middle East,,DBG00000056,,,,deleted,false,operator deleted,,,,,,duplicate barcode; missing category; missing or invalid price
+row-58,recipe+odin,debug-source-00058,Curly Fries,2.70,DBG00000057,Salads and Sides,Plated Sides,Curly Fries,pos_ready,false,,,,,,,
+row-59,recipe+odin,debug-source-00059,Dinner Rolls,0.95,DBG00000058,Bread,Bread,Dinner Rolls,pos_ready,false,,,,,,,
+row-60,recipe+odin,debug-source-00060,Double Chocolate Muffins,3.00,DBG00000059,Breakfast,Breakfast,Choc Muff,pos_ready,false,,,,,,,
+row-61,recipe,debug-source-00061,Egg Drop Soup,2.99,DBG00000060,,Soups,Egg Drop Soup,pos_ready,false,,,,,,,
+row-62,recipe+odin,debug-source-00062,Eggplant Parmesan,5.05,DBG00000061,Entrees,Plated Entree,EggplnPrmsn,pos_ready,false,,,,,,,
+row-63,recipe+odin,debug-source-00063,French Fries,2.70,DBG00000062,Salads and Sides,Plated Sides,French Fries,pos_ready,false,,,,,,,
+row-64,recipe+odin,debug-source-00064,Fresh-Brewed Coffee,1.50,DBG00000063,Beverages,House-made Beverages,Hot Coffee,pos_ready,false,,,,,,,
+row-65,recipe+odin,debug-source-00065,Fried Chicken Sandwich,4.75,DBG00000064,Entrees,Plated Entree,Fried Chk Sand,pos_ready,false,,,,,,,
+row-66,recipe+odin,debug-source-00066,Fried French Toast Sticks,2.75,DBG00000065,Breakfast,Breakfast,FT Sticks,pos_ready,false,,,,,,,
+row-67,recipe+odin,debug-source-00067,Fruit and Vanilla Yogurt Parfait,3.75,DBG00000066,Transit,Transit Non-Entree,Van Yog Parf,pos_ready,false,,,,,,,
+row-68,recipe+odin,debug-source-00068,Garden Salad,4.75,DBG00000067,Entrees,Transit Entree,Garden Salad,pos_ready,false,,,,,,,
+row-69,recipe+odin,debug-source-00069,Garlic Butter Breadsticks,0.95,DBG00000068,Bread,Bread,GrlcBttrBrdstc,pos_ready,false,,,,,,,
+row-70,recipe+odin,debug-source-00070,Grilled Cheese on Texas Toast,4.75,DBG00000069,Entrees,Plated Entree,GrldChz Txt,pos_ready,false,,,,,,,
+row-71,recipe+odin,debug-source-00071,Grilled Hamburgers with Bun,4.75,"DBG00000070,DBG00000343",Entrees,Plated Entree,Grld Hmbrgr,pos_ready,true,,,,,,,
+row-72,recipe+odin,debug-source-00072,Grits,2.15,DBG00000071,Breakfast,,,deleted,false,operator deleted,,,,,,
+row-73,recipe+odin,debug-source-00073,Ham and Cheese Croissant,4.50,DBG00000072,Sandwiches,Transit Entree,Ham Chz Croi,pos_ready,false,,,,,,,
+row-74,recipe+odin,debug-source-00074,Ham and Cheese Sandwich,4.50,DBG00000073,Sandwiches,Transit Entree,Ham Chz Sand,pos_ready,false,,,,,,,
+row-75,recipe+odin,debug-source-00075,Ham and Cheese Slider,4.50,DBG00000074,Sandwiches,Transit Entree,Ham Chz Slider,pos_ready,false,,,,,,,
+row-76,recipe+odin,debug-source-00076,Ham and Cheese Sub,4.50,DBG00000075,Sandwiches,Transit Entree,Ham Chz Sub,pos_ready,false,,,,,,,
+row-77,recipe+odin,debug-source-00077,Ham and Provolone Croissant,4.50,DBG00000076,Sandwiches,Transit Entree,HP Croi,pos_ready,false,,,,,,,
+row-78,recipe+odin,debug-source-00078,Ham and Swiss Pretzel Roll,4.50,DBG00000077,Sandwiches,Transit Entree,HamSwssPrtzlRol,pos_ready,false,,,,,,,
+row-79,recipe+odin,debug-source-00079,Ham and Swiss Wrap,3.25,DBG00000078,Sandwiches,Transit Entree,Ham Swiss Wrap,pos_ready,false,,,,,,,
+row-80,recipe+odin,debug-source-00080,Honey BBQ Chicken Wrap,4.75,DBG00000079,Entrees,Plated Entree,HonBbqChkWrap,pos_ready,false,,,,,,,
+row-81,recipe+odin,debug-source-00081,Honey Butter Chicken Biscuit,3.75,DBG00000080,Breakfast,Breakfast,HnyBttrChkBsct,pos_ready,false,,,,,,,
+row-82,recipe+odin,debug-source-00082,Honey Mustard Chicken Tender Wrap,3.25,"DBG00000081,DBG00000438",Sandwiches,Transit Entree,HonMstChkTenWrp,pos_ready,true,,,,,,,
+row-83,recipe+odin,debug-source-00083,Honey-Glazed Cornbread,0.95,DBG00000082,Bread,Bread,HnyGlzdCrnbrd,pos_ready,false,,,,,,,
+row-84,recipe+odin,debug-source-00084,Hot Chocolate,4.50,DBG00000083,Beverages,House-made Beverages,Hot Choccolate,pos_ready,false,,,,,,,
+row-85,recipe,debug-source-00085,House-Made Basil Pesto,,DBG00000084,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-86,recipe+odin,debug-source-00086,House-Made Granola,0.30,DBG00000085,Breakfast,Transit Non-Entree,HM Granola,pos_ready,false,,,,,,,
+row-87,recipe+odin,debug-source-00087,House-Made Guacamole,0.80,DBG00000086,Misc,Plated Sides,HM Guacamole,pos_ready,false,,,,,,,
+row-88,recipe,debug-source-00088,House-Roasted Pulled Pork,5.05,DBG00000087,,Plated Entree,HRoastPullPork,pos_ready,false,,,,,,,
+row-89,recipe+odin,debug-source-00089,House-Roasted Turkey and Ham on Ciabatta,4.50,DBG00000088,Sandwiches,Transit Entree,HRTrkyHamCia,pos_ready,false,,,,,,,
+row-90,recipe+odin,debug-source-00090,Hummus and Pita Chips,4.00,DBG00000089,Entrees,Transit Non-Entree,HummusPitaChips,pos_ready,false,,,,,,,
+row-91,recipe+odin,debug-source-00091,Italian Herb-Roasted Tomatoes,2.70,DBG00000090,Salads and Sides,Plated Sides,IT Ro Tom,pos_ready,false,,,,,,,
+row-92,recipe+odin,debug-source-00092,Italian Wedding Soup,2.99,DBG00000091,Soups and Ladles,Soups,IT Wed Soup,pos_ready,false,,,,,,,
+row-93,recipe+odin,debug-source-00093,Lemonade,1.40,DBG00000092,Beverages,House-made Beverages,,deleted,false,merged into row-532,row-532,DBG00000092,DBG00000218,"DBG00000218,DBG00000092",2026-07-19T00:00:00,operator review; barcode transferred to row-532
+row-94,recipe+odin,debug-source-00094,Linguine,2.70,DBG00000093,Salads and Sides,Plated Sides,Linguine,pos_ready,false,,,,,,,
+row-95,recipe+odin,debug-source-00095,Louisiana-Style Dipping Sauce,0.00,DBG00000094,Misc,,,deleted,false,operator deleted,,,,,,
+row-96,recipe+odin,debug-source-00096,Mac & Cheese,5.05,DBG00000095,Entrees,Plated Entree,Mac Chz,pos_ready,false,,,,,,,
+row-97,recipe,debug-source-00097,Marinara Sauce,,DBG00000096,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-98,recipe,debug-source-00098,Mexican Chicken Quesadillas,4.75,DBG00000097,,Plated Entree,MxChkQuedillas,pos_ready,false,,,,,,,
+row-99,recipe,debug-source-00099,Milk (2%),2.00,DBG00000098,,,,deleted,false,operator deleted,,,,,,
+row-100,recipe+odin,debug-source-00100,Mixed Berry and Vanilla Yogurt Cup,3.75,DBG00000099,Transit,Transit Non-Entree,MixBryVanlYog,pos_ready,false,,,,,,,
+row-101,recipe+odin,debug-source-00101,Oreo® Cheesecake,3.75,DBG00000100,Desserts/Snacks,Packaged Desserts,Oreo Cheesecake,pos_ready,false,,,,,,,
+row-102,recipe+odin,debug-source-00102,Oreo® Chocolate Pudding Parfait,3.75,DBG00000101,Transit,Transit Non-Entree,OreoPuddParf,pos_ready,false,,,,,,,
+row-103,recipe,debug-source-00103,Parmesan Cheese,,DBG00000102,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-104,recipe,debug-source-00104,Pasta with Marinara,,DBG00000103,,Plated Entree,,deleted,false,merged into row-555,row-555,DBG00000103,DBG00000362,"DBG00000362,DBG00000103",2026-07-19T00:00:00,duplicate name; missing or invalid price; barcode transferred to row-555
+row-105,recipe+odin,debug-source-00105,Penne,2.70,DBG00000104,Salads and Sides,Plated Sides,Penne,pos_ready,false,,,,,,,
+row-106,recipe+odin,debug-source-00106,Pepperoni Pizza,3.50,DBG00000105,Entrees,Plated Entree,Pep Pzza,pos_ready,false,,,,,,,
+row-107,recipe+odin,debug-source-00107,"Pepperoni, Cheese, Grapes, and Crackers Pack",5.75,DBG00000106,Entrees,Transit Entree,PepChzGrpsCrckr,pos_ready,false,,,,,,,
+row-108,recipe+odin,debug-source-00108,Pesto Chicken Wrap,3.25,DBG00000107,Sandwiches,Transit Entree,Pesto Chk Wrap,pos_ready,false,,,,,,,
+row-109,recipe+odin,debug-source-00109,Pesto Pasta Alfredo,5.05,DBG00000108,Entrees,Plated Entree,Pesto Pasta Al,pos_ready,false,,,,,,,
+row-110,recipe+odin,debug-source-00110,Pork Egg Rolls,2.00,DBG00000109,Salads and Sides,Plated Sides,Pork Egg Rolls,pos_ready,false,,,,,,,
+row-111,recipe+odin,debug-source-00111,Ranch Dressing,0.00,DBG00000110,Misc,,,deleted,false,operator deleted,,,,,,
+row-112,recipe+odin,debug-source-00112,Red Beans and Rice,5.05,DBG00000111,Entrees,Plated Entree,Red Beans Rice,pos_ready,false,,,,,,,
+row-113,recipe+odin,debug-source-00113,Roasted Summer Squash,2.70,DBG00000112,Salads and Sides,Plated Sides,RoSummerSquash,pos_ready,false,,,,,,,
+row-114,recipe,debug-source-00114,Roasted Tomatoes,2.7,DBG00000113,,Plated Sides,Ro Tomatoes,pos_ready,true,,,,,,,
+row-115,recipe+odin,debug-source-00115,Salsa,0.00,DBG00000114,Misc,,,deleted,false,operator deleted,,,,,,
+row-116,recipe+odin,debug-source-00116,Sausage Biscuit,3.75,DBG00000115,Breakfast,Breakfast,Saus Biscuit,pos_ready,false,,,,,,,
+row-117,recipe+odin,debug-source-00117,"Sausage, Egg, and Cheese on English Muffin",3.75,DBG00000116,Breakfast,Breakfast,SEC Eng Muff,pos_ready,false,,,,,,,
+row-118,recipe,debug-source-00118,Sautéed Summer Squash with Tomatoes,2.70,DBG00000117,,Plated Sides,StSmmrSqshTom,pos_ready,false,,,,,,,
+row-119,recipe+odin,debug-source-00119,Scrambled Eggs,2.00,DBG00000118,Breakfast,Breakfast,Scrambled Eggs,pos_ready,false,,,,,,,
+row-120,recipe+odin,debug-source-00120,Seasoned White Beans,2.70,DBG00000119,Salads and Sides,Plated Sides,SsnWhtBns,pos_ready,false,,,,,,,
+row-121,recipe+odin,debug-source-00121,Sesame Fried Rice,2.70,DBG00000120,Salads and Sides,Plated Sides,SesameFriedRice,pos_ready,false,,,,,,,
+row-122,recipe,debug-source-00122,Shrimp and Bacon with Pesto-Alfredo Sauce,6.05,DBG00000121,,Plated Entree,ShrmpBcnPstAlfr,pos_ready,false,,,,,,,
+row-123,recipe+odin,debug-source-00123,Sour Cream,0.00,DBG00000122,Misc,,,deleted,false,operator deleted,,,,,,
+row-124,recipe+odin,debug-source-00124,Spa Water,0.00,DBG00000123,Misc,,,deleted,false,operator deleted,,,,,,
+row-125,recipe+odin,debug-source-00125,Spicy Tofu and Broccoli Stir-Fry (GF),5.05,DBG00000124,Entrees,Plated Entree,SpcyTofuBrcclSt,pos_ready,false,,,,,,,
+row-126,recipe+odin,debug-source-00126,Steamed Broccoli,2.70,DBG00000125,Salads and Sides,Plated Sides,St Broc,pos_ready,false,,,,,,,
+row-127,recipe+odin,debug-source-00127,Steamed Edamame,2.70,DBG00000126,Salads and Sides,Plated Sides,St Edamame,pos_ready,false,,,,,,,
+row-128,recipe+odin,debug-source-00128,Steamed Green Beans,2.70,DBG00000127,Salads and Sides,Plated Sides,St Green Beans,pos_ready,false,,,,,,,
+row-129,recipe+odin,debug-source-00129,Steamed White Rice,2.70,DBG00000128,Salads and Sides,Plated Sides,St White Rice,pos_ready,false,,,,,,,
+row-130,recipe+odin,debug-source-00130,Stewed Okra and Tomatoes,2.70,DBG00000129,Salads and Sides,Plated Sides,StwdOkraTmts,pos_ready,false,,,,,,,
+row-131,recipe+odin,debug-source-00131,Strawberries and Cream Cup,3.30,DBG00000130,Transit,Transit Non-Entree,StrwbrCrmCup,pos_ready,false,,,,,,,
+row-132,recipe+odin,debug-source-00132,Strawberry Yogurt and Mixed Berry Parfait,3.75,DBG00000131,Transit,Transit Non-Entree,StrwYgrtMxdBrry,pos_ready,false,,,,,,,
+row-133,recipe+odin,debug-source-00133,Strawberry Yogurt and Strawberry Cup,3.75,DBG00000132,Transit,Transit Non-Entree,StrwYgrtStrwCup,pos_ready,false,,,,,,,
+row-134,recipe+odin,debug-source-00134,String Cheese,1.25,DBG00000133,Transit,Transit Non-Entree,String Chz,pos_ready,false,,,,,,,
+row-135,recipe+odin,debug-source-00135,Sweet & Sour Tofu,3.50,DBG00000134,Entrees,Plated Entree,SS Tofu,pos_ready,false,,,,,,,
+row-136,recipe,debug-source-00136,Sweet and Sour Chicken,5.05,"DBG00000135,DBG00000382",,Plated Entree,SS Chick,pos_ready,true,,,,,,,
+row-137,recipe+odin,debug-source-00137,Sweetened Iced Tea,1.40,DBG00000136,Beverages,House-made Beverages,Swt Tea,pos_ready,false,,,,,,,
+row-138,recipe+odin,debug-source-00138,Tater Tots,2.70,DBG00000137,Salads and Sides,Plated Sides,Tater Tots,pos_ready,false,,,,,,,
+row-139,recipe+odin,debug-source-00139,Teriyaki Tori Niku (Authentic Chicken Teriyaki),5.05,DBG00000138,Entrees,Plated Entree,Teri Chick,pos_ready,false,,,,,,,
+row-140,recipe+odin,debug-source-00140,Tomato and Vegetable Soup,2.99,DBG00000139,Soups and Ladles,Soups,Tom Veg Soup,pos_ready,false,,,,,,,
+row-141,recipe+odin,debug-source-00141,Tomato-Basil Flatbread Pizza,4.25,DBG00000140,Entrees,,,deleted,false,operator deleted,,,,,,
+row-142,recipe+odin,debug-source-00142,Turkey and Provolone Sandwich,4.50,DBG00000141,Sandwiches,Transit Entree,TP Sand,pos_ready,false,,,,,,,
+row-143,recipe+odin,debug-source-00143,Turkey Club Croissant with Cheese,4.50,DBG00000142,Sandwiches,Transit Entree,Turk Club Croi,pos_ready,false,,,,,,,
+row-144,recipe+odin,debug-source-00144,Vegetarian Red Beans and Rice,5.05,DBG00000143,Entrees,Plated Entree,VegRedBeansRice,pos_ready,false,,,,,,,
+row-145,recipe+odin,debug-source-00145,Vietnamese Coffee,3.50,DBG00000144,Beverages,House-made Beverages,Viet Coffee,pos_ready,false,,,,,,,
+row-146,recipe+odin,debug-source-00146,Waffle Fries,2.70,DBG00000145,Salads and Sides,Plated Sides,Waffle Fries,pos_ready,false,,,,,,,
+row-147,recipe+odin,debug-source-00147,Waffles,3.00,DBG00000146,Breakfast,Breakfast,Waffles,pos_ready,false,,,,,,,
+row-148,recipe+odin,debug-source-00148,Water,1.60,DBG00000147,Beverages,,,deleted,false,operator deleted,,,,,,
+row-149,recipe+odin,debug-source-00149,Whole Dill Pickle,2.00,DBG00000148,Transit,Transit Non-Entree,WholeDillPickle,pos_ready,false,,,,,,,
+row-150,recipe+odin,debug-source-00150,Bacon Cheeseburger Combo,6.50,"DBG00000149,DBG00000297",Entrees,Plated Entree,Bcn Chzbrg Cmb,pos_ready,true,,,,,,,
+row-151,recipe+odin,debug-source-00151,Bang Bang Rice and Noodle Bowl,6.10,DBG00000150,Entrees,Plated Entree,BangRiceNdlBwl,pos_ready,false,,,,,,,
+row-152,recipe+odin,debug-source-00152,Build Your Own Mediterranean Bowl,6.10,DBG00000151,Entrees,Plated Entree,Med Bowl,pos_ready,false,,,,,,,
+row-153,recipe+odin,debug-source-00153,Build-Your-Own BBQ Bowl,6.10,DBG00000152,Entrees,Plated Entree,BBQ Bwl,pos_ready,false,,,,,,,
+row-154,recipe+odin,debug-source-00154,Build-Your-Own Cuban Plate,6.10,DBG00000153,Entrees,Plated Entree,Cuban Bowl,pos_ready,false,,,,,,,
+row-155,recipe+odin,debug-source-00155,Build-Your-Own Sushi Bowl,7.10,DBG00000154,Entrees,Plated Entree,Sushi Bowl,pos_ready,false,,,,,,,
+row-156,recipe+odin,debug-source-00156,Burrito Bowl or Burrito,6.10,DBG00000155,Entrees,Plated Entree,Burr Bowl,pos_ready,false,,,,,,,
+row-157,recipe+odin,debug-source-00157,Cajun Cheeseburger Combo,6.50,DBG00000156,Entrees,Plated Entree,CajunChzbrgCmb,pos_ready,false,,,,,,,
+row-158,recipe+odin,debug-source-00158,Cajun Chicken Alfredo Combo,6.10,DBG00000157,Entrees,Plated Entree,CajunChickAlCmb,pos_ready,false,,,,,,,
+row-159,recipe,debug-source-00159,Cajun Pulled Pork Sandwich Combo,6.50,DBG00000158,,Plated Entree,CjnPldPrkSndCmb,pos_ready,false,,,,,,,
+row-160,recipe+odin,debug-source-00160,Caprese Pesto Sandwich Combo,6.50,DBG00000159,Sandwiches,Plated Entree,CprsPstSandCmb,pos_ready,false,,,,,,,
+row-161,recipe+odin,debug-source-00161,Cheese Pizza Combo,5.50,"DBG00000160,DBG00000325",Entrees,Plated Entree,Chz Pizza Cmb,pos_ready,true,,,,,,,
+row-162,recipe+odin,debug-source-00162,Cheeseburger Combo,6.50,DBG00000161,Entrees,Plated Entree,Chzbrg Cmb,pos_ready,false,,,,,,,
+row-163,recipe,debug-source-00163,Cheeseburger Toppings,,DBG00000162,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-164,recipe,debug-source-00164,Chicken and Waffle Sandwich Combo,6.50,DBG00000163,,Plated Entree,ChkWfflSandCmb,pos_ready,false,,,,,,,
+row-165,recipe+odin,debug-source-00165,Chicken Bacon Ranch Pizza Combo,6.50,DBG00000164,Entrees,Plated Entree,ChkBcnRnchPzzCm,pos_ready,false,,,,,,,
+row-166,recipe+odin,debug-source-00166,Chicken Bites Combo,6.50,DBG00000165,Entrees,Plated Entree,Chick Bites Cmb,pos_ready,false,,,,,,,
+row-167,recipe+odin,debug-source-00167,Chicken Nugget Combo,6.50,DBG00000166,Entrees,Plated Entree,Chk Nugget Cmb,pos_ready,false,,,,,,,
+row-168,recipe+odin,debug-source-00168,Chicken Parm Combo,6.10,DBG00000167,Entrees,Plated Entree,Chick Parm Cmb,pos_ready,false,,,,,,,
+row-169,recipe+odin,debug-source-00169,Free Style Protein Pack,5.75,DBG00000168,Entrees,Plated Entree,FS Pro Pack,pos_ready,false,,,,,,,
+row-170,recipe+odin,debug-source-00170,Free Style™ Grits Bar,4.00,DBG00000169,Breakfast,,,deleted,false,operator deleted,,,,,,
+row-171,recipe+odin,debug-source-00171,Fresh For You Salad Bar,6.25,DBG00000170,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-172,recipe+odin,debug-source-00172,Fried Chicken Sandwich Combo,6.50,DBG00000171,Entrees,Plated Entree,FriedChkSandCmb,pos_ready,false,,,,,,,
+row-173,recipe,debug-source-00173,Grilled Burger Topping Bar,,DBG00000172,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-174,recipe+odin,debug-source-00174,Grilled Cheese Combo,6.50,DBG00000173,Entrees,Plated Entree,Grld Chz Cmb,pos_ready,false,,,,,,,
+row-175,recipe+odin,debug-source-00175,Half Wrap Chips Combo,5.25,DBG00000174,Entrees,Transit Entree,HalfWrapChpsCmb,pos_ready,false,,,,,,,
+row-176,recipe+odin,debug-source-00176,Half Wrap Fruit Combo,4.30,DBG00000175,Entrees,,,deleted,false,operator deleted,,,,,,
+row-177,recipe+odin,debug-source-00177,Hamburger Combo,6.50,DBG00000176,Entrees,Plated Entree,Burger Cmb,pos_ready,false,,,,,,,
+row-178,recipe+odin,debug-source-00178,Honey BBQ Chicken Wrap Combo,6.50,DBG00000177,Entrees,Plated Entree,HnyBbqChkWrapCm,pos_ready,false,,,,,,,
+row-179,recipe+odin,debug-source-00179,Jambalaya Combo,6.10,DBG00000178,Entrees,Plated Entree,Jambalaya Cmb,pos_ready,false,,,,,,,
+row-180,recipe+odin,debug-source-00180,Loaded Mac & Cheese Bar,6.10,DBG00000179,Entrees,Plated Entree,L Mac & Chz Bar,pos_ready,false,,,,,,,
+row-181,recipe+odin,debug-source-00181,Mexican Street Corn Chicken Bowl,6.10,DBG00000180,Entrees,Plated Entree,MxStCornChkBwl,pos_ready,false,,,,,,,
+row-182,recipe+odin,debug-source-00182,Pasta Combo,6.10,DBG00000181,Entrees,Plated Entree,Pasta Cmb,pos_ready,false,,,,,,,
+row-183,recipe+odin,debug-source-00183,Pepperoni Pizza Combo,6.25,DBG00000182,Entrees,Plated Entree,Pep Pizza Cmb,pos_ready,false,,,,,,,
+row-184,recipe+odin,debug-source-00184,Protein Pack Combo,5.75,DBG00000183,Entrees,Transit Entree,Pro Pack Cmb,pos_ready,false,,,,,,,
+row-185,recipe+odin,debug-source-00185,Quesadilla Combo,6.50,DBG00000184,Entrees,,,deleted,false,operator deleted,,,,,,
+row-186,recipe+odin,debug-source-00186,Red & White Pasta Bar,6.10,DBG00000185,Entrees,Plated Entree,RedWhtPstBar,pos_ready,false,,,,,,,
+row-187,recipe+odin,debug-source-00187,Red Beans Combo,6.10,DBG00000186,Entrees,Plated Entree,Red Beans Cmb,pos_ready,false,,,,,,,
+row-188,recipe+odin,debug-source-00188,Salad with Chicken Combo,6.25,DBG00000187,Entrees,Plated Entree,Salad Chick Cmb,pos_ready,false,,,,,,,
+row-189,recipe,debug-source-00189,Sandwich Topping Bar,,DBG00000188,,,,deleted,false,operator deleted,,,,,,missing category; missing or invalid price
+row-190,recipe+odin,debug-source-00190,Sandwich Whole Fruit Combo,5.30,DBG00000189,Entrees,Transit Entree,SandWholeFrtCmb,pos_ready,false,,,,,,,
+row-191,recipe+odin,debug-source-00191,Sm MI Combo,5.60,DBG00000190,Entrees,,,deleted,false,operator deleted,,,,,,
+row-192,recipe+odin,debug-source-00192,Sweet and Sour Chicken Combo,6.10,DBG00000191,Entrees,Plated Entree,SS Chick Cmb,pos_ready,false,,,,,,,
+row-193,recipe+odin,debug-source-00193,Tacos or Taco Bowls!,6.10,DBG00000192,Entrees,Plated Entree,Taco Bwl,pos_ready,false,,,,,,,
+row-194,recipe+odin,debug-source-00194,Tenders and Tots Combo,6.50,DBG00000193,Entrees,Plated Entree,TendersTotsCmb,pos_ready,false,,,,,,,
+row-195,recipe+odin,debug-source-00195,Top Allergen Free Burger Combo,7.00,DBG00000194,Entrees,,,deleted,false,operator deleted,,,,,,
+row-196,recipe+odin,debug-source-00196,Top Allergen Free Cajun Chicken Combo,7.00,DBG00000195,Entrees,,,deleted,false,operator deleted,,,,,,
+row-197,recipe+odin,debug-source-00197,Top Allergen Free Chicken Sandwich Combo,7.00,DBG00000196,Entrees,,,deleted,false,operator deleted,,,,,,
+row-198,recipe+odin,debug-source-00198,Top Allergen Free Cuban Combo,7.00,DBG00000197,Entrees,,,deleted,false,operator deleted,,,,,,
+row-199,recipe+odin,debug-source-00199,Top Allergen Free Greek Chicken Combo,7.00,DBG00000198,Entrees,,,deleted,false,operator deleted,,,,,,
+row-200,recipe+odin,debug-source-00200,Top Allergen Free Mexican Chicken Combo,7.00,DBG00000199,Entrees,,,deleted,false,operator deleted,,,,,,
+row-201,recipe+odin,debug-source-00201,Top Allergen Free Pulled Pork Combo,7.00,DBG00000200,Entrees,,,deleted,false,operator deleted,,,,,,
+row-202,recipe+odin,debug-source-00202,Top Allergen Free Veggie Red Beans Combo,7.00,DBG00000201,Entrees,,,deleted,false,operator deleted,,,,,,
+row-203,recipe+odin,debug-source-00203,Top Allergen Free White Beans Combo,7.00,DBG00000202,Entrees,,,deleted,false,operator deleted,,,,,,
+row-204,recipe+odin,debug-source-00204,Tossed To Order Caesar Salad Bar,6.10,DBG00000203,Entrees,Plated Entree,Toss CaeSal Bar,pos_ready,false,,,,,,,
+row-205,recipe+odin,debug-source-00205,Vegetarian Rice Bowl Bar,4.00,DBG00000204,Soups and Ladles,Rice Bowls,VegRiceBowlBar,pos_ready,false,,,,,,,
+row-206,recipe+odin,debug-source-00206,Watermelon Lemonade,2.75,DBG00000205,Beverages,House-made Beverages,,deleted,false,merged into row-944,row-944,DBG00000205,DBG00000219,"DBG00000219,DBG00000205",2026-07-19T00:00:00,operator review; barcode transferred to row-944
+row-207,odin,debug-source-00207,Gold Fish,2.00,DBG00000275,Snacks,Packaged Snacks,Gold Fish,pos_ready,false,,,,,,,
+row-208,odin,debug-source-00208,Chex Mix,2.00,DBG00000262,Snacks,Packaged Snacks,Chex Mix,pos_ready,false,,,,,,,
+row-209,odin,debug-source-00209,Gardettos,2.00,DBG00000274,Snacks,Packaged Snacks,Gardettos,pos_ready,false,,,,,,,
+row-210,odin,debug-source-00210,Welch's Fruit Snacks Mixed Berry,2.00,DBG00000504,Snacks,,,deleted,false,operator deleted,,,,,,
+row-211,odin,debug-source-00211,Welch's Fruit Snacks Assorted,2.00,DBG00000505,Snacks,,,deleted,false,operator deleted,,,,,,
+row-212,odin,debug-source-00212,Sparkling Ice Black Rasp,3.00,DBG00000496,Beverages,Vendor Beverages,Sprk Ice Blck,pos_ready,false,,,,,,,
+row-213,odin,debug-source-00213,Sparkling Ice Kiwi Straw,3.00,DBG00000497,Beverages,Vendor Beverages,Sprk Ice KiwiSt,pos_ready,false,,,,,,,
+row-214,odin,debug-source-00214,Ozarka Spt Water,2.00,DBG00000506,Beverages,,,deleted,false,operator deleted,,,,,,
+row-215,odin,debug-source-00215,Cheez It,2.00,DBG00000260,Snacks,Packaged Snacks,Cheez It,pos_ready,false,,,,,,,
+row-216,odin,debug-source-00216,Banjo Classic,4.15,DBG00000232,Ice Cream,Ice Cream,Banjo Clsc,pos_ready,false,,,,,,,
+row-217,odin,debug-source-00217,Fudjo Bar,4.15,DBG00000238,Ice Cream,Ice Cream,Fudjo Bar,pos_ready,false,,,,,,,
+row-218,odin,debug-source-00218,Orange Blossom Bar,4.15,DBG00000244,Ice Cream,Ice Cream,OrngBlssmBar,pos_ready,false,,,,,,,
+row-219,odin,debug-source-00219,Chocolate Eclair Stick,4.15,DBG00000234,Ice Cream,Ice Cream,ChocEclairStick,pos_ready,false,,,,,,,
+row-220,odin,debug-source-00220,Strawberry Shortcake Stick,4.15,DBG00000248,Ice Cream,Ice Cream,StrwShrtckStck,pos_ready,false,,,,,,,
+row-221,odin,debug-source-00221,Tropikool Mango,4.15,DBG00000251,Ice Cream,Ice Cream,Tropikool Mango,pos_ready,false,,,,,,,
+row-222,odin,debug-source-00222,Tropikool Strawberry,4.15,DBG00000252,Ice Cream,Ice Cream,Tropikool Straw,pos_ready,false,,,,,,,
+row-223,odin,debug-source-00223,Cotton Candy Ice Cream Cup,4.75,DBG00000236,Ice Cream,Ice Cream,CttnCndyIceCrmC,pos_ready,false,,,,,,,
+row-224,odin,debug-source-00224,Midnight Caramel River,4.75,DBG00000243,Ice Cream,Ice Cream,MdnghtCrmlRvr,pos_ready,false,,,,,,,
+row-225,odin,debug-source-00225,Polar Bear Choc Chip,4.75,DBG00000246,Ice Cream,Ice Cream,PlrBearChocChip,pos_ready,false,,,,,,,
+row-226,odin,debug-source-00226,Polar Bear Cook Crea,4.75,DBG00000247,Ice Cream,Ice Cream,PlrBearCookCrea,pos_ready,false,,,,,,,
+row-227,odin,debug-source-00227,Polar Bear Bownie,4.75,DBG00000245,Ice Cream,Ice Cream,PolarBearBownie,pos_ready,false,,,,,,,
+row-228,odin,debug-source-00228,Super Cookies and Cream Cone,4.75,DBG00000250,Ice Cream,Ice Cream,SuprCksCrmCone,pos_ready,false,,,,,,,
+row-229,odin,debug-source-00229,Ice Cream Sand Mint (Giant),4.15,DBG00000239,Ice Cream,Ice Cream,IceCrmSandMintG,pos_ready,false,,,,,,,
+row-230,odin,debug-source-00230,Chocolate Sundae,4.75,DBG00000235,Ice Cream,Ice Cream,Choc Sundae,pos_ready,false,,,,,,,
+row-231,odin,debug-source-00231,Strawberry Sundae,4.75,DBG00000249,Ice Cream,Ice Cream,Straw Sundae,pos_ready,false,,,,,,,
+row-232,odin,debug-source-00232,Dulce de leche,4.75,DBG00000237,Ice Cream,Ice Cream,Dulce De Leche,pos_ready,false,,,,,,,
+row-233,odin,debug-source-00233,Ice Cream Sand Vanilla (Giant),4.15,DBG00000240,Ice Cream,Ice Cream,IceCrmSandVnllG,pos_ready,false,,,,,,,
+row-234,odin,debug-source-00234,Incredible Ice Cherry,3.50,DBG00000242,Desserts/Snacks,Ice Cream,IncrdbIceChrry,pos_ready,false,,,,,,,
+row-235,odin,debug-source-00235,Incredible Cone,4.75,DBG00000241,Ice Cream,Ice Cream,Incredible Cone,pos_ready,false,,,,,,,
+row-236,odin,debug-source-00236,MM Peach,3.00,DBG00000477,Beverages,Vendor Beverages,Mm Peach,pos_ready,false,,,,,,,
+row-237,odin,debug-source-00237,MM Tropical,3.00,DBG00000479,Beverages,Vendor Beverages,Mm Tropical,pos_ready,false,,,,,,,
+row-238,odin,debug-source-00238,MinuteMd Berry Punch,3.00,DBG00000507,Beverages,,,deleted,false,operator deleted,,,,,,
+row-239,odin,debug-source-00239,Juice Pineapple Orange,3.25,DBG00000473,Beverages,Vendor Beverages,JuicPineOran,pos_ready,true,,,,,,,
+row-240,odin,debug-source-00240,Juice Cranberry Grape,3.25,DBG00000471,Beverages,Vendor Beverages,JuicCranGrap,pos_ready,true,,,,,,,
+row-241,odin,debug-source-00241,MM Lemonade,3.00,DBG00000476,Beverages,Vendor Beverages,Mm Lemonade,pos_ready,false,,,,,,,
+row-242,odin,debug-source-00242,MM Fruit Punch,3.00,DBG00000474,Beverages,Vendor Beverages,Mm Frt Punch,pos_ready,true,,,,,,,
+row-243,odin,debug-source-00243,MM Pink Lemond,3.00,DBG00000478,Beverages,Vendor Beverages,Mm Pink Lemond,pos_ready,true,,,,,,,
+row-244,odin,debug-source-00244,Juice Apple,3.25,DBG00000470,Beverages,Vendor Beverages,Juice Apple,pos_ready,true,,,,,,,
+row-245,odin,debug-source-00245,Juice Orange,3.25,DBG00000472,Beverages,Vendor Beverages,Juice Orange,pos_ready,true,,,,,,,
+row-246,odin,debug-source-00246,MM Kiwi Straw,3.00,DBG00000475,Beverages,Vendor Beverages,Mm Kiwi Straw,pos_ready,false,,,,,,,
+row-247,odin,debug-source-00247,Aguas Fresca Strawberry,2.75,DBG00000508,Beverages,,,deleted,false,operator deleted,,,,,,
+row-248,odin,debug-source-00248,Aguas Fresca Mango,2.75,DBG00000509,Beverages,,,deleted,false,operator deleted,,,,,,
+row-249,odin,debug-source-00249,Fudge Stripes,2.00,DBG00000273,Snacks,Packaged Snacks,Fudge Stripes,pos_ready,false,,,,,,,
+row-250,odin,debug-source-00250,Lays Sour Cream 1.5 oz,2.00,DBG00000280,Snacks,Packaged Snacks,LS Cream 1 5 Oz,pos_ready,false,,,,,,,
+row-251,odin,debug-source-00251,Lays BBQ,2.00,DBG00000279,Snacks,Packaged Snacks,Lays Bbq,pos_ready,false,,,,,,,
+row-252,odin,debug-source-00252,Miss Vickies Sea Salt,2.00,DBG00000283,Snacks,Packaged Snacks,MissVcksSeaSalt,pos_ready,false,,,,,,,
+row-253,odin,debug-source-00253,Ms. Vickie BBQ,3.00,DBG00000286,Beverages,Packaged Snacks,Ms Vickie Bbq,pos_ready,false,,,,,,,
+row-254,odin,debug-source-00254,Miss Vickies Salt Vinegar,2.00,DBG00000282,Snacks,Packaged Snacks,MissVcksSaltVng,pos_ready,false,,,,,,,
+row-255,odin,debug-source-00255,Miss Vickies Jalapeno,2.00,DBG00000281,Snacks,Packaged Snacks,MissVickiesJal,pos_ready,false,,,,,,,
+row-256,odin,debug-source-00256,Smartfood Popcorn,2.00,DBG00000294,Snacks,Packaged Snacks,SmrtfdPpcrn,pos_ready,false,,,,,,,
+row-257,odin,debug-source-00257,Pretzels Roll Gold,2.00,DBG00000292,Snacks,Packaged Snacks,PrtzlsRollGold,pos_ready,false,,,,,,,
+row-258,odin,debug-source-00258,Chesters Hot Fries,2.00,DBG00000510,Snacks,,,deleted,false,operator deleted,,,,,,
+row-259,odin,debug-source-00259,Flaming Cheetos,2.00,DBG00000270,Snacks,Packaged Snacks,Flaming Cheetos,pos_ready,false,,,,,,,
+row-260,odin,debug-source-00260,Fritos BBQ Twist,2.00,DBG00000271,Snacks,Packaged Snacks,FritosBbqTwist,pos_ready,false,,,,,,,
+row-261,odin,debug-source-00261,Doritos Cool Ranch,2.00,DBG00000263,Snacks,Packaged Snacks,DrtsCoolRnch,pos_ready,false,,,,,,,
+row-262,odin,debug-source-00262,Doritos Nacho,2.00,DBG00000264,Snacks,Packaged Snacks,Doritos Nacho,pos_ready,false,,,,,,,
+row-263,odin,debug-source-00263,Regular Lays Chips,2.00,DBG00000293,Snacks,Packaged Snacks,RglrLaysChps,pos_ready,false,,,,,,,
+row-264,odin,debug-source-00264,Welch's Fruit Snacks - Mixed,2.00,DBG00000296,Snacks,Packaged Snacks,WlchSFrtSncksMx,pos_ready,false,,,,,,,
+row-265,odin,debug-source-00265,Nutrigrain Bar Ap Cin,2.00,DBG00000287,Snacks,Packaged Snacks,NtrgrnBarApCin,pos_ready,false,,,,,,,
+row-266,odin,debug-source-00266,Nutrigrain Bar Blue,2.00,DBG00000288,Snacks,Packaged Snacks,NtrgrnBarBlue,pos_ready,false,,,,,,,
+row-267,odin,debug-source-00267,Nutrigrain Bar Straw,2.00,DBG00000289,Snacks,Packaged Snacks,NtrgrnBarStrw,pos_ready,false,,,,,,,
+row-268,odin,debug-source-00268,Treat Rice Krispie,2.00,DBG00000295,Beverages,Packaged Snacks,TrtRiceKrsp,pos_ready,false,,,,,,,
+row-269,odin,debug-source-00269,Oreo Mini - 3 oz,2.00,DBG00000291,Snacks,Packaged Snacks,Oreo Mini 3 Oz,pos_ready,false,,,,,,,
+row-270,odin,debug-source-00270,Oreos Mini,2.00,DBG00000511,Snacks,,,deleted,false,operator deleted,,,,,,
+row-271,odin,debug-source-00271,Belvita Blueberry,2.00,DBG00000258,Snacks,Packaged Snacks,BlvtBlbrry,pos_ready,false,,,,,,,
+row-272,odin,debug-source-00272,Fig Bar Raspberry,2.00,DBG00000268,Snacks,Packaged Snacks,FigBarRaspberry,pos_ready,false,,,,,,,
+row-273,odin,debug-source-00273,Fig Bar Apple Cinnamon,2.00,DBG00000265,Snacks,Packaged Snacks,FigBarAppleCin,pos_ready,false,,,,,,,
+row-274,odin,debug-source-00274,Fig Bar Blueberry,2.00,DBG00000266,Desserts/Snacks,Packaged Snacks,FigBarBlueberry,pos_ready,true,,,,,,,
+row-275,odin,debug-source-00275,Fig Bar Peach Apricot,2.00,DBG00000267,Desserts/Snacks,Packaged Snacks,FigBarPchAprct,pos_ready,true,,,,,,,
+row-276,odin,debug-source-00276,Fig Bar Strawberry,2.00,DBG00000269,Desserts/Snacks,Packaged Snacks,Fig Bar Straw,pos_ready,true,,,,,,,
+row-277,odin,debug-source-00277,Powerade Lemon Lime,3.00,DBG00000486,Beverages,Vendor Beverages,PwrdLmnLime,pos_ready,false,,,,,,,
+row-278,odin,debug-source-00278,Powerade Fruit Punch,3.00,DBG00000485,Beverages,Vendor Beverages,PwrdFrtPnch,pos_ready,false,,,,,,,
+row-279,odin,debug-source-00279,Powerade Berry Blast,3.00,DBG00000484,Beverages,Vendor Beverages,PwrdBrryBlst,pos_ready,false,,,,,,,
+row-280,odin,debug-source-00280,Powerade Orange,3.00,DBG00000487,Beverages,Vendor Beverages,Pwrd Orange,pos_ready,false,,,,,,,
+row-281,odin,debug-source-00281,Powerade Zero Grape,3.00,DBG00000493,Beverages,Vendor Beverages,PwrdZeroGrp,pos_ready,false,,,,,,,
+row-282,odin,debug-source-00282,Powerade Zero Berry,3.00,DBG00000492,Beverages,Vendor Beverages,PwrdZeroBrry,pos_ready,false,,,,,,,
+row-283,odin,debug-source-00283,Powerade Grape,3.00,DBG00000512,Beverages,,,deleted,false,operator deleted,,,,,,
+row-284,odin,debug-source-00284,Peace Tea Caddy,2.95,DBG00000480,Beverages,Vendor Beverages,Peace Tea Caddy,pos_ready,false,,,,,,,
+row-285,odin,debug-source-00285,Peace Tea Peach,2.95,DBG00000481,Beverages,Vendor Beverages,Peace Tea Peach,pos_ready,false,,,,,,,
+row-286,odin,debug-source-00286,Peace Tea Raspberry,2.95,DBG00000482,Beverages,Vendor Beverages,PcTeaRspbrr,pos_ready,false,,,,,,,
+row-287,odin,debug-source-00287,Peace Tea Snoberry,2.95,DBG00000483,Beverages,Vendor Beverages,PcTeaSnbrry,pos_ready,false,,,,,,,
+row-288,odin,debug-source-00288,Powerade Water Mt Blue,3.25,DBG00000488,Beverages,Vendor Beverages,PwrdWtrMtBlue,pos_ready,true,,,,,,,
+row-289,odin,debug-source-00289,Powerade Water St Kiwi,3.25,DBG00000489,Beverages,Vendor Beverages,PwrdWtrStKiwi,pos_ready,true,,,,,,,
+row-290,odin,debug-source-00290,Powerade Water TropPA,3.25,DBG00000490,Beverages,Vendor Beverages,PwrdWtrTrpp,pos_ready,true,,,,,,,
+row-291,odin,debug-source-00291,Powerade Water WMelon,3.25,DBG00000491,Beverages,Vendor Beverages,PwrdWtrWmln,pos_ready,true,,,,,,,
+row-292,odin,debug-source-00292,Pure Life Water - 23.7 fl oz,2.00,DBG00000495,Beverages,Vendor Beverages,PureLifeWtr237F,pos_ready,true,,,,,,,
+row-293,odin,debug-source-00293,Pure Life Water - 16.9 fl oz,1.60,DBG00000494,Beverages,Vendor Beverages,PureLifeWtr169F,pos_ready,true,,,,,,,
+row-294,odin,debug-source-00294,Hello Panda Chocolate,2.00,DBG00000513,Snacks,,,deleted,false,operator deleted,,,,,,
+row-295,odin,debug-source-00295,Luigis Lemon Ital Ice,3.50,DBG00000514,Ice Cream,,,deleted,false,operator deleted,,,,,,
+row-296,odin,debug-source-00296,Luigis Strawberry Ital Ice,3.50,DBG00000515,Ice Cream,,,deleted,false,operator deleted,,,,,,
+row-297,odin,debug-source-00297,Arrezzio Lemon Italian Ice,3.50,DBG00000230,Ice Cream,Ice Cream,Arz Lmn IT Ice,pos_ready,false,,,,,,,
+row-298,odin,debug-source-00298,Arrezzio Strawberry Italian Ice,3.50,DBG00000231,Ice Cream,Ice Cream,Arz Strw IT Ice,pos_ready,false,,,,,,,
+row-299,odin,debug-source-00299,Mangia Entree,4.99,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-300,odin,debug-source-00300,Regular Ice Cream,3.50,,Ice Cream,,,deleted,false,operator deleted,,,,,,missing barcode
+row-301,odin,debug-source-00301,BBQ Beef Sandwich,4.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-302,odin,debug-source-00302,Loaded Baked Potato,4.95,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-303,odin,debug-source-00303,JESUIT BAKE POTATO,4.50,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-304,odin,debug-source-00304,Add Catfish,1.50,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-305,odin,debug-source-00305,Jalapeno Poppers,3.00,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-306,odin,debug-source-00306,Salad  With Meat,6.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-307,odin,debug-source-00307,Granola/ Cereal Bar,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-308,odin,debug-source-00308,Mozz Sticks,3.50,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-309,odin,debug-source-00309,Seasoning 1,4.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-310,odin,debug-source-00310,Chicken Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-311,odin,debug-source-00311,add Shrimp,1.25,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-312,odin,debug-source-00312,Boxed Lunch,4.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-313,odin,debug-source-00313,Veg Plate,4.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-314,odin,debug-source-00314,Seasoning 2,6.25,DBG00000516,Entrees,,,deleted,false,operator deleted,,,,,,
+row-315,odin,debug-source-00315,Popcorn,1.25,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-316,odin,debug-source-00316,Specialty Dessrt,2.50,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-317,odin,debug-source-00317,Hamburger Combo,4.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-318,odin,debug-source-00318,Chicken Tender Combo,6.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-319,odin,debug-source-00319,Taco Salad,4.50,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-320,odin,debug-source-00320,Coffee Airpot,3.50,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-321,odin,debug-source-00321,Grilled Chicken Caesar,5.50,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-322,odin,debug-source-00322,EMPLOYEE BRKFST,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-323,odin,debug-source-00323,Boxed Lunch,5.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-324,odin,debug-source-00324,Vegetable/Starch Side,2.70,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-325,odin,debug-source-00325,Italian Club,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-326,odin,debug-source-00326,ICE CREAM BAR,1.25,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-327,odin,debug-source-00327,Crossroads Combo,6.50,DBG00000335,Entrees,Plated Entree,Crossroads Cmb,pos_ready,false,,,,,,,
+row-328,odin,debug-source-00328,Small Hummus Cup,3.25,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-329,odin,debug-source-00329,Large Sub Combo,6.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-330,odin,debug-source-00330,Jalapeno Poppers,3.00,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-331,odin,debug-source-00331,Bodyarmor,4.75,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-332,odin,debug-source-00332,Tamales DZ,12.95,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-333,odin,debug-source-00333,Monterey Bacon Chicken,3.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-334,odin,debug-source-00334,ADULT BRKFST MILK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-335,odin,debug-source-00335,Peach Mango Tea,2.75,DBG00000517,Beverages,,,deleted,false,operator deleted,,,,,,
+row-336,odin,debug-source-00336,CONTRACT LUNCH #3,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-337,odin,debug-source-00337,CONTRACT LUNCH #4,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-338,odin,debug-source-00338,FREE MID SNACK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-339,odin,debug-source-00339,CONTRACT SNACK #3,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-340,odin,debug-source-00340,CONTRACT SNACK #4,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-341,odin,debug-source-00341,Chocolate Mousse,3.75,DBG00000518,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-342,odin,debug-source-00342,Test Item,1.50,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-343,odin,debug-source-00343,MISC $3.00,3.02,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-344,odin,debug-source-00344,Onion Rings,2.70,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-345,odin,debug-source-00345,Carnival Corn Dogs,4.75,DBG00000322,Entrees,Plated Entree,CrnvlCornDogs,pos_ready,false,,,,,,,
+row-346,odin,debug-source-00346,Corn Dog Combo,6.50,DBG00000333,Entrees,Plated Entree,Corn Dog Cmb,pos_ready,false,,,,,,,
+row-347,odin,debug-source-00347,Latte,4.70,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-348,odin,debug-source-00348,Waffle,2.50,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-349,odin,debug-source-00349,Belvita,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-350,odin,debug-source-00350,Premium Dessert,3.50,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-351,odin,debug-source-00351,Smart H2O,3.25,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-352,odin,debug-source-00352,Sushi,2.75,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-353,odin,debug-source-00353,MM Lemonade,3.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-354,odin,debug-source-00354,Lemonade Popping,3.50,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-355,odin,debug-source-00355,ADULT SNACK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-356,odin,debug-source-00356,Pasta Alfredo,5.05,DBG00000519,Entrees,,,deleted,false,operator deleted,,,,,,
+row-357,odin,debug-source-00357,ADULT SNACK MILK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-358,odin,debug-source-00358,Tuna Cup,2.25,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-359,odin,debug-source-00359,Chili-Cheese Fries,4.25,DBG00000520,Entrees,,,deleted,false,operator deleted,,,,,,
+row-360,odin,debug-source-00360,Pulled Pork Sandwich,4.25,DBG00000521,Entrees,,,deleted,false,operator deleted,,,,,,
+row-361,odin,debug-source-00361,Main Ingredient Combo,6.10,DBG00000351,Entrees,Plated Entree,MainIngrdnCmb,pos_ready,false,,,,,,,
+row-362,odin,debug-source-00362,Chicken Club Salad,6.00,DBG00000522,Transit,,,deleted,false,operator deleted,,,,,,
+row-363,odin,debug-source-00363,Mott's Mixed Berry,2.00,DBG00000285,Snacks,Packaged Snacks,MottSMixedBerry,pos_ready,false,,,,,,,
+row-364,odin,debug-source-00364,NO ID,0.00,DBG00000253,No Dept Category,Misc Operation,No Id,pos_ready,false,,,,,,,
+row-365,odin,debug-source-00365,Garden Salad with Ham,6.00,DBG00000523,Transit,,,deleted,false,operator deleted,,,,,,
+row-366,odin,debug-source-00366,Turkey and Cheese Sub,4.25,DBG00000524,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-367,odin,debug-source-00367,Chicken Cheese Steak,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-368,odin,debug-source-00368,Premium House Bottle Drinks,3.50,DBG00000226,Beverages,House-made Beverages,PrmmHsBttlDrnks,pos_ready,false,,,,,,,
+row-369,odin,debug-source-00369,Italian Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-370,odin,debug-source-00370,Seas Brk,5.25,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-371,odin,debug-source-00371,Spinach Salad with Bacon and Eggs,6.00,DBG00000525,Transit,,,deleted,false,operator deleted,,,,,,
+row-372,odin,debug-source-00372,Turkey & Swiss Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-373,odin,debug-source-00373,Strawberry Spinach Salad with Chicken,6.50,DBG00000526,Transit,,,deleted,false,operator deleted,,,,,,
+row-374,odin,debug-source-00374,Hamburger,3.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-375,odin,debug-source-00375,Pimento Cheese,4.00,DBG00000527,Transit,,,deleted,false,operator deleted,,,,,,
+row-376,odin,debug-source-00376,Toppings,0.75,DBG00000406,Misc,Plated Sides,Toppings,pos_ready,false,,,,,,,
+row-377,odin,debug-source-00377,Chicken Bacon Ranch Sandwich,3.50,DBG00000427,Entrees,Transit Entree,SndBcnRanchSand,pos_ready,false,,,,,,,
+row-378,odin,debug-source-00378,Chicken Tender Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-379,odin,debug-source-00379,Feast,8.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-380,odin,debug-source-00380,Chicken Dragon Noodle Salad,6.50,DBG00000528,Transit,,,deleted,false,operator deleted,,,,,,
+row-381,odin,debug-source-00381,ADULT LUNCH,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-382,odin,debug-source-00382,House Bottle Drinks,2.75,DBG00000529,Beverages,,,deleted,false,operator deleted,,,,,,
+row-383,odin,debug-source-00383,Pimento Cheese Protein Pack,5.75,DBG00000530,Transit,,,deleted,false,operator deleted,,,,,,
+row-384,odin,debug-source-00384,Chicken Bacon Ranch Sandwich Combo,6.25,DBG00000326,Entrees,Plated Entree,ChkBcnRnchSandC,pos_ready,false,,,,,,,
+row-385,odin,debug-source-00385,EMPLOYEE LUNCH,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-386,odin,debug-source-00386,Mott's Fruit,2.00,DBG00000284,Snacks,Packaged Snacks,Mott S Frt,pos_ready,false,,,,,,,
+row-387,odin,debug-source-00387,Chicken Salad,4.00,DBG00000429,Transit,Transit Entree,Chick Salad,pos_ready,false,,,,,,,
+row-388,odin,debug-source-00388,Extra Meat/ Fries,2.70,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-389,odin,debug-source-00389,Oreo Mini,2.00,DBG00000290,Snacks,Packaged Snacks,Oreo Mini,pos_ready,false,,,,,,,
+row-390,odin,debug-source-00390,Free Style Entree,7.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-391,odin,debug-source-00391,Premium Dessert,3.50,DBG00000531,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-392,odin,debug-source-00392,Chef's Salad,6.00,DBG00000532,Transit,,,deleted,false,operator deleted,,,,,,
+row-393,odin,debug-source-00393,Philly Pork Sand Combo,6.50,DBG00000533,Entrees,,,deleted,false,operator deleted,,,,,,
+row-394,odin,debug-source-00394,Cheese Stick,2.00,DBG00000454,Desserts/Snacks,Transit Non-Entree,Chz Stick,pos_ready,false,,,,,,,
+row-395,odin,debug-source-00395,Chocolate Cup,4.75,DBG00000233,Ice Cream,Ice Cream,Choc Cup,pos_ready,false,,,,,,,
+row-396,odin,debug-source-00396,Sweet and Salty Trail Mix,2.00,DBG00000534,Snacks,,,deleted,false,operator deleted,,,,,,
+row-397,odin,debug-source-00397,Core Power,4.75,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-398,odin,debug-source-00398,Reuben Sandwich,4.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-399,odin,debug-source-00399,House Made Spicy Dill Chips,2.00,DBG00000276,Snacks,Packaged Snacks,HsMadeSpcyDillC,pos_ready,false,,,,,,,
+row-400,odin,debug-source-00400,Free Style Grits,3.00,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-401,odin,debug-source-00401,Hot Fries,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-402,odin,debug-source-00402,Chester's Hot Fries,2.00,DBG00000261,Snacks,Packaged Snacks,ChstrSHotFrs,pos_ready,false,,,,,,,
+row-403,odin,debug-source-00403,CONTRACT BRKFST #3,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-404,odin,debug-source-00404,ADULT MILK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-405,odin,debug-source-00405,Box Lunch,5.95,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-406,odin,debug-source-00406,Do Not Use,3.75,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-407,odin,debug-source-00407,Chicken Parmesan Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-408,odin,debug-source-00408,Meat Ball Sub,4.95,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-409,odin,debug-source-00409,Cheese Burger,3.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-410,odin,debug-source-00410,Bacon Cheeseburger Combo,6.50,DBG00000535,Entrees,,,deleted,false,operator deleted,,,,,,
+row-411,odin,debug-source-00411,Italian Sausage Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-412,odin,debug-source-00412,Chicken Ceasar Wrap,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-413,odin,debug-source-00413,Brownie,2.50,DBG00000458,Desserts/Snacks,Trayed Desserts,Brownie,pos_ready,false,,,,,,,
+row-414,odin,debug-source-00414,CONTRACT BRKFST #4,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-415,odin,debug-source-00415,Sausage Burrito,2.75,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-416,odin,debug-source-00416,Cookie,2.10,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-417,odin,debug-source-00417,Croissant,2.75,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-418,odin,debug-source-00418,COFFEE CHARGE,1.25,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-419,odin,debug-source-00419,Guac Side,0.80,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-420,odin,debug-source-00420,Aqua Fresca,2.75,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-421,odin,debug-source-00421,CHIPS,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-422,odin,debug-source-00422,Chic Bisc,3.75,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-423,odin,debug-source-00423,Turkey & Cheese Wrap,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-424,odin,debug-source-00424,Side Dish,2.70,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-425,odin,debug-source-00425,Veg Ranch,2.50,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-426,odin,debug-source-00426,Spk Ice,3.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-427,odin,debug-source-00427,Small Salad,3.75,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-428,odin,debug-source-00428,WM Lmnd,2.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-429,odin,debug-source-00429,Soup,2.99,,Soups and Ladles,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-430,odin,debug-source-00430,Sm Burger Combo,3.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-431,odin,debug-source-00431,Protein Pack,5.75,DBG00000536,Transit,,,deleted,false,operator deleted,,,,,,
+row-432,odin,debug-source-00432,Small Soup,2.00,,Soups and Ladles,,,deleted,false,operator deleted,,,,,,missing barcode
+row-433,odin,debug-source-00433,Specialty Salad,6.50,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-434,odin,debug-source-00434,Cheese Pizza Combo,5.50,DBG00000325,Entrees,Plated Entree,,deleted,false,merged into row-161,row-161,DBG00000325,DBG00000160,"DBG00000160,DBG00000325",2026-07-19T00:00:00,duplicate name; barcode transferred to row-161
+row-435,odin,debug-source-00435,Donut,2.50,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-436,odin,debug-source-00436,Premium Granola/Pop Tart,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-437,odin,debug-source-00437,French Brd Pizza,2.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-438,odin,debug-source-00438,Salad Bar,6.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-439,odin,debug-source-00439,Crossroads Entree,4.75,DBG00000537,Entrees,,,deleted,false,operator deleted,,,,,,
+row-440,odin,debug-source-00440,Grill Cheese,2.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-441,odin,debug-source-00441,Philly Cheese,4.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-442,odin,debug-source-00442,Tater Tots,2.70,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-443,odin,debug-source-00443,Sub Sandwich,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-444,odin,debug-source-00444,Sub & Wrap Combo,5.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-445,odin,debug-source-00445,Side Salad,2.50,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-446,odin,debug-source-00446,SEC English Muffin,3.20,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-447,odin,debug-source-00447,Chicken Salads,5.75,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-448,odin,debug-source-00448,Premium Ice Cream,4.75,,Ice Cream,,,deleted,false,operator deleted,,,,,,missing barcode
+row-449,odin,debug-source-00449,Chips,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-450,odin,debug-source-00450,Snacks,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-451,odin,debug-source-00451,Hummus,3.20,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-452,odin,debug-source-00452,Cinnamon Beignets,2.50,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-453,odin,debug-source-00453,Greek Yogurts,2.10,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-454,odin,debug-source-00454,Gumbo Small,2.99,,Soups and Ladles,,,deleted,false,operator deleted,,,,,,missing barcode
+row-455,odin,debug-source-00455,Spicy Chicken Sandwi,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-456,odin,debug-source-00456,Chzburger,3.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-457,odin,debug-source-00457,Cheese Nachos,2.75,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-458,odin,debug-source-00458,Chicken Parm Sandwic,2.35,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-459,odin,debug-source-00459,Bottled Water,1.60,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-460,odin,debug-source-00460,THE END,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-461,odin,debug-source-00461,Bottled Juice,3.25,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-462,odin,debug-source-00462,Breakfast Sandwich,3.75,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-463,odin,debug-source-00463,Tuna Sandwich,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-464,odin,debug-source-00464,Fruit Plate,4.00,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-465,odin,debug-source-00465,Peace Tea,2.95,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-466,odin,debug-source-00466,MI Entree ALa Carte,5.05,DBG00000538,Entrees,,,deleted,false,operator deleted,,,,,,
+row-467,odin,debug-source-00467,Bottled Water,1.60,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-468,odin,debug-source-00468,VW Zero Acai Bl Pom,4.00,DBG00000503,Beverages,Vendor Beverages,VwZeroAcaiBlPom,pos_ready,false,,,,,,,
+row-469,odin,debug-source-00469,VW lemonade,4.00,DBG00000501,Beverages,Vendor Beverages,Vw Lemonade,pos_ready,false,,,,,,,
+row-470,odin,debug-source-00470,VW Dragon Fruit,4.00,DBG00000499,Beverages,Vendor Beverages,Vw Dragon Frt,pos_ready,false,,,,,,,
+row-471,odin,debug-source-00471,VW Kiwi Strawberry,4.00,DBG00000500,Beverages,Vendor Beverages,Vw Kiwi Straw,pos_ready,false,,,,,,,
+row-472,odin,debug-source-00472,VW Tropical Energy,4.00,DBG00000502,Beverages,Vendor Beverages,VwTrpclEnrgy,pos_ready,false,,,,,,,
+row-473,odin,debug-source-00473,VW Acai Bl Pom,4.00,DBG00000498,Beverages,Vendor Beverages,Vw Acai Bl Pom,pos_ready,false,,,,,,,
+row-474,odin,debug-source-00474,Eggroll,2.00,,Bread,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-475,odin,debug-source-00475,Oreos/ Chickpeas,0.95,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-476,odin,debug-source-00476,Ascend,1.60,DBG00000539,Beverages,,,deleted,false,operator deleted,,,,,,
+row-477,odin,debug-source-00477,Thai Chicken Wraps,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-478,odin,debug-source-00478,Chicken Club Wraps,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-479,odin,debug-source-00479,Extra Bread,0.95,,Bread,,,deleted,false,operator deleted,,,,,,missing barcode
+row-480,odin,debug-source-00480,BA Straw Ban Lyte,4.75,DBG00000540,Beverages,,,deleted,false,operator deleted,,,,,,
+row-481,odin,debug-source-00481,Body Armor Zero Cherry Lime,4.75,DBG00000541,Beverages,,,deleted,false,operator deleted,,,,,,
+row-482,odin,debug-source-00482,Core Power Chocolate,4.75,DBG00000467,Beverages,Vendor Beverages,Core Power Choc,pos_ready,false,,,,,,,
+row-483,odin,debug-source-00483,Core Power Vanilla,4.75,DBG00000469,Beverages,Vendor Beverages,CorePwrVnll,pos_ready,false,,,,,,,
+row-484,odin,debug-source-00484,Core Power Strawberry,4.75,DBG00000468,Beverages,Vendor Beverages,CorePowerStraw,pos_ready,false,,,,,,,
+row-485,odin,debug-source-00485,Pasta Salad,3.50,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-486,odin,debug-source-00486,Bagel Pizza,1.60,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-487,odin,debug-source-00487,Premium Small Salad,4.25,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-488,odin,debug-source-00488,Chobani Strawberry,2.10,DBG00000456,Transit,Transit Non-Entree,Chobani Straw,pos_ready,false,,,,,,,
+row-489,odin,debug-source-00489,Body Armor Strawberry Grape,4.75,DBG00000542,Beverages,,,deleted,false,operator deleted,,,,,,
+row-490,odin,debug-source-00490,Body Armor Kiwi Straw,4.75,DBG00000543,Beverages,,,deleted,false,operator deleted,,,,,,
+row-491,odin,debug-source-00491,Sm Burger,2.98,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-492,odin,debug-source-00492,Body Armor Fruit Punch,4.75,DBG00000544,Beverages,,,deleted,false,operator deleted,,,,,,
+row-493,odin,debug-source-00493,Body Armor Tropical Punch,4.75,DBG00000545,Beverages,,,deleted,false,operator deleted,,,,,,
+row-494,odin,debug-source-00494,Body Armor Zero Blueberry Pom,4.75,DBG00000546,Beverages,,,deleted,false,operator deleted,,,,,,
+row-495,odin,debug-source-00495,Popcorners Kettle Corn,2.00,DBG00000547,Snacks,,,deleted,false,operator deleted,,,,,,
+row-496,odin,debug-source-00496,Chobani Blueberry,2.10,DBG00000455,Transit,Transit Non-Entree,ChbnBlbrry,pos_ready,false,,,,,,,
+row-497,odin,debug-source-00497,Chic Cup,1.25,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-498,odin,debug-source-00498,Sausage Biscuit,2.50,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-499,odin,debug-source-00499,Transit 1/2 Wrap,3.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-500,odin,debug-source-00500,Oatmeal,2.75,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-501,odin,debug-source-00501,Panini,4.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-502,odin,debug-source-00502,Spicy Chicken Wrap,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-503,odin,debug-source-00503,JD GRILL,0.00,,Unknown,,,deleted,false,operator deleted,,,,,,missing barcode
+row-504,odin,debug-source-00504,Chix Cup,1.25,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-505,odin,debug-source-00505,Oz Sport h2o,2.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-506,odin,debug-source-00506,BREAKFAST,0.00,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-507,odin,debug-source-00507,BEVERAGES,0.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-508,odin,debug-source-00508,SALADS SOUPS AND SIDES,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-509,odin,debug-source-00509,SANDWICHES,0.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-510,odin,debug-source-00510,ENTREES,0.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-511,odin,debug-source-00511,DESSERTS/SNACKS,0.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-512,odin,debug-source-00512,MISC $2.00,2.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-513,odin,debug-source-00513,<Deposit Cash,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-514,odin,debug-source-00514,<Deposit Check,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-515,odin,debug-source-00515,Small Burger Combo,4.32,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-516,odin,debug-source-00516,Small Fruit,0.50,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-517,odin,debug-source-00517,<<Misc>>,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-518,odin,debug-source-00518,Gummie Snacks,1.55,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-519,odin,debug-source-00519,Bowl BYO,6.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-520,odin,debug-source-00520,Transit Sandwich,4.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-521,odin,debug-source-00521,Chocolate Chip Brookies,3.50,DBG00000461,Desserts/Snacks,Trayed Desserts,ChocChipBrks,pos_ready,false,,,,,,,
+row-522,odin,debug-source-00522,Tomato and Cheese Quiche,5.05,DBG00000385,Entrees,Plated Entree,Tom Chz Quiche,pos_ready,false,,,,,,,
+row-523,odin,debug-source-00523,Fried Mozzarella Sticks,4.75,DBG00000339,Entrees,Plated Entree,FriedMozzSticks,pos_ready,false,,,,,,,
+row-524,odin,debug-source-00524,Rice Krispie Treat,2.50,DBG00000465,Desserts/Snacks,Trayed Desserts,RiceKrspTrt,pos_ready,false,,,,,,,
+row-525,odin,debug-source-00525,Caprese Sandwich on Ciabatta,4.50,DBG00000422,Sandwiches,Transit Entree,CprsSandOnCbtt,pos_ready,false,,,,,,,
+row-526,odin,debug-source-00526,Honey Mustard Chicken Tender Wrap,3.25,DBG00000438,Sandwiches,Transit Entree,,deleted,false,merged into row-82,row-82,DBG00000438,DBG00000081,"DBG00000081,DBG00000438",2026-07-19T00:00:00,duplicate name; barcode transferred to row-82
+row-527,odin,debug-source-00527,"Discontinued - Blueberry, Yogurt, and Granola Parf",3.50,DBG00000548,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-528,odin,debug-source-00528,Assorted Scones,2.50,DBG00000208,Breakfast,Breakfast,Asst Scones,pos_ready,false,,,,,,,
+row-529,odin,debug-source-00529,Turkey and Provolone Wrap,3.25,DBG00000549,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-530,odin,debug-source-00530,Bacon-Cheddar Chicken Sandwich,4.75,DBG00000299,Entrees,Plated Entree,BcnChdChickSand,pos_ready,false,,,,,,,
+row-531,odin,debug-source-00531,Buffalo Chicken Sandwich,4.75,DBG00000550,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-532,odin,debug-source-00532,House-Made Lemonade,1.40,"DBG00000218,DBG00000092",Beverages,House-made Beverages,HsMadeLmnd,pos_ready,true,,,,,,,
+row-533,odin,debug-source-00533,Chicken Caesar Salad,6.50,DBG00000428,Transit,Transit Entree,ChkCaesarSalad,pos_ready,false,,,,,,,
+row-534,odin,debug-source-00534,Banana Pudding Parfait,3.75,DBG00000551,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-535,odin,debug-source-00535,Strawberry Shortcake,3.50,DBG00000552,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-536,odin,debug-source-00536,Pesto Caprese on Ciabatta,4.25,DBG00000553,Entrees,,,deleted,false,operator deleted,,,,,,
+row-537,odin,debug-source-00537,Grilled Chicken Garden Salad,6.50,DBG00000554,Transit,,,deleted,false,operator deleted,,,,,,
+row-538,odin,debug-source-00538,Turkey and Pesto Sandwich,4.25,DBG00000555,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-539,odin,debug-source-00539,Cubano,4.75,DBG00000336,Entrees,Plated Entree,Cubano,pos_ready,false,,,,,,,
+row-540,odin,debug-source-00540,Turkey Ranch Wrap,3.25,DBG00000556,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-541,odin,debug-source-00541,Arroz Moro (Cuban Black Beans & Ric,5.05,DBG00000557,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-542,odin,debug-source-00542,Chicken and Bacon Club on Pretzel R,4.50,DBG00000425,Sandwiches,Transit Entree,ChkBcnClubOnPrt,pos_ready,false,,,,,,,
+row-543,odin,debug-source-00543,Shrimp Caesar Salad,7.50,DBG00000446,Salads and Sides,Transit Entree,ShrmpCsrSld,pos_ready,false,,,,,,,
+row-544,odin,debug-source-00544,HouseandFried Tortilla Chips,2.70,DBG00000394,Salads and Sides,Plated Sides,HFriTortChip,pos_ready,false,,,,,,,
+row-545,odin,debug-source-00545,Unsweetened Iced Tea,1.40,DBG00000558,Beverages,,,deleted,false,operator deleted,,,,,,
+row-546,odin,debug-source-00546,Ranch Chicken Tender Wrap,3.25,DBG00000442,Sandwiches,Transit Entree,RnchChkTndrWrap,pos_ready,false,,,,,,,
+row-547,odin,debug-source-00547,Ham and Cheese Wrap,3.25,DBG00000559,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-548,odin,debug-source-00548,Ham and Cheddar Sub,4.25,DBG00000436,Sandwiches,Transit Entree,Ham Chd Sub,pos_ready,false,,,,,,,
+row-549,odin,debug-source-00549,Cilantro-Lime Rice,2.70,DBG00000391,Salads and Sides,Plated Sides,ClntrLimeRice,pos_ready,false,,,,,,,
+row-550,odin,debug-source-00550,Southwestern Salad with Chicken,7.00,DBG00000560,Transit,,,deleted,false,operator deleted,,,,,,
+row-551,odin,debug-source-00551,Chocolate Cake with Chocolate Frosting,3.75,DBG00000459,Desserts/Snacks,Trayed Desserts,ChocCakeChocFrs,pos_ready,false,,,,,,,
+row-552,odin,debug-source-00552,Vegetable and Hummus Wrap,3.25,DBG00000561,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-553,odin,debug-source-00553,Turkey and Swiss Sandwich,4.25,DBG00000453,Sandwiches,Transit Entree,TurkeySwissSand,pos_ready,false,,,,,,,
+row-554,odin,debug-source-00554,Turkey and Cheddar Sub,4.50,DBG00000450,Sandwiches,Transit Entree,Turkey Chd Sub,pos_ready,false,,,,,,,
+row-555,odin,debug-source-00555,Pasta with Marinara,5.05,"DBG00000362,DBG00000103",Entrees,Plated Entree,Pasta Marinara,pos_ready,true,,,,,,,
+row-556,odin,debug-source-00556,Sesame Cucumber Salad,4.00,DBG00000445,Salads and Sides,Transit Entree,SsmCcmbrSld,pos_ready,false,,,,,,,
+row-557,odin,debug-source-00557,Egg and Cheese Biscuit,2.50,DBG00000562,Breakfast,,,deleted,false,operator deleted,,,,,,
+row-558,odin,debug-source-00558,Buffalo Shrimp Wrap,4.25,DBG00000419,Transit,Transit Entree,BfflShrmpWrap,pos_ready,false,,,,,,,
+row-559,odin,debug-source-00559,Ham and Cheese Wrap,3.25,DBG00000563,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-560,odin,debug-source-00560,Assorted Gelatin,2.50,DBG00000254,Desserts/Snacks,Packaged Desserts,Asst Gelatin,pos_ready,false,,,,,,,
+row-561,odin,debug-source-00561,Blueberry Quinoa Salad,7.00,DBG00000564,Transit,,,deleted,false,operator deleted,,,,,,
+row-562,odin,debug-source-00562,Grilled Cheese,4.75,DBG00000565,Entrees,,,deleted,false,operator deleted,,,,,,
+row-563,odin,debug-source-00563,California Roll Sushi Cup,4.75,DBG00000421,Transit,Transit Entree,ClfrnRollSshCup,pos_ready,false,,,,,,,
+row-564,odin,debug-source-00564,"Turkey, Bacon, and Ranch Wrap",3.25,DBG00000566,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-565,odin,debug-source-00565,Grilled Chicken Pesto Sandwich,4.75,DBG00000567,Entrees,,,deleted,false,operator deleted,,,,,,
+row-566,odin,debug-source-00566,Ham and Swiss Sub,4.25,DBG00000568,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-567,odin,debug-source-00567,Cheese Quesadillas,4.25,DBG00000569,Entrees,,,deleted,false,operator deleted,,,,,,
+row-568,odin,debug-source-00568,New-York Style Strawberry Cheesecake,3.75,DBG00000570,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-569,odin,debug-source-00569,Strawberry Banana Smoothie,4.00,DBG00000228,Beverages,House-made Beverages,StrwBnnSmth,pos_ready,false,,,,,,,
+row-570,odin,debug-source-00570,Chicken Pot Pie,5.05,DBG00000331,Entrees,Plated Entree,Chick Pot Pie,pos_ready,false,,,,,,,
+row-571,odin,debug-source-00571,Quinoa with Chickpeas and Tomatoes,5.05,DBG00000371,Entrees,Plated Entree,QuinChckpTmts,pos_ready,false,,,,,,,
+row-572,odin,debug-source-00572,Seasoned Hamburgers,4.75,DBG00000375,Entrees,Plated Entree,Seasoned Hmbrgr,pos_ready,false,,,,,,,
+row-573,odin,debug-source-00573,Carrot Cake with Cream Cheese Icing,3.75,DBG00000571,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-574,odin,debug-source-00574,Baked Ziti with Meatballs,5.05,DBG00000572,Entrees,,,deleted,false,operator deleted,,,,,,
+row-575,odin,debug-source-00575,Honey-Butter Chicken Thighs,5.05,DBG00000573,Entrees,,,deleted,false,operator deleted,,,,,,
+row-576,odin,debug-source-00576,Chocolate Cake with Vanilla Icing and Chocolate Ch,3.75,DBG00000460,Desserts/Snacks,Trayed Desserts,ChocCakeVnllIcn,pos_ready,false,,,,,,,
+row-577,odin,debug-source-00577,"Chicken, Spinach, and Strawberry Sa",7.00,DBG00000574,Transit,,,deleted,false,operator deleted,,,,,,
+row-578,odin,debug-source-00578,New-York Style Cheesecake,3.75,DBG00000575,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-579,odin,debug-source-00579,Teriyaki Noodle Salad,4.50,DBG00000576,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-580,odin,debug-source-00580,Assorted Gelatin with Whipped Cream,2.75,DBG00000577,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-581,odin,debug-source-00581,Turkey and Cheddar Croissant,4.50,DBG00000449,Sandwiches,Transit Entree,Turkey Chd Croi,pos_ready,false,,,,,,,
+row-582,odin,debug-source-00582,Ham and Cheddar on Kaiser Roll,4.50,DBG00000435,Sandwiches,Transit Entree,HamChddrOnKsrRo,pos_ready,false,,,,,,,
+row-583,odin,debug-source-00583,Beef Chili,2.99,DBG00000408,Soups and Ladles,Soups,Beef Chili,pos_ready,false,,,,,,,
+row-584,odin,debug-source-00584,Ham and Swiss Croissant,4.25,DBG00000578,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-585,odin,debug-source-00585,Sausage and Cheese Biscuit,3.75,DBG00000579,Breakfast,,,deleted,false,operator deleted,,,,,,
+row-586,odin,debug-source-00586,Garlic-Roasted Broccoli,2.70,DBG00000580,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-587,odin,debug-source-00587,Ham and Provolone Croissant,4.25,DBG00000581,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-588,odin,debug-source-00588,Grilled Ham and Cheese,4.25,DBG00000582,Entrees,,,deleted,false,operator deleted,,,,,,
+row-589,odin,debug-source-00589,Cinnamon-Sugar Soft Pretzels,3.50,DBG00000392,Snacks,Plated Sides,CinSgrSoftPrtzl,pos_ready,false,,,,,,,
+row-590,odin,debug-source-00590,Bang Bang Sauce,0.00,DBG00000583,Misc,,,deleted,false,operator deleted,,,,,,
+row-591,odin,debug-source-00591,Ranch Chef's Salad Wrap,3.25,DBG00000584,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-592,odin,debug-source-00592,Bang Bang Shrimp Bowl,7.10,DBG00000303,Entrees,Plated Entree,BangBangShrmpBo,pos_ready,false,,,,,,,
+row-593,odin,debug-source-00593,Bang Bang Tofu Rice Bowl,6.10,DBG00000306,Entrees,Plated Entree,BangBangTofuRic,pos_ready,false,,,,,,,
+row-594,odin,debug-source-00594,Sweet Potato Fries,2.70,DBG00000585,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-595,odin,debug-source-00595,Fajita Vegetables,2.70,DBG00000586,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-596,odin,debug-source-00596,Flour Tortillas (6 inch),0.00,DBG00000587,Bread,,,deleted,false,operator deleted,,,,,,
+row-597,odin,debug-source-00597,Mexican Rice,2.70,DBG00000588,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-598,odin,debug-source-00598,Roasted Broccoli,2.70,DBG00000589,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-599,odin,debug-source-00599,Meatballs with Marinara,5.05,DBG00000355,Entrees,Plated Entree,MtbllsMrnr,pos_ready,false,,,,,,,
+row-600,odin,debug-source-00600,Chicken Tortilla Soup (GF),2.99,DBG00000411,Soups and Ladles,Soups,ChkTrtllSoupGf,pos_ready,false,,,,,,,
+row-601,odin,debug-source-00601,Chocolate Tiramisu,3.75,DBG00000590,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-602,odin,debug-source-00602,Lemonade Iced Tea,2.75,DBG00000220,Beverages,House-made Beverages,LemonadeIcedTea,pos_ready,false,,,,,,,
+row-603,odin,debug-source-00603,Turkey and Cheddar Pinwheel,3.25,DBG00000591,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-604,odin,debug-source-00604,Chocolate Pretzels,2.25,DBG00000592,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-605,odin,debug-source-00605,Lemon-Herb Orzo,2.70,DBG00000593,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-606,odin,debug-source-00606,Fried Pesto Chicken Sandwich,4.25,DBG00000594,Entrees,,,deleted,false,operator deleted,,,,,,
+row-607,odin,debug-source-00607,Ham and Cheddar Croissant,4.50,DBG00000212,Breakfast,Breakfast,Ham Chd Croi,pos_ready,false,,,,,,,
+row-608,odin,debug-source-00608,Macaroni and Cheese Pizza,4.75,DBG00000350,Entrees,Plated Entree,Mac Chz Pizza,pos_ready,false,,,,,,,
+row-609,odin,debug-source-00609,Chipotle Chicken and Bacon Sandwich,4.75,DBG00000595,Entrees,,,deleted,false,operator deleted,,,,,,
+row-610,odin,debug-source-00610,Lemonade with Strawberry Popping Pearls,3.75,DBG00000221,Beverages,House-made Beverages,LmndStrwPppngPr,pos_ready,false,,,,,,,
+row-611,odin,debug-source-00611,Mardi Gras King Cake,3.50,DBG00000464,Desserts/Snacks,Trayed Desserts,MrdGrasKingCake,pos_ready,false,,,,,,,
+row-612,odin,debug-source-00612,Cuban Mojo Pulled Pork,5.05,DBG00000596,Entrees,,,deleted,false,operator deleted,,,,,,
+row-613,odin,debug-source-00613,House-Made Ranch Chip,2.00,DBG00000277,Desserts/Snacks,Packaged Snacks,HsMadeRnchChip,pos_ready,false,,,,,,,
+row-614,odin,debug-source-00614,Beef Lasagna,5.05,DBG00000597,Entrees,,,deleted,false,operator deleted,,,,,,
+row-615,odin,debug-source-00615,Creamy Tomato-Basil Soup,2.99,DBG00000598,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-616,odin,debug-source-00616,Chocolate Oreo® Cake with Vanilla Frosting,3.75,DBG00000599,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-617,odin,debug-source-00617,Vegetarian Egg Rolls,1.00,DBG00000600,Bread,,,deleted,false,operator deleted,,,,,,
+row-618,odin,debug-source-00618,Mozzarella Sticks with Marinara Sauce,4.50,DBG00000356,Salads and Sides,Plated Entree,MozzStcksMrnrSc,pos_ready,false,,,,,,,
+row-619,odin,debug-source-00619,Roasted Button Mushrooms,2.70,DBG00000601,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-620,odin,debug-source-00620,House-Made Honey Granola,0.30,DBG00000602,Misc,,,deleted,false,operator deleted,,,,,,
+row-621,odin,debug-source-00621,Turkey and Cheese Slider,4.25,DBG00000603,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-622,odin,debug-source-00622,Broccoli-Cheddar Soup,2.99,DBG00000407,Soups and Ladles,Rice Bowls,,deleted,false,merged into row-20,row-20,DBG00000407,DBG00000020,"DBG00000020,DBG00000407",2026-07-19T00:00:00,duplicate name; barcode transferred to row-20
+row-623,odin,debug-source-00623,Barbecue Buffalo Sauce,0.00,DBG00000604,Misc,,,deleted,false,operator deleted,,,,,,
+row-624,odin,debug-source-00624,BBQ Pulled Pork,5.05,DBG00000310,Entrees,Plated Entree,Bbq Pulled Pork,pos_ready,false,,,,,,,
+row-625,odin,debug-source-00625,Hashbrowns,2.00,DBG00000213,Breakfast,Breakfast,Hashbrowns,pos_ready,false,,,,,,,
+row-626,odin,debug-source-00626,Three-Cheese Broccoli and Rice Casserole,5.05,DBG00000384,Entrees,Plated Entree,ThrChzBrcclRice,pos_ready,false,,,,,,,
+row-627,odin,debug-source-00627,Bang Bang Tofu,5.05,"DBG00000304,DBG00000305",Entrees,Plated Entree,Bang Bang Tofu,pos_ready,true,,,,,,,
+row-628,odin,debug-source-00628,Turkey and Provolone Croissant,4.25,DBG00000451,Sandwiches,Transit Entree,TP Croi,pos_ready,false,,,,,,,
+row-629,odin,debug-source-00629,Blueberry Muffin Trifle,3.75,DBG00000259,Snacks,Packaged Snacks,BlbrryMffnTrfl,pos_ready,false,,,,,,,
+row-630,odin,debug-source-00630,Nashville Hot Chicken Sandwich,4.75,DBG00000359,Entrees,Plated Entree,NshvHotSndSand,pos_ready,false,,,,,,,
+row-631,odin,debug-source-00631,House-Roasted Turkey,5.05,DBG00000346,Entrees,Plated Entree,House Ro Turkey,pos_ready,false,,,,,,,
+row-632,odin,debug-source-00632,Honey-Ginger Chicken Thighs,5.05,DBG00000605,Entrees,,,deleted,false,operator deleted,,,,,,
+row-633,odin,debug-source-00633,Cookie Sandwich,2.50,DBG00000463,Desserts/Snacks,Trayed Desserts,Cookie Sand,pos_ready,false,,,,,,,
+row-634,odin,debug-source-00634,Frozen Grapes,2.75,DBG00000272,Snacks,Packaged Snacks,Frozen Grapes,pos_ready,false,,,,,,,
+row-635,odin,debug-source-00635,Cherry and Pineapple Fruit Punch,3.50,DBG00000606,Beverages,,,deleted,false,operator deleted,,,,,,
+row-636,odin,debug-source-00636,Turkey and Swiss Pinwheel,4.50,DBG00000452,Sandwiches,Transit Entree,TrkySwssPnwhl,pos_ready,false,,,,,,,
+row-637,odin,debug-source-00637,Peas and Carrots,2.70,DBG00000607,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-638,odin,debug-source-00638,Steamed Corn,2.70,DBG00000405,Salads and Sides,Plated Sides,St Corn,pos_ready,false,,,,,,,
+row-639,odin,debug-source-00639,Black Beans,2.70,DBG00000608,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-640,odin,debug-source-00640,Steamed Mixed Vegetables,2.70,DBG00000609,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-641,odin,debug-source-00641,Sweet and Sour Chicken,5.05,DBG00000382,Entrees,Plated Entree,,deleted,false,merged into row-136,row-136,DBG00000382,DBG00000135,"DBG00000135,DBG00000382",2026-07-19T00:00:00,duplicate name; barcode transferred to row-136
+row-642,odin,debug-source-00642,Chickpea Salad,7.00,DBG00000610,Transit,,,deleted,false,operator deleted,,,,,,
+row-643,odin,debug-source-00643,Honey-Glazed Ham,5.05,DBG00000611,Entrees,,,deleted,false,operator deleted,,,,,,
+row-644,odin,debug-source-00644,Roasted Brussels Sprouts,2.70,DBG00000398,Salads and Sides,Plated Sides,RstdBrsslsSprts,pos_ready,false,,,,,,,
+row-645,odin,debug-source-00645,Roasted Garlic Green Beans,2.70,DBG00000612,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-646,odin,debug-source-00646,Spinach and Artichoke-Stuffed Porto,5.05,DBG00000613,Entrees,,,deleted,false,operator deleted,,,,,,
+row-647,odin,debug-source-00647,Steamed Broccoli and Cauliflower,2.70,DBG00000404,Salads and Sides,Plated Sides,StmdBrcclClflwr,pos_ready,false,,,,,,,
+row-648,odin,debug-source-00648,Steamed Carrots,2.70,DBG00000614,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-649,odin,debug-source-00649,Bacon Cheeseburgers,4.75,DBG00000298,Entrees,Plated Entree,,deleted,false,merged into row-9,row-9,DBG00000298,DBG00000009,"DBG00000009,DBG00000298",2026-07-19T00:00:00,duplicate name; barcode transferred to row-9
+row-650,odin,debug-source-00650,Cheeseburgers,4.75,DBG00000615,Entrees,,,deleted,false,operator deleted,,,,,,
+row-651,odin,debug-source-00651,BBQ Chicken Pizza,4.75,DBG00000307,Entrees,Plated Entree,Bbq Chick Pizza,pos_ready,false,,,,,,,
+row-652,odin,debug-source-00652,Chicken Noodle Soup,2.99,DBG00000410,Soups and Ladles,Soups,Chick Sal Soup,pos_ready,false,,,,,,,
+row-653,odin,debug-source-00653,Chicken Tender Parmesan Club,4.25,DBG00000616,Entrees,,,deleted,false,operator deleted,,,,,,
+row-654,odin,debug-source-00654,Creamy Tomato-Basil Soup,2.99,DBG00000412,Soups and Ladles,Soups,CrmTomBaslSoup,pos_ready,false,,,,,,,
+row-655,odin,debug-source-00655,Garlic Bread,0.95,DBG00000207,Bread,Bread,Garlic Bread,pos_ready,false,,,,,,,
+row-656,odin,debug-source-00656,Garlic-Roasted Carrots,2.70,DBG00000393,Salads and Sides,Plated Sides,GarlicRoCarrots,pos_ready,false,,,,,,,
+row-657,odin,debug-source-00657,Sauteed Mexican Green Beans,2.70,DBG00000617,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-658,odin,debug-source-00658,Steamed Cauliflower,2.70,DBG00000618,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-659,odin,debug-source-00659,Turkey Noodle Soup,2.99,DBG00000415,Soups and Ladles,Soups,Turk Nood Soup,pos_ready,false,,,,,,,
+row-660,odin,debug-source-00660,Bean and Vegetable Cassoulet,5.05,DBG00000619,Entrees,,,deleted,false,operator deleted,,,,,,
+row-661,odin,debug-source-00661,Crispy Eggplant Parmesan,5.05,DBG00000620,Entrees,,,deleted,false,operator deleted,,,,,,
+row-662,odin,debug-source-00662,Garlic Lo Mein,2.70,DBG00000621,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-663,odin,debug-source-00663,House-Roasted Cajun Chicken Breast,5.05,DBG00000622,Entrees,,,deleted,false,operator deleted,,,,,,
+row-664,odin,debug-source-00664,Roasted Red Potatoes,2.70,DBG00000623,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-665,odin,debug-source-00665,Vegetarian Shepherd's Pie,5.05,DBG00000388,Entrees,Plated Entree,VegShepherdSPie,pos_ready,false,,,,,,,
+row-666,odin,debug-source-00666,Pasta,2.70,DBG00000397,Salads and Sides,Plated Sides,Pasta,pos_ready,false,,,,,,,
+row-667,odin,debug-source-00667,Rice with Salsa,2.70,DBG00000624,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-668,odin,debug-source-00668,Steamed Corn,2.70,DBG00000625,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-669,odin,debug-source-00669,General Tso's Tofu,5.05,DBG00000626,Entrees,,,deleted,false,operator deleted,,,,,,
+row-670,odin,debug-source-00670,Ranch Fries,2.70,DBG00000627,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-671,odin,debug-source-00671,Cheese Pizza,3.00,DBG00000324,Entrees,Plated Entree,,deleted,false,merged into row-32,row-32,DBG00000324,DBG00000032,"DBG00000032,DBG00000324",2026-07-19T00:00:00,duplicate name; barcode transferred to row-32
+row-672,odin,debug-source-00672,Grilled Hamburgers with Bun,4.75,DBG00000343,Entrees,Plated Entree,,deleted,false,merged into row-71,row-71,DBG00000343,DBG00000070,"DBG00000070,DBG00000343",2026-07-19T00:00:00,duplicate name; barcode transferred to row-71
+row-673,odin,debug-source-00673,Jamaican Black Beans,2.70,DBG00000628,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-674,odin,debug-source-00674,Loaded Baked Potato Soup,2.99,DBG00000629,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-675,odin,debug-source-00675,Sauteed Sesame Carrots,2.70,DBG00000630,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-676,odin,debug-source-00676,Steamed Sugar Snap Peas,2.70,DBG00000631,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-677,odin,debug-source-00677,Totchos,6.50,DBG00000387,Entrees,Plated Entree,Totchos,pos_ready,false,,,,,,,
+row-678,odin,debug-source-00678,Roasted Vegetable Medley,2.70,DBG00000632,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-679,odin,debug-source-00679,Turkey and Rice Soup,2.99,DBG00000633,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-680,odin,debug-source-00680,Margherita Pizza,3.50,DBG00000634,Entrees,,,deleted,false,operator deleted,,,,,,
+row-681,odin,debug-source-00681,Baked Beans with Bacon,2.70,DBG00000635,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-682,odin,debug-source-00682,Baked Italian Vegetable Medley,2.70,DBG00000636,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-683,odin,debug-source-00683,Chicken and Waffle Sandwich,4.50,DBG00000210,Breakfast,Breakfast,Chk Waffle Sand,pos_ready,false,,,,,,,
+row-684,odin,debug-source-00684,Garlic-Parmesan Broccoli,2.70,DBG00000637,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-685,odin,debug-source-00685,Mexican Rice with Fresh Tomatoes,2.70,DBG00000638,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-686,odin,debug-source-00686,Sautéed Vegetable Medley,2.70,DBG00000639,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-687,odin,debug-source-00687,Cheddar Refried Beans,2.70,DBG00000640,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-688,odin,debug-source-00688,Glazed Doughnuts,2.50,DBG00000211,Breakfast,Breakfast,GlazedDoughnuts,pos_ready,false,,,,,,,
+row-689,odin,debug-source-00689,Mexican-Style Street Corn Casserole,2.70,DBG00000641,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-690,odin,debug-source-00690,"Ranch Chicken, Bacon, and Cheddar P",4.25,DBG00000642,Entrees,,,deleted,false,operator deleted,,,,,,
+row-691,odin,debug-source-00691,Cheeseburger Soup,2.99,DBG00000409,Soups and Ladles,Soups,Chzbrg Soup,pos_ready,false,,,,,,,
+row-692,odin,debug-source-00692,General Tso's Chicken with Broccoli,5.05,DBG00000643,Entrees,,,deleted,false,operator deleted,,,,,,
+row-693,odin,debug-source-00693,Loaded Baked Potato Soup (GF),2.99,DBG00000414,Soups and Ladles,Soups,LodBkdPotSoup,pos_ready,false,,,,,,,
+row-694,odin,debug-source-00694,Cauliflower Cheese Soup,2.99,DBG00000644,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-695,odin,debug-source-00695,Blackened Chicken Breast,5.05,DBG00000318,Entrees,Plated Entree,BlckndChkBrst,pos_ready,false,,,,,,,
+row-696,odin,debug-source-00696,Buttered Green Peas and Onions,2.70,DBG00000645,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-697,odin,debug-source-00697,Buttermilk Cornbread,0.95,DBG00000206,Bread,Bread,Btrmlk Crnbrd,pos_ready,false,,,,,,,
+row-698,odin,debug-source-00698,Cajun Crawfish Étouffée,6.05,DBG00000646,Entrees,,,deleted,false,operator deleted,,,,,,
+row-699,odin,debug-source-00699,Chicken Fricassee,5.05,DBG00000329,Entrees,Plated Entree,Chick Fricassee,pos_ready,false,,,,,,,
+row-700,odin,debug-source-00700,Creole Shrimp,6.05,DBG00000647,Entrees,,,deleted,false,operator deleted,,,,,,
+row-701,odin,debug-source-00701,Grilled Jerk Chicken Thighs,5.05,DBG00000648,Entrees,,,deleted,false,operator deleted,,,,,,
+row-702,odin,debug-source-00702,Hamburger Steak in Mushroom Gravy,5.05,DBG00000649,Entrees,,,deleted,false,operator deleted,,,,,,
+row-703,odin,debug-source-00703,Homestyle Meatloaf,5.05,DBG00000650,Entrees,,,deleted,false,operator deleted,,,,,,
+row-704,odin,debug-source-00704,Meat Sauce,5.05,DBG00000352,Entrees,Plated Entree,Meat Sauce,pos_ready,false,,,,,,,
+row-705,odin,debug-source-00705,Shoestring Fries,2.70,DBG00000401,Salads and Sides,Plated Sides,ShoestringFries,pos_ready,false,,,,,,,
+row-706,odin,debug-source-00706,Vegetable Pizza,3.50,DBG00000651,Entrees,,,deleted,false,operator deleted,,,,,,
+row-707,odin,debug-source-00707,Fiesta Green Beans and Peppers,2.70,DBG00000652,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-708,odin,debug-source-00708,Meat Sauce,5.05,DBG00000653,Entrees,,,deleted,false,operator deleted,,,,,,
+row-709,odin,debug-source-00709,Roasted Carrots and Shallots with T,2.70,DBG00000399,Salads and Sides,Plated Sides,RstdCartsShalts,pos_ready,false,,,,,,,
+row-710,odin,debug-source-00710,Roasted Cauliflower,2.70,DBG00000654,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-711,odin,debug-source-00711,Fried Sweet & Sour Tofu,5.05,DBG00000655,Entrees,,,deleted,false,operator deleted,,,,,,
+row-712,odin,debug-source-00712,Grilled Mac & Cheese Sandwich,4.75,DBG00000656,Entrees,,,deleted,false,operator deleted,,,,,,
+row-713,odin,debug-source-00713,Herb-Roasted Squash Medley,2.70,DBG00000657,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-714,odin,debug-source-00714,Jamaican Jerk Tofu with Pepper and Onion,5.05,DBG00000658,Entrees,,,deleted,false,operator deleted,,,,,,
+row-715,odin,debug-source-00715,Lemon Pepper Chicken Wings,4.75,DBG00000659,Entrees,,,deleted,false,operator deleted,,,,,,
+row-716,odin,debug-source-00716,Sautéed Vegetable Fajitas,2.70,DBG00000660,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-717,odin,debug-source-00717,Spicy Teriyaki Tofu,5.05,DBG00000661,Entrees,,,deleted,false,operator deleted,,,,,,
+row-718,odin,debug-source-00718,Taco Meat,5.05,DBG00000662,Entrees,,,deleted,false,operator deleted,,,,,,
+row-719,odin,debug-source-00719,Roasted Vegetable Soft Tacos,5.05,DBG00000663,Entrees,,,deleted,false,operator deleted,,,,,,
+row-720,odin,debug-source-00720,Chicken and Orzo Soup,2.99,DBG00000664,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-721,odin,debug-source-00721,Beef Bourguignon,5.05,DBG00000313,Entrees,Plated Entree,BeefBourguignon,pos_ready,false,,,,,,,
+row-722,odin,debug-source-00722,Broccoli-Cheddar Pasta,5.05,DBG00000665,Entrees,,,deleted,false,operator deleted,,,,,,
+row-723,odin,debug-source-00723,Cajun-Roasted Corn,2.70,DBG00000390,Salads and Sides,Plated Sides,Cajun Ro Corn,pos_ready,false,,,,,,,
+row-724,odin,debug-source-00724,Pot Roast,5.05,DBG00000369,Entrees,Plated Entree,Pot Roast,pos_ready,false,,,,,,,
+row-725,odin,debug-source-00725,Caramelized Onion Soup,2.99,DBG00000666,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-726,odin,debug-source-00726,Sauteed Spinach,2.70,DBG00000667,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-727,odin,debug-source-00727,Smash Burger Tacos,4.75,DBG00000668,Entrees,,,deleted,false,operator deleted,,,,,,
+row-728,odin,debug-source-00728,Black Bean Stuffed Red Peppers,5.05,DBG00000669,Entrees,,,deleted,false,operator deleted,,,,,,
+row-729,odin,debug-source-00729,Gingerbread People,3.50,DBG00000670,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-730,odin,debug-source-00730,Mushroom Pot Pie,5.05,DBG00000357,Entrees,Plated Entree,MushroomPotPie,pos_ready,false,,,,,,,
+row-731,odin,debug-source-00731,Quinoa with Mushrooms,5.05,DBG00000372,Entrees,Plated Entree,QuinoaMushrooms,pos_ready,false,,,,,,,
+row-732,odin,debug-source-00732,Sausage and Sun-Dried Tomato Pasta,5.05,DBG00000671,Entrees,,,deleted,false,operator deleted,,,,,,
+row-733,odin,debug-source-00733,Sautéed Onions and Peppers,2.70,DBG00000672,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-734,odin,debug-source-00734,Edamame Succotash,2.70,DBG00000673,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-735,odin,debug-source-00735,Cinnamon Roll Cake,3.75,DBG00000674,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-736,odin,debug-source-00736,Fettuccine Alfredo with Portobello,5.05,DBG00000675,Entrees,,,deleted,false,operator deleted,,,,,,
+row-737,odin,debug-source-00737,Arroz Moro (Cuban Black Beans & Ric,5.05,DBG00000676,Entrees,,,deleted,false,operator deleted,,,,,,
+row-738,odin,debug-source-00738,Corn Chowder (GF),2.99,DBG00000677,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-739,odin,debug-source-00739,Grilled Portobello Mushrooms,2.70,DBG00000678,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-740,odin,debug-source-00740,Mashed Potatoes,2.70,DBG00000396,Salads and Sides,Plated Sides,Mashed Potatoes,pos_ready,false,,,,,,,
+row-741,odin,debug-source-00741,Brussels Sprouts and Corn,2.70,DBG00000679,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-742,odin,debug-source-00742,Fettuccine,4.00,DBG00000680,Entrees,,,deleted,false,operator deleted,,,,,,
+row-743,odin,debug-source-00743,New Orleans Style Shrimp and Grits,5.05,DBG00000681,Entrees,,,deleted,false,operator deleted,,,,,,
+row-744,odin,debug-source-00744,Tortellini Pasta Bar,6.10,DBG00000386,Entrees,Plated Entree,TrtllnPstBar,pos_ready,false,,,,,,,
+row-745,odin,debug-source-00745,Tossed to Order Chicken Bites,6.50,DBG00000682,Entrees,,,deleted,false,operator deleted,,,,,,
+row-746,odin,debug-source-00746,Sautéed Mushrooms and Onions,2.70,DBG00000683,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-747,odin,debug-source-00747,White Bean Chicken Chili,2.99,DBG00000417,Soups and Ladles,Soups,WhtBeanChkChl,pos_ready,false,,,,,,,
+row-748,odin,debug-source-00748,Chocolate Pudding Cake,3.50,DBG00000462,Desserts/Snacks,Trayed Desserts,ChocPuddingCake,pos_ready,false,,,,,,,
+row-749,odin,debug-source-00749,Garlic Eggplant,2.70,DBG00000684,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-750,odin,debug-source-00750,OpenandFaced Roast Beef and Provolo,4.75,DBG00000685,Entrees,,,deleted,false,operator deleted,,,,,,
+row-751,odin,debug-source-00751,Roasted Cherry Tomatoes,2.70,DBG00000686,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-752,odin,debug-source-00752,Chicken Marsala,5.05,DBG00000687,Entrees,,,deleted,false,operator deleted,,,,,,
+row-753,odin,debug-source-00753,Char Siu Pork Fried Rice,5.05,DBG00000688,Entrees,,,deleted,false,operator deleted,,,,,,
+row-754,odin,debug-source-00754,Cuban Mojo Chicken,5.05,DBG00000689,Entrees,,,deleted,false,operator deleted,,,,,,
+row-755,odin,debug-source-00755,Barbecue Chicken Pizza,4.75,DBG00000690,Entrees,,,deleted,false,operator deleted,,,,,,
+row-756,odin,debug-source-00756,BBQ Pulled Chicken,5.05,DBG00000691,Entrees,,,deleted,false,operator deleted,,,,,,
+row-757,odin,debug-source-00757,BBQ Pulled Pork Pizza,4.75,DBG00000311,Entrees,Plated Entree,BbqPlldPorkPzz,pos_ready,false,,,,,,,
+row-758,odin,debug-source-00758,Popcorn Shrimp,6.10,DBG00000366,Beverages,Plated Entree,Popcorn Shrimp,pos_ready,false,,,,,,,
+row-759,odin,debug-source-00759,Mexican Roast Chicken,5.05,DBG00000692,Entrees,,,deleted,false,operator deleted,,,,,,
+row-760,odin,debug-source-00760,Corn- and Tomato-Stuffed Red Pepper,5.05,DBG00000693,Entrees,,,deleted,false,operator deleted,,,,,,
+row-761,odin,debug-source-00761,Vegetable and Mozzarella Napoleon,5.05,DBG00000694,Entrees,,,deleted,false,operator deleted,,,,,,
+row-762,odin,debug-source-00762,Pepperoni Pizza Pretzels,4.75,DBG00000363,Entrees,Plated Entree,PepPzzaPretzels,pos_ready,false,,,,,,,
+row-763,odin,debug-source-00763,Southwestern Stuffed Peppers,5.05,DBG00000695,Entrees,,,deleted,false,operator deleted,,,,,,
+row-764,odin,debug-source-00764,Collard Greens with Hot Pepper Reli,2.70,DBG00000696,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-765,odin,debug-source-00765,Bang Bang Chicken,5.05,DBG00000697,Entrees,,,deleted,false,operator deleted,,,,,,
+row-766,odin,debug-source-00766,Churros,3.50,DBG00000698,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-767,odin,debug-source-00767,Orzo with Spinach,2.70,DBG00000699,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-768,odin,debug-source-00768,Blueberry-Pineapple Smoothie,4.00,DBG00000216,Beverages,House-made Beverages,BlbrryPnpplSmth,pos_ready,false,,,,,,,
+row-769,odin,debug-source-00769,Chorizo and Poblano Chowder with Ch,2.99,DBG00000700,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-770,odin,debug-source-00770,House-Made Pesto Cream Sauce,5.05,DBG00000345,Entrees,Plated Entree,HsMadePstCrmSc,pos_ready,false,,,,,,,
+row-771,odin,debug-source-00771,Sesame-Ginger Coleslaw,2.70,DBG00000701,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-772,odin,debug-source-00772,Bang Bang Shrimp,6.05,DBG00000702,Entrees,,,deleted,false,operator deleted,,,,,,
+row-773,odin,debug-source-00773,"Corn, Shrimp, and Potato Soup",2.99,DBG00000703,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-774,odin,debug-source-00774,Cheddar-Topped Shepherd's Pie,5.05,DBG00000323,Entrees,Plated Entree,ChddrTppdShphrd,pos_ready,false,,,,,,,
+row-775,odin,debug-source-00775,Spicy Garlic Lo Mein,2.70,DBG00000704,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-776,odin,debug-source-00776,Chicken Pot Pie Soup,2.99,DBG00000705,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-777,odin,debug-source-00777,Quick Pickled Cucumber Salad,4.00,DBG00000441,Salads and Sides,Transit Entree,QckPckldCcmbrSl,pos_ready,false,,,,,,,
+row-778,odin,debug-source-00778,Green Chile and Chipotle Chicken En,5.05,DBG00000341,Entrees,Plated Entree,GrnChlChpChkEn,pos_ready,false,,,,,,,
+row-779,odin,debug-source-00779,Hoisin- and Sesame-Fried Tofu,5.05,DBG00000706,Entrees,,,deleted,false,operator deleted,,,,,,
+row-780,odin,debug-source-00780,Southwestern Red Beans and Rice,2.70,DBG00000403,Salads and Sides,Plated Sides,SthwstRedBnsRic,pos_ready,false,,,,,,,
+row-781,odin,debug-source-00781,Vegetable Rice Soup,2.99,DBG00000707,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-782,odin,debug-source-00782,Taco Meat,5.05,DBG00000708,Entrees,,,deleted,false,operator deleted,,,,,,
+row-783,odin,debug-source-00783,Jamaican Jerk Pork Loin,5.05,DBG00000709,Entrees,,,deleted,false,operator deleted,,,,,,
+row-784,odin,debug-source-00784,Roasted Cherry Tomatoes,2.70,DBG00000400,Salads and Sides,Plated Sides,Ro Chr Tomatoes,pos_ready,false,,,,,,,
+row-785,odin,debug-source-00785,Vegetable Egg Drop Soup,2.99,DBG00000416,Soups and Ladles,Soups,VegEggDropSoup,pos_ready,false,,,,,,,
+row-786,odin,debug-source-00786,Discontinued - Berries and Yogurt Granola Parfait,3.50,DBG00000710,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-787,odin,debug-source-00787,Southern-Style Fried Pork Chops,5.05,DBG00000711,Entrees,,,deleted,false,operator deleted,,,,,,
+row-788,odin,debug-source-00788,Frosted Sugar Cookies with Seasonal,2.50,DBG00000712,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-789,odin,debug-source-00789,French Onion Soup,2.99,DBG00000413,Soups and Ladles,Soups,FrenchOnionSoup,pos_ready,false,,,,,,,
+row-790,odin,debug-source-00790,Baked Apple Cobbler,3.50,DBG00000713,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-791,odin,debug-source-00791,Mushroom Polenta Ragout,5.05,DBG00000714,Entrees,,,deleted,false,operator deleted,,,,,,
+row-792,odin,debug-source-00792,Pumpkin Cheesecake,3.75,DBG00000715,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-793,odin,debug-source-00793,Italian Wedding Soup,2.99,DBG00000716,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-794,odin,debug-source-00794,Tropical Melon Green Smoothie,4.00,DBG00000229,Beverages,House-made Beverages,TrpclMlnGrnSmth,pos_ready,false,,,,,,,
+row-795,odin,debug-source-00795,Mac & Cheese Side,2.70,DBG00000395,Salads and Sides,Plated Sides,Mac Chz Side,pos_ready,false,,,,,,,
+row-796,odin,debug-source-00796,Broccoli-Cheddar Soup,2.99,DBG00000717,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-797,odin,debug-source-00797,Mediterranean Chicken Soup,2.99,DBG00000718,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-798,odin,debug-source-00798,Sugar Cookies,2.10,DBG00000466,Desserts/Snacks,Trayed Desserts,Sugar Cookies,pos_ready,false,,,,,,,
+row-799,odin,debug-source-00799,Barbecue-Braised Beef Brisket,5.05,DBG00000719,Entrees,,,deleted,false,operator deleted,,,,,,
+row-800,odin,debug-source-00800,Cornbread Dressing,2.70,DBG00000720,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-801,odin,debug-source-00801,Vitality® Strawberry Kiwi Water,4.00,DBG00000721,Beverages,,,deleted,false,operator deleted,,,,,,
+row-802,odin,debug-source-00802,Grilled Chicken Quinoa Salad,7.00,DBG00000722,Transit,,,deleted,false,operator deleted,,,,,,
+row-803,odin,debug-source-00803,Beef and Cheese Quesadillas,4.75,DBG00000312,Entrees,Plated Entree,BC Quedillas,pos_ready,false,,,,,,,
+row-804,odin,debug-source-00804,Shrimp Gumbo,3.99,DBG00000723,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-805,odin,debug-source-00805,Chocolate-Dipped Sugar Cookie,2.50,DBG00000724,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-806,odin,debug-source-00806,Pasta Alfredo,5.05,DBG00000725,Entrees,,,deleted,false,operator deleted,,,,,,
+row-807,odin,debug-source-00807,Bang Bang Shrimp Wrap,4.25,DBG00000418,Sandwiches,Transit Entree,BangBangShrmpWr,pos_ready,false,,,,,,,
+row-808,odin,debug-source-00808,Creamy Marinara,5.05,DBG00000334,Entrees,Plated Entree,Crm Marinara,pos_ready,false,,,,,,,
+row-809,odin,debug-source-00809,Bang Bang Chicken,5.05,DBG00000301,Entrees,Plated Entree,Bang Bang Chick,pos_ready,false,,,,,,,
+row-810,odin,debug-source-00810,Crab Rangoon Grilled Cheese,5.75,DBG00000726,Entrees,,,deleted,false,operator deleted,,,,,,
+row-811,odin,debug-source-00811,Caesar Salad,4.50,DBG00000420,Transit,Transit Entree,Caesar Salad,pos_ready,false,,,,,,,
+row-812,odin,debug-source-00812,Ravioli Pasta Bar,6.10,DBG00000727,Entrees,,,deleted,false,operator deleted,,,,,,
+row-813,odin,debug-source-00813,SJA Salad Bar,6.25,DBG00000728,Entrees,,,deleted,false,operator deleted,,,,,,
+row-814,odin,debug-source-00814,Portuguese-Style Rice,2.70,DBG00000729,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-815,odin,debug-source-00815,Roasted Portuguese-Style Vegetables,2.70,DBG00000730,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-816,odin,debug-source-00816,Cajun Shrimp Alfredo Sauce,5.05,DBG00000321,Entrees,Plated Entree,CjnShrmpAlfrdSc,pos_ready,false,,,,,,,
+row-817,odin,debug-source-00817,Sauteed Napa Cabbage and Mushrooms,2.70,DBG00000731,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-818,odin,debug-source-00818,Chic Teri Salad,7.00,DBG00000424,Transit,Transit Entree,Chic Teri Salad,pos_ready,false,,,,,,,
+row-819,odin,debug-source-00819,FS Chicken and White Beans,7.00,DBG00000732,Entrees,,,deleted,false,operator deleted,,,,,,
+row-820,odin,debug-source-00820,"Spinach, Artichoke and Bacon Soup",2.99,DBG00000733,Soups and Ladles,,,deleted,false,operator deleted,,,,,,
+row-821,odin,debug-source-00821,Big Game Wings Bar,6.50,DBG00000734,Entrees,,,deleted,false,operator deleted,,,,,,
+row-822,odin,debug-source-00822,Chicken Tenders and Tots,6.50,DBG00000735,Entrees,,,deleted,false,operator deleted,,,,,,
+row-823,odin,debug-source-00823,Free Style Protein Pack,5.75,DBG00000736,Transit,,,deleted,false,operator deleted,,,,,,
+row-824,odin,debug-source-00824,FS Cajun Chicken and Potatoes,7.00,DBG00000737,Entrees,,,deleted,false,operator deleted,,,,,,
+row-825,odin,debug-source-00825,FS Chicken Sandwich,7.00,DBG00000738,Entrees,,,deleted,false,operator deleted,,,,,,
+row-826,odin,debug-source-00826,FS Chicken Spinach Mandarin Salad,7.00,DBG00000739,Transit,,,deleted,false,operator deleted,,,,,,
+row-827,odin,debug-source-00827,FS Cuban Pork Combo,7.00,DBG00000740,Entrees,,,deleted,false,operator deleted,,,,,,
+row-828,odin,debug-source-00828,FS Hamburger,7.00,DBG00000741,Entrees,,,deleted,false,operator deleted,,,,,,
+row-829,odin,debug-source-00829,FS Honey Ginger Chicken Combo,7.00,DBG00000742,Entrees,,,deleted,false,operator deleted,,,,,,
+row-830,odin,debug-source-00830,FS Mexican Roast Chicken,7.00,DBG00000743,Entrees,,,deleted,false,operator deleted,,,,,,
+row-831,odin,debug-source-00831,FS Vegetarian Red Beans,7.00,DBG00000744,Entrees,,,deleted,false,operator deleted,,,,,,
+row-832,odin,debug-source-00832,Hot Ramen Bar,6.50,DBG00000745,Entrees,,,deleted,false,operator deleted,,,,,,
+row-833,odin,debug-source-00833,Loaded Mac and Cheese Bar,6.50,DBG00000348,Entrees,Plated Entree,L Mac Chz Bar,pos_ready,false,,,,,,,
+row-834,odin,debug-source-00834,SJA Mashed Potato Bar,6.05,DBG00000746,Entrees,,,deleted,false,operator deleted,,,,,,
+row-835,odin,debug-source-00835,Large Red Beans Combo,6.10,DBG00000747,Entrees,,,deleted,false,operator deleted,,,,,,
+row-836,odin,debug-source-00836,Small Red Beans Combo,5.60,DBG00000748,Entrees,,,deleted,false,operator deleted,,,,,,
+row-837,odin,debug-source-00837,Bacon Chicken Pizza Combo,6.50,DBG00000749,Entrees,,,deleted,false,operator deleted,,,,,,
+row-838,odin,debug-source-00838,Beef Lasagna Combo,6.05,DBG00000750,Entrees,,,deleted,false,operator deleted,,,,,,
+row-839,odin,debug-source-00839,Burrito Bar Combo,6.50,DBG00000751,Entrees,,,deleted,false,operator deleted,,,,,,
+row-840,odin,debug-source-00840,Cajun Chicken Combo,6.05,DBG00000752,Entrees,,,deleted,false,operator deleted,,,,,,
+row-841,odin,debug-source-00841,Chicken Enchilada Combo,6.10,DBG00000328,Entrees,Plated Entree,ChkEnchiladaCmb,pos_ready,false,,,,,,,
+row-842,odin,debug-source-00842,Chicken Marsala Combo,6.05,DBG00000753,Entrees,,,deleted,false,operator deleted,,,,,,
+row-843,odin,debug-source-00843,Chicken Parm Sandwich Combo,6.05,DBG00000754,Entrees,,,deleted,false,operator deleted,,,,,,
+row-844,odin,debug-source-00844,Chicken Teriyaki Combo,6.05,DBG00000332,Entrees,Plated Entree,Chick Nood Cmb,pos_ready,false,,,,,,,
+row-845,odin,debug-source-00845,Fried Rice Take Out Combo,6.50,DBG00000340,Entrees,Plated Entree,FrdRiceTakeOutC,pos_ready,false,,,,,,,
+row-846,odin,debug-source-00846,Hamburger Steak Combo,6.05,DBG00000755,Entrees,,,deleted,false,operator deleted,,,,,,
+row-847,odin,debug-source-00847,Honey Ginger Chicken Combo,6.05,DBG00000756,Entrees,,,deleted,false,operator deleted,,,,,,
+row-848,odin,debug-source-00848,Meatloaf Combo,6.05,DBG00000757,Entrees,,,deleted,false,operator deleted,,,,,,
+row-849,odin,debug-source-00849,Mojo Pork Combo,6.10,DBG00000758,Entrees,,,deleted,false,operator deleted,,,,,,
+row-850,odin,debug-source-00850,Pesto Chicken Sandwich Combo,6.50,DBG00000759,Entrees,,,deleted,false,operator deleted,,,,,,
+row-851,odin,debug-source-00851,Pork Chop and Mac Combo,6.05,DBG00000760,Entrees,,,deleted,false,operator deleted,,,,,,
+row-852,odin,debug-source-00852,Shrimp and Grits Combo,6.05,DBG00000761,Entrees,,,deleted,false,operator deleted,,,,,,
+row-853,odin,debug-source-00853,Taco Bar Combo,6.50,DBG00000762,Entrees,,,deleted,false,operator deleted,,,,,,
+row-854,odin,debug-source-00854,Totchos Combo,6.50,DBG00000763,Entrees,,,deleted,false,operator deleted,,,,,,
+row-855,odin,debug-source-00855,Meatball Sub,4.75,DBG00000353,Entrees,Plated Entree,Meatball Sub,pos_ready,false,,,,,,,
+row-856,odin,debug-source-00856,Tex Mex Toppings,0.75,DBG00000764,Misc,,,deleted,false,operator deleted,,,,,,
+row-857,odin,debug-source-00857,Poblano Corn Rice,2.70,DBG00000765,Salads and Sides,,,deleted,false,operator deleted,,,,,,
+row-858,odin,debug-source-00858,Chilled Spicy Dragon Noodle Salad,4.25,DBG00000430,Transit,Transit Entree,ChlldSpcyDrgnNd,pos_ready,false,,,,,,,
+row-859,odin,debug-source-00859,Cake in a Cup,3.75,DBG00000255,Desserts/Snacks,Packaged Desserts,Cake In Cup,pos_ready,false,,,,,,,
+row-860,odin,debug-source-00860,House-Made Sweet Heat Chips,2.00,DBG00000278,Desserts/Snacks,Packaged Snacks,HousMdeSwtHtChp,pos_ready,false,,,,,,,
+row-861,odin,debug-source-00861,Black Forrest Cake In A Cup,3.75,DBG00000766,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-862,odin,debug-source-00862,Stickers Ravioli Bar,6.05,DBG00000379,Entrees,Plated Entree,StckrsRvlBar,pos_ready,false,,,,,,,
+row-863,odin,debug-source-00863,King Cake In A Cup,3.75,DBG00000767,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-864,odin,debug-source-00864,Chilled Teriyaki Noodle Salad,4.50,DBG00000768,Transit,,,deleted,false,operator deleted,,,,,,
+row-865,odin,debug-source-00865,Chilled Teriyaki Noodle Salad with Char Siu,6.50,DBG00000769,Transit,,,deleted,false,operator deleted,,,,,,
+row-866,odin,debug-source-00866,King CupCake,3.50,DBG00000770,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-867,odin,debug-source-00867,Dill Dip and Chips,2.00,DBG00000771,Transit,,,deleted,false,operator deleted,,,,,,
+row-868,odin,debug-source-00868,Chicken Sensation Salad,6.50,DBG00000772,Transit,,,deleted,false,operator deleted,,,,,,
+row-869,odin,debug-source-00869,Sensation Salad,4.50,DBG00000773,Transit,,,deleted,false,operator deleted,,,,,,
+row-870,odin,debug-source-00870,House-Fried Salt and Vinegar Potato,2.00,DBG00000774,Snacks,,,deleted,false,operator deleted,,,,,,
+row-871,odin,debug-source-00871,Cookie Butter Pack,4.00,DBG00000775,Transit,,,deleted,false,operator deleted,,,,,,
+row-872,odin,debug-source-00872,"Cheese, Grapes, Cracker Pack",5.75,DBG00000423,Transit,Transit Entree,ChzGrpsCrckrPac,pos_ready,false,,,,,,,
+row-873,odin,debug-source-00873,"Hard Boiled Eggs, Cheese, Grapes, C",5.75,DBG00000437,Transit,Transit Entree,EggsChzGrapeBnt,pos_ready,false,,,,,,,
+row-874,odin,debug-source-00874,Onion and Cheese Dip Pack,5.75,DBG00000776,Transit,,,deleted,false,operator deleted,,,,,,
+row-875,odin,debug-source-00875,Breakfast Bagel Bar,4.00,DBG00000209,Breakfast,Breakfast,BrkfstBagelBar,pos_ready,false,,,,,,,
+row-876,odin,debug-source-00876,Build You Own! Taco Salad Bar,6.10,DBG00000777,Entrees,,,deleted,false,operator deleted,,,,,,
+row-877,odin,debug-source-00877,FS Cassoulet,7.00,DBG00000778,Entrees,,,deleted,false,operator deleted,,,,,,
+row-878,odin,debug-source-00878,FS Grilled Portobello Mushroom,7.00,DBG00000779,Entrees,,,deleted,false,operator deleted,,,,,,
+row-879,odin,debug-source-00879,Loaded BBQ Nachos,6.50,DBG00000347,Entrees,Plated Entree,L Bbq Nachos,pos_ready,false,,,,,,,
+row-880,odin,debug-source-00880,Mac & Cheese Bar,6.50,DBG00000780,Entrees,,,deleted,false,operator deleted,,,,,,
+row-881,odin,debug-source-00881,Street Corn Chicken Bowl Combo,6.10,DBG00000380,Entrees,Plated Entree,StrtCornChkBowl,pos_ready,false,,,,,,,
+row-882,odin,debug-source-00882,BBQ Pork Pizza Combo,6.50,DBG00000309,Entrees,Plated Entree,BbqPorkPizzaCmb,pos_ready,false,,,,,,,
+row-883,odin,debug-source-00883,Pesto Pasta Combo,6.10,DBG00000781,Entrees,,,deleted,false,operator deleted,,,,,,
+row-884,odin,debug-source-00884,Shrimp Alfredo Combo,7.10,DBG00000377,Entrees,Plated Entree,Shrimp Al Cmb,pos_ready,false,,,,,,,
+row-885,odin,debug-source-00885,Tacos or Rice Bowl Combo,6.10,DBG00000782,Entrees,,,deleted,false,operator deleted,,,,,,
+row-886,odin,debug-source-00886,Sausage Pasta Combo,6.10,DBG00000783,Entrees,,,deleted,false,operator deleted,,,,,,
+row-887,odin,debug-source-00887,Chipotle Chicken Sandwich Combo,6.50,DBG00000784,Entrees,,,deleted,false,operator deleted,,,,,,
+row-888,odin,debug-source-00888,Iced Matcha Latte,3.75,DBG00000785,Beverages,,,deleted,false,operator deleted,,,,,,
+row-889,odin,debug-source-00889,Creole Shrimp Combo,7.10,DBG00000786,Entrees,,,deleted,false,operator deleted,,,,,,
+row-890,odin,debug-source-00890,Crab Rangoon Grilled Cheese Combo,7.50,DBG00000787,Entrees,,,deleted,false,operator deleted,,,,,,
+row-891,odin,debug-source-00891,Hummus and Carrots,4.00,DBG00000788,Transit,,,deleted,false,operator deleted,,,,,,
+row-892,odin,debug-source-00892,Bang Bang Shrimp Combo,7.10,DBG00000789,Entrees,,,deleted,false,operator deleted,,,,,,
+row-893,odin,debug-source-00893,Build-Your-Own Burrito Bar,6.10,DBG00000790,Entrees,,,deleted,false,operator deleted,,,,,,
+row-894,odin,debug-source-00894,Pork and Mac Combo,6.10,DBG00000367,Entrees,Plated Entree,Pork Mac Cmb,pos_ready,false,,,,,,,
+row-895,odin,debug-source-00895,Grilled Mac and Cheese Combo,6.50,DBG00000791,Entrees,,,deleted,false,operator deleted,,,,,,
+row-896,odin,debug-source-00896,Mediterranean Topping Bar,0.75,DBG00000792,Misc,,,deleted,false,operator deleted,,,,,,
+row-897,odin,debug-source-00897,Louisiana Shrimp Wrap,4.25,DBG00000793,Sandwiches,,,deleted,false,operator deleted,,,,,,
+row-898,odin,debug-source-00898,Pimento Cheese Sandwich,4.25,DBG00000440,Sandwiches,Transit Entree,PC Sand,pos_ready,false,,,,,,,
+row-899,odin,debug-source-00899,Mac and Cheese Pizza Combo,6.50,DBG00000349,Entrees,Plated Entree,MC Pizza Cmb,pos_ready,false,,,,,,,
+row-900,odin,debug-source-00900,Baked Ziti Combo,6.10,DBG00000794,Entrees,,,deleted,false,operator deleted,,,,,,
+row-901,odin,debug-source-00901,House-Fried Teriyaki Potato Chips,2.00,DBG00000795,Snacks,,,deleted,false,operator deleted,,,,,,
+row-902,odin,debug-source-00902,Merica' Cheesecake,3.75,DBG00000796,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-903,odin,debug-source-00903,Taco Salad or Nachos?,6.10,DBG00000797,Entrees,,,deleted,false,operator deleted,,,,,,
+row-904,odin,debug-source-00904,Crawfish Etouffee Combo,7.10,DBG00000798,Entrees,,,deleted,false,operator deleted,,,,,,
+row-905,odin,debug-source-00905,Guacamole and Chips,4.00,DBG00000799,Transit,,,deleted,false,operator deleted,,,,,,
+row-906,odin,debug-source-00906,BBQ Chicken Pizza Combo,6.50,DBG00000308,Entrees,Plated Entree,BbqChickPzzaCmb,pos_ready,false,,,,,,,
+row-907,odin,debug-source-00907,Baja Style House Fried Potato Chips,2.00,DBG00000257,Snacks,Packaged Snacks,BajaHsFrdPotChp,pos_ready,false,,,,,,,
+row-908,odin,debug-source-00908,Burrito or Burrito Bowl,6.10,DBG00000800,Entrees,,,deleted,false,operator deleted,,,,,,
+row-909,odin,debug-source-00909,Blackberry Lemonade,2.75,DBG00000215,Beverages,House-made Beverages,BlkbryLmnd,pos_ready,false,,,,,,,
+row-910,odin,debug-source-00910,Soft Pretzel Bar,4.75,DBG00000402,Snacks,Plated Sides,SoftPretzelBar,pos_ready,false,,,,,,,
+row-911,odin,debug-source-00911,Bubble Tea Bar,3.50,DBG00000801,Beverages,,,deleted,false,operator deleted,,,,,,
+row-912,odin,debug-source-00912,FriBao Friday,4.00,DBG00000802,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-913,odin,debug-source-00913,BBQ Bowl Combo,6.10,DBG00000803,Entrees,,,deleted,false,operator deleted,,,,,,
+row-914,odin,debug-source-00914,Dip Into Summer Chicken Bar,6.50,DBG00000804,Entrees,,,deleted,false,operator deleted,,,,,,
+row-915,odin,debug-source-00915,Made-To-Order Breakfast Sandwich Bar,3.75,DBG00000214,Breakfast,Breakfast,MdToOrdBrkfsSnd,pos_ready,false,,,,,,,
+row-916,odin,debug-source-00916,Mixed Fruit Smoothie,3.50,DBG00000805,Beverages,,,deleted,false,operator deleted,,,,,,
+row-917,odin,debug-source-00917,FS Lent Hummus Pack,5.75,DBG00000432,Transit,Transit Entree,FsLentHmmsPack,pos_ready,false,,,,,,,
+row-918,odin,debug-source-00918,Birria Quesadilla,4.75,DBG00000316,Entrees,Plated Entree,BrrQsdll,pos_ready,false,,,,,,,
+row-919,odin,debug-source-00919,Bibimbap Bar,6.10,DBG00000315,Entrees,Plated Entree,Bibimbap Bar,pos_ready,false,,,,,,,
+row-920,odin,debug-source-00920,Fajita Bar,6.10,DBG00000338,Entrees,Plated Entree,Fajita Bar,pos_ready,false,,,,,,,
+row-921,odin,debug-source-00921,Build Your Own Moroccan Bowl,6.10,DBG00000320,Entrees,Plated Entree,Moroccan Bowl,pos_ready,false,,,,,,,
+row-922,odin,debug-source-00922,Birria Quesadilla Combo,6.50,DBG00000317,Entrees,Plated Entree,BrrQsdllCmb,pos_ready,false,,,,,,,
+row-923,odin,debug-source-00923,Blackened Chicken Combo,6.10,DBG00000319,Entrees,Plated Entree,BlackenedChkCmb,pos_ready,false,,,,,,,
+row-924,odin,debug-source-00924,Chicken Club Combo,6.50,DBG00000327,Entrees,Plated Entree,Chick Club Cmb,pos_ready,false,,,,,,,
+row-925,odin,debug-source-00925,Meatball Sub Combo,6.50,DBG00000354,Entrees,Plated Entree,MeatballSubCmb,pos_ready,false,,,,,,,
+row-926,odin,debug-source-00926,Popping Lemonade Stand,3.50,DBG00000806,Beverages,,,deleted,false,operator deleted,,,,,,
+row-927,odin,debug-source-00927,Roast Beef Poboy Combo,6.50,DBG00000373,Entrees,Plated Entree,RstBeefPbyCmb,pos_ready,false,,,,,,,
+row-928,odin,debug-source-00928,Smash Burger Taco Combo,6.50,DBG00000807,Entrees,,,deleted,false,operator deleted,,,,,,
+row-929,odin,debug-source-00929,Top Allergen Free  Moroccan Chicken,7.00,DBG00000808,Entrees,,,deleted,false,operator deleted,,,,,,
+row-930,odin,debug-source-00930,Top Allergen Free Black Beans & Ric,7.00,DBG00000809,Entrees,,,deleted,false,operator deleted,,,,,,
+row-931,odin,debug-source-00931,Top Allergen Free Fajita Chicken Co,7.00,DBG00000810,Entrees,,,deleted,false,operator deleted,,,,,,
+row-932,odin,debug-source-00932,Top Allergen Free Mexican Roast Bee,7.00,DBG00000811,Entrees,,,deleted,false,operator deleted,,,,,,
+row-933,odin,debug-source-00933,Wake Up Your Waffle Bar,4.00,DBG00000812,Breakfast,,,deleted,false,operator deleted,,,,,,
+row-934,odin,debug-source-00934,Welcome Week Lunch,7.00,DBG00000389,Entrees,Plated Entree,WlcmWeekLnch,pos_ready,false,,,,,,,
+row-935,odin,debug-source-00935,Remoulade Shrimp Wrap,4.25,DBG00000443,Sandwiches,Transit Entree,RmldShrmpWrap,pos_ready,false,,,,,,,
+row-936,odin,debug-source-00936,Korean BBQ Beef Wrap,3.25,DBG00000439,Sandwiches,Transit Entree,KrnBbqBeefWrap,pos_ready,false,,,,,,,
+row-937,odin,debug-source-00937,Nacho Bar,6.10,DBG00000358,Entrees,Plated Entree,Nacho Bar,pos_ready,false,,,,,,,
+row-938,odin,debug-source-00938,Chocolate Chip Cookie Butter Pack,5.25,DBG00000813,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-939,odin,debug-source-00939,Popping Peach Mango Tea,3.75,DBG00000224,Beverages,House-made Beverages,PpngPchMngTea,pos_ready,false,,,,,,,
+row-940,odin,debug-source-00940,Nashville Hot Chicken Sandwich Combo,6.50,DBG00000360,Entrees,Plated Entree,NshvllHotChkSan,pos_ready,false,,,,,,,
+row-941,odin,debug-source-00941,French Week Combo,6.10,DBG00000814,Entrees,,,deleted,false,operator deleted,,,,,,
+row-942,odin,debug-source-00942,Yogurt Parfait Bar,4.00,DBG00000815,Breakfast,,,deleted,false,operator deleted,,,,,,
+row-943,odin,debug-source-00943,House-Made Raspberry Lemonade,2.75,DBG00000816,Beverages,,,deleted,false,operator deleted,,,,,,
+row-944,odin,debug-source-00944,House-Made Watermelon Lemonade,2.75,"DBG00000219,DBG00000205",Beverages,House-made Beverages,HsMadeWtmlLmnde,pos_ready,true,,,,,,,
+row-945,odin,debug-source-00945,Thanksgiving Feast,8.25,DBG00000817,Entrees,,,deleted,false,operator deleted,,,,,,
+row-946,odin,debug-source-00946,Bang Bang Tofu,5.05,DBG00000305,Entrees,Plated Entree,,deleted,false,merged into row-627,row-627,DBG00000305,DBG00000304,"DBG00000304,DBG00000305",2026-07-19T00:00:00,duplicate name; barcode transferred to row-627
+row-947,odin,debug-source-00947,Bacon Cheeseburger Combo,6.50,DBG00000297,Entrees,Plated Entree,,deleted,false,merged into row-150,row-150,DBG00000297,DBG00000149,"DBG00000149,DBG00000297",2026-07-19T00:00:00,duplicate name; barcode transferred to row-150
+row-948,odin,debug-source-00948,Bacon-Cheddar Chicken Sandwich Comb,6.50,DBG00000300,Entrees,Plated Entree,BcnChdChkSndCmb,pos_ready,false,,,,,,,
+row-949,odin,debug-source-00949,Bang Bang Chicken Combo,6.10,DBG00000302,Entrees,Plated Entree,BangBangChkCmb,pos_ready,false,,,,,,,
+row-950,odin,debug-source-00950,Cubano Combo,6.50,DBG00000337,Entrees,Plated Entree,Cubano Cmb,pos_ready,false,,,,,,,
+row-951,odin,debug-source-00951,Grilled Hamburger Combo,6.50,DBG00000342,Entrees,Plated Entree,Grld Burger Cmb,pos_ready,false,,,,,,,
+row-952,odin,debug-source-00952,Hot Ramen Bar,6.10,DBG00000344,Entrees,Plated Entree,Ramen Bar Bar,pos_ready,false,,,,,,,
+row-953,odin,debug-source-00953,Papri Chaat Bar,6.10,DBG00000361,Entrees,Plated Entree,Papri Chaat Bar,pos_ready,false,,,,,,,
+row-954,odin,debug-source-00954,Pho Bar,6.10,DBG00000364,Entrees,Plated Entree,Pho Bar,pos_ready,false,,,,,,,
+row-955,odin,debug-source-00955,Polynesian Bowl,6.10,DBG00000365,Entrees,Plated Entree,Polynesian Bowl,pos_ready,false,,,,,,,
+row-956,odin,debug-source-00956,Pot Pie Combo,6.10,DBG00000368,Entrees,Plated Entree,Pot Pie Cmb,pos_ready,false,,,,,,,
+row-957,odin,debug-source-00957,Pot Roast Combo,6.10,DBG00000370,Entrees,Plated Entree,Pot Roast Cmb,pos_ready,false,,,,,,,
+row-958,odin,debug-source-00958,SJA Loaded Mashed Bar,6.10,DBG00000378,Entrees,Plated Entree,SjaLMashedBar,pos_ready,false,,,,,,,
+row-959,odin,debug-source-00959,Sticker Salad Bar,6.25,DBG00000818,Entrees,,,deleted,false,operator deleted,,,,,,
+row-960,odin,debug-source-00960,STUCO Frochos,6.50,DBG00000381,Entrees,Plated Entree,Stuco Frochos,pos_ready,false,,,,,,,
+row-961,odin,debug-source-00961,Taco Bowl or Taco Salad,6.10,DBG00000383,Entrees,Plated Entree,Taco Bowl,pos_ready,false,,,,,,,
+row-962,odin,debug-source-00962,Top Allergen Free Chicken & Black B,7.00,DBG00000819,Entrees,,,deleted,false,operator deleted,,,,,,
+row-963,odin,debug-source-00963,Top Allergen Free Ginger Pork Combo,7.00,DBG00000820,Entrees,,,deleted,false,operator deleted,,,,,,
+row-964,odin,debug-source-00964,Top Allergen Free Rice Noodle Combo,7.00,DBG00000821,Entrees,,,deleted,false,operator deleted,,,,,,
+row-965,odin,debug-source-00965,Top Allergen Free Roast Beef Combo,7.00,DBG00000822,Entrees,,,deleted,false,operator deleted,,,,,,
+row-966,odin,debug-source-00966,Popping Passion Fruit Lemonade,3.75,DBG00000222,Beverages,House-made Beverages,PpngPssnFrtLmnd,pos_ready,false,,,,,,,
+row-967,odin,debug-source-00967,Popping Passion Fruit Tea,3.75,DBG00000223,Beverages,House-made Beverages,PpngPssnFrtTea,pos_ready,false,,,,,,,
+row-968,odin,debug-source-00968,Guac & Chips Pack,4.00,DBG00000434,Transit,Transit Entree,Guac Chips Pack,pos_ready,false,,,,,,,
+row-969,odin,debug-source-00969,Hot Chocolate Toppings,0.70,DBG00000217,Beverages,House-made Beverages,HotChocToppings,pos_ready,false,,,,,,,
+row-970,odin,debug-source-00970,Chicken Avocado Wrap,3.25,DBG00000426,Sandwiches,Transit Entree,ChkAvoWrap,pos_ready,false,,,,,,,
+row-971,odin,debug-source-00971,Sugar Cookie Pack,4.00,DBG00000823,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,
+row-972,odin,debug-source-00972,Popping Vietnamese Coffee,3.75,DBG00000225,Beverages,House-made Beverages,PpngVietCoff,pos_ready,false,,,,,,,
+row-973,odin,debug-source-00973,Creamy Sriracha Cucumbers,4.00,DBG00000431,Salads and Sides,Transit Entree,CrmySrrchCcmbrs,pos_ready,false,,,,,,,
+row-974,odin,debug-source-00974,Greek Cucumber Salad,4.00,DBG00000433,Salads and Sides,Transit Entree,GrkCcmbrSld,pos_ready,false,,,,,,,
+row-975,odin,debug-source-00975,Sensation Cucumber Shakers,4.00,DBG00000444,Salads and Sides,Transit Entree,SenCcmbrShkrs,pos_ready,false,,,,,,,
+row-976,odin,debug-source-00976,Vietnamese Coffee with Caramel Boba,3.75,DBG00000457,Transit,Transit Non-Entree,VietCoffWithCar,pos_ready,false,,,,,,,
+row-977,odin,debug-source-00977,Spicy Shrimp Dragon Noodles,6.50,DBG00000448,Salads and Sides,Transit Entree,SpcyShrmpDrgnNd,pos_ready,false,,,,,,,
+row-978,odin,debug-source-00978,Chicken Nuggets Combo,6.50,DBG00000330,Entrees,Plated Entree,Chk Nuggets Cmb,pos_ready,false,,,,,,,
+row-979,odin,debug-source-00979,Magherita Pizza Combo,6.25,DBG00000824,Entrees,,,deleted,false,operator deleted,,,,,,
+row-980,odin,debug-source-00980,Seasoned Hamburger Combo,6.50,DBG00000374,Entrees,Plated Entree,SsndBrgrCmb,pos_ready,false,,,,,,,
+row-981,odin,debug-source-00981,Veggie Pizza Combo,6.25,DBG00000825,Entrees,,,deleted,false,operator deleted,,,,,,
+row-982,odin,debug-source-00982,Wing Combo,6.50,DBG00000826,Entrees,,,deleted,false,operator deleted,,,,,,
+row-983,odin,debug-source-00983,Fricasse Combo,6.10,DBG00000827,Entrees,,,deleted,false,operator deleted,,,,,,
+row-984,odin,debug-source-00984,Jamaican Plate,6.10,DBG00000828,Entrees,,,deleted,false,operator deleted,,,,,,
+row-985,odin,debug-source-00985,Shepherd's Pie Combo,6.10,DBG00000376,Entrees,Plated Entree,ShepherdSPieCmb,pos_ready,false,,,,,,,
+row-986,odin,debug-source-00986,Raspberry Tea,2.75,DBG00000227,Beverages,House-made Beverages,Raspberry Tea,pos_ready,false,,,,,,,
+row-987,odin,debug-source-00987,Snow Crab Salad with Honey Sriracha Mayo,4.50,DBG00000447,Salads and Sides,Transit Entree,SnowCrabSldHnyS,pos_ready,false,,,,,,,
+row-988,odin,debug-source-00988,Mediterranean Dip Box,5.75,DBG00000829,Snacks,,,deleted,false,operator deleted,,,,,,
+row-989,odin,debug-source-00989,Beef Quesadilla Combo,6.50,DBG00000314,Entrees,Plated Entree,BeefQsdllCmb,pos_ready,false,,,,,,,
+row-990,odin,debug-source-00990,Open House Boxed Lunch,7.00,DBG00000256,Misc,Packaged Entree,OpenHsBxdLnch,pos_ready,false,,,,,,,
+row-991,odin,debug-source-00991,ToGo Entree,3.99,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-992,odin,debug-source-00992,Mangia Entree,4.99,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-993,odin,debug-source-00993,Regular Ice Cream,3.50,,Ice Cream,,,deleted,false,operator deleted,,,,,,missing barcode
+row-994,odin,debug-source-00994,BBQ Beef Sandwich,4.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-995,odin,debug-source-00995,Loaded Baked Potato,4.95,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-996,odin,debug-source-00996,JESUIT BAKE POTATO,4.50,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-997,odin,debug-source-00997,Add Catfish,1.50,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-998,odin,debug-source-00998,Jalapeno Poppers,3.00,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-999,odin,debug-source-00999,Salad  With Meat,6.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1000,odin,debug-source-01000,Granola/ Cereal Bar,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1001,odin,debug-source-01001,Mozz Sticks,3.50,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1002,odin,debug-source-01002,Seasoning 1,4.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1003,odin,debug-source-01003,Chicken Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1004,odin,debug-source-01004,add Shrimp,1.25,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1005,odin,debug-source-01005,Boxed Lunch,4.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1006,odin,debug-source-01006,Veg Plate,4.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1007,odin,debug-source-01007,Popcorn,1.25,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1008,odin,debug-source-01008,Specialty Dessrt,2.50,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1009,odin,debug-source-01009,Hamburger Combo,4.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1010,odin,debug-source-01010,Chicken Tender Combo,6.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1011,odin,debug-source-01011,Taco Salad,4.50,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1012,odin,debug-source-01012,Coffee Airpot,3.50,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1013,odin,debug-source-01013,Grilled Chicken Caesar,5.50,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1014,odin,debug-source-01014,EMPLOYEE BRKFST,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1015,odin,debug-source-01015,Boxed Lunch,5.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1016,odin,debug-source-01016,Vegetable/Starch Side,2.70,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1017,odin,debug-source-01017,Italian Club,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1018,odin,debug-source-01018,ICE CREAM BAR,1.25,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1019,odin,debug-source-01019,Small Hummus Cup,3.25,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1020,odin,debug-source-01020,Large Sub Combo,6.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1021,odin,debug-source-01021,Jalapeno Poppers,3.00,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1022,odin,debug-source-01022,Bodyarmor,4.75,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1023,odin,debug-source-01023,Tamales DZ,12.95,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1024,odin,debug-source-01024,Monterey Bacon Chicken,3.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1025,odin,debug-source-01025,ADULT BRKFST MILK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1026,odin,debug-source-01026,CONTRACT LUNCH #3,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1027,odin,debug-source-01027,CONTRACT LUNCH #4,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1028,odin,debug-source-01028,FREE MID SNACK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1029,odin,debug-source-01029,CONTRACT SNACK #3,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1030,odin,debug-source-01030,CONTRACT SNACK #4,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1031,odin,debug-source-01031,Test Item,1.50,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1032,odin,debug-source-01032,MISC $3.00,3.02,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1033,odin,debug-source-01033,Onion Rings,2.70,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1034,odin,debug-source-01034,Latte,4.70,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1035,odin,debug-source-01035,Waffle,2.50,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1036,odin,debug-source-01036,Belvita,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1037,odin,debug-source-01037,Premium Dessert,3.50,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1038,odin,debug-source-01038,Smart H2O,3.25,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1039,odin,debug-source-01039,Sushi,2.75,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1040,odin,debug-source-01040,MM Lemonade,3.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1041,odin,debug-source-01041,Lemonade Popping,3.50,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1042,odin,debug-source-01042,ADULT SNACK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1043,odin,debug-source-01043,ADULT SNACK MILK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1044,odin,debug-source-01044,Tuna Cup,2.25,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1045,odin,debug-source-01045,Chicken Cheese Steak,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1046,odin,debug-source-01046,Italian Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1047,odin,debug-source-01047,Seas Brk,5.25,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1048,odin,debug-source-01048,Turkey & Swiss Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1049,odin,debug-source-01049,Hamburger,3.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1050,odin,debug-source-01050,Chicken Tender Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1051,odin,debug-source-01051,Feast,8.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1052,odin,debug-source-01052,ADULT LUNCH,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1053,odin,debug-source-01053,EMPLOYEE LUNCH,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1054,odin,debug-source-01054,Extra Meat/ Fries,2.70,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1055,odin,debug-source-01055,Free Style Entree,7.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1056,odin,debug-source-01056,Core Power,4.75,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1057,odin,debug-source-01057,Reuben Sandwich,4.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1058,odin,debug-source-01058,Free Style Grits,3.00,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1059,odin,debug-source-01059,Hot Fries,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1060,odin,debug-source-01060,CONTRACT BRKFST #3,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1061,odin,debug-source-01061,ADULT MILK,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1062,odin,debug-source-01062,Box Lunch,5.95,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1063,odin,debug-source-01063,Do Not Use,3.75,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1064,odin,debug-source-01064,Chicken Parmesan Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1065,odin,debug-source-01065,Meat Ball Sub,4.95,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1066,odin,debug-source-01066,Cheese Burger,3.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1067,odin,debug-source-01067,Italian Sausage Sub,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1068,odin,debug-source-01068,Chicken Ceasar Wrap,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1069,odin,debug-source-01069,CONTRACT BRKFST #4,0.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1070,odin,debug-source-01070,Sausage Burrito,2.75,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1071,odin,debug-source-01071,Cookie,2.10,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1072,odin,debug-source-01072,Croissant,2.75,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1073,odin,debug-source-01073,COFFEE CHARGE,1.25,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1074,odin,debug-source-01074,Guac Side,0.80,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1075,odin,debug-source-01075,Aqua Fresca,2.75,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1076,odin,debug-source-01076,CHIPS,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1077,odin,debug-source-01077,Chic Bisc,3.75,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1078,odin,debug-source-01078,Turkey & Cheese Wrap,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1079,odin,debug-source-01079,Side Dish,2.70,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1080,odin,debug-source-01080,Veg Ranch,2.50,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1081,odin,debug-source-01081,Spk Ice,3.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1082,odin,debug-source-01082,Small Salad,3.75,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1083,odin,debug-source-01083,WM Lmnd,2.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1084,odin,debug-source-01084,Soup,2.99,,Soups and Ladles,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1085,odin,debug-source-01085,Sm Burger Combo,3.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1086,odin,debug-source-01086,Small Soup,2.00,,Soups and Ladles,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1087,odin,debug-source-01087,Specialty Salad,6.50,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1088,odin,debug-source-01088,Donut,2.50,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1089,odin,debug-source-01089,Premium Granola/Pop Tart,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1090,odin,debug-source-01090,French Brd Pizza,2.50,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1091,odin,debug-source-01091,Salad Bar,6.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1092,odin,debug-source-01092,Grill Cheese,2.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1093,odin,debug-source-01093,Philly Cheese,4.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1094,odin,debug-source-01094,Tater Tots,2.70,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1095,odin,debug-source-01095,Sub Sandwich,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1096,odin,debug-source-01096,Sub & Wrap Combo,5.75,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1097,odin,debug-source-01097,Side Salad,2.50,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1098,odin,debug-source-01098,SEC English Muffin,3.20,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1099,odin,debug-source-01099,Chicken Salads,5.75,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1100,odin,debug-source-01100,Premium Ice Cream,4.75,,Ice Cream,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1101,odin,debug-source-01101,Chips,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1102,odin,debug-source-01102,Snacks,2.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1103,odin,debug-source-01103,Hummus,3.20,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1104,odin,debug-source-01104,Cinnamon Beignets,2.50,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1105,odin,debug-source-01105,Greek Yogurts,2.10,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1106,odin,debug-source-01106,Gumbo Small,2.99,,Soups and Ladles,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1107,odin,debug-source-01107,Spicy Chicken Sandwi,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1108,odin,debug-source-01108,Chzburger,3.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1109,odin,debug-source-01109,Cheese Nachos,2.75,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1110,odin,debug-source-01110,Chicken Parm Sandwic,2.35,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1111,odin,debug-source-01111,Bottled Water,1.60,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1112,odin,debug-source-01112,THE END,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1113,odin,debug-source-01113,Bottled Juice,3.25,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1114,odin,debug-source-01114,Breakfast Sandwich,3.75,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1115,odin,debug-source-01115,Tuna Sandwich,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1116,odin,debug-source-01116,Fruit Plate,4.00,,Salads and Sides,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1117,odin,debug-source-01117,Peace Tea,2.95,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1118,odin,debug-source-01118,Bottled Water,1.60,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1119,odin,debug-source-01119,Eggroll,2.00,,Bread,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1120,odin,debug-source-01120,Oreos/ Chickpeas,0.95,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1121,odin,debug-source-01121,Thai Chicken Wraps,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1122,odin,debug-source-01122,Chicken Club Wraps,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1123,odin,debug-source-01123,Extra Bread,0.95,,Bread,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1124,odin,debug-source-01124,Pasta Salad,3.50,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1125,odin,debug-source-01125,Bagel Pizza,1.60,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1126,odin,debug-source-01126,Premium Small Salad,4.25,,Transit,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1127,odin,debug-source-01127,Sm Burger,2.98,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1128,odin,debug-source-01128,Chic Cup,1.25,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1129,odin,debug-source-01129,Sausage Biscuit,2.50,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1130,odin,debug-source-01130,Transit 1/2 Wrap,3.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode; missing category
+row-1131,odin,debug-source-01131,Oatmeal,2.75,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1132,odin,debug-source-01132,Panini,4.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1133,odin,debug-source-01133,Spicy Chicken Wrap,4.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1134,odin,debug-source-01134,JD GRILL,0.00,,Unknown,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1135,odin,debug-source-01135,Chix Cup,1.25,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1136,odin,debug-source-01136,Oz Sport h2o,2.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1137,odin,debug-source-01137,BREAKFAST,0.00,,Breakfast,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1138,odin,debug-source-01138,BEVERAGES,0.00,,Beverages,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1139,odin,debug-source-01139,SALADS SOUPS AND SIDES,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1140,odin,debug-source-01140,SANDWICHES,0.00,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1141,odin,debug-source-01141,ENTREES,0.00,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1142,odin,debug-source-01142,DESSERTS/SNACKS,0.00,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1143,odin,debug-source-01143,MISC $2.00,2.00,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1144,odin,debug-source-01144,<Deposit Cash,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1145,odin,debug-source-01145,<Deposit Check,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1146,odin,debug-source-01146,Small Burger Combo,4.32,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1147,odin,debug-source-01147,Small Fruit,0.50,,Misc,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1148,odin,debug-source-01148,<<Misc>>,0.00,,No Dept Category,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1149,odin,debug-source-01149,Gummie Snacks,1.55,,Desserts/Snacks,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1150,odin,debug-source-01150,Bowl BYO,6.25,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1151,odin,debug-source-01151,Transit Sandwich,4.25,,Sandwiches,,,deleted,false,operator deleted,,,,,,missing barcode
+row-1152,odin,debug-source-01152,ToGo Entree,3.99,,Entrees,,,deleted,false,operator deleted,,,,,,missing barcode

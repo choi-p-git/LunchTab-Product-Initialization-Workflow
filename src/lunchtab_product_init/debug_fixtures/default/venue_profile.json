@@ -1,0 +1,3007 @@
+{
+  "schema_version": 2,
+  "name": "Debug Fixture Venue Profile",
+  "categories": [
+    "Bread",
+    "Breakfast",
+    "House-made Beverages",
+    "Ice Cream",
+    "Misc Operation",
+    "Packaged Desserts",
+    "Packaged Entree",
+    "Packaged Sides",
+    "Packaged Snacks",
+    "Plated Desserts",
+    "Plated Entree",
+    "Plated Sides",
+    "Rice Bowls",
+    "Soups",
+    "Transit Entree",
+    "Transit Non-Entree",
+    "Trayed Desserts",
+    "Trayed Snacks",
+    "Vendor Beverages"
+  ],
+  "pos_name_preferences": {
+    "bacon": "BcnChdChkSndCmb",
+    "broccoli": "Broc",
+    "cajun": "Cjn",
+    "cheese": "Txt",
+    "pizza": "Pizza",
+    "quesadillas": "Quedillas",
+    "cheeseburgers": "Chs",
+    "grilled": "Grld",
+    "hamburgers": "Hmbrgr",
+    "croissant": "Croi",
+    "honey": "HonMstChkTenWrp",
+    "mustard": "Chk",
+    "chicken": "ChkAvoWrap",
+    "italian": "IT",
+    "wedding": "Wed",
+    "soup": "Soup",
+    "cheeseburger": "Chzbrg",
+    "combo": "Comb",
+    "protein": "Pro",
+    "pack": "Pack",
+    "loaded": "LodBkdPotSoup",
+    "mac": "Mac",
+    "bar": "Chz",
+    "top": "FS",
+    "allergen": "Mx",
+    "free": "Chk",
+    "mexican": "MxStCornChkBwl",
+    "welch": "WFS",
+    "pure": "Pure",
+    "life": "23.7",
+    "pasta": "Pasta",
+    "alfredo": "Al",
+    "cheddar": "Chd",
+    "arroz": "Arrz",
+    "moro": "Moro",
+    "wrap": "Wrap",
+    "creamy": "CrmTomBaslSoup",
+    "tomato": "Tom",
+    "basil": "Soup",
+    "bang": "BangBangChkCmb",
+    "nashville": "Nshv",
+    "hot": "Hot",
+    "steamed": "St",
+    "corn": "Corn",
+    "meat": "Meat",
+    "sauce": "Sauce",
+    "taco": "Taco",
+    "roasted": "Ro",
+    "cherry": "Chr",
+    "crab": "Crab",
+    "rangoon": "Grld",
+    "ramen": "Bar",
+    "chilled": "Teri",
+    "teriyaki": "Teri",
+    "noodle": "Nood",
+    "breakfast": "Bfast",
+    "sausage": "Saus",
+    "patties": "Pty",
+    "buffalo": "BffRnch",
+    "ranch": "ChkWrap",
+    "fettuccine": "Ftt",
+    "pulled": "PldPork",
+    "pork": "Snd",
+    "salad": "Sld",
+    "on": "Eng",
+    "tender": "Cae",
+    "caesar": "Wrap",
+    "chocolate": "Choccolate",
+    "chip": "Cook",
+    "cookie": "Pud",
+    "double": "Choc",
+    "fresh": "Hot",
+    "brewed": "Coffee",
+    "fried": "FriedChkSandCmb",
+    "french": "Sticks",
+    "fruit": "Van",
+    "vanilla": "Yog",
+    "yogurt": "Parf",
+    "granola": "Granola",
+    "guacamole": "Guacamole",
+    "house": "HsMadeWtmlLmnde",
+    "herb": "Ro",
+    "mixed": "MixBryVanlYog",
+    "oreo": "OreoPuddParf",
+    "biscuit": "Biscuit",
+    "english": "Muff",
+    "sauteed": "StSmmrSqshTom",
+    "seasoned": "SsnWhtBns",
+    "sweetened": "Swt",
+    "iced": "Tea",
+    "tori": "Chick",
+    "turkey": "Turk",
+    "club": "Club",
+    "vietnamese": "VietCoffWithCar",
+    "coffee": "Coffee",
+    "build": "Moroccan",
+    "your": "Bowl",
+    "burrito": "Burr",
+    "bowl": "Bowl",
+    "tacos": "Taco",
+    "or": "Bwl",
+    "tossed": "Toss",
+    "to": "CaeSal",
+    "order": "Bar",
+    "sparkling": "Sprk",
+    "ice": "Ice",
+    "black": "Blck",
+    "kiwi": "KiwiSt",
+    "super": "SuprCksCrmCone",
+    "juice": "JuicCranGrap",
+    "powerade": "Pwrd",
+    "orange": "Orange",
+    "arrezzio": "Arz",
+    "lemon": "Lmn",
+    "strawberry": "Strw",
+    "houseandfried": "HFriTortChip",
+    "quinoa": "QuinChckpTmts",
+    "buttermilk": "Btrmlk",
+    "cornbread": "Crnbrd",
+    "tomatoes": "Tomatoes",
+    "green": "GrnChlChpChkEn",
+    "hard": "EggsChzGrapeBnt",
+    "baja": "BajaHsFrdPotChp",
+    "blackberry": "BlkbryLmnd",
+    "made": "MdToOrdBrkfsSnd",
+    "popping": "PpngVietCoff",
+    "sensation": "SenCcmbrShkrs"
+  },
+  "pos_name_preference_rules": {
+    "alfredo": [
+      {
+        "value": "Al",
+        "count": 2,
+        "source_token_counts": [
+          2,
+          4
+        ],
+        "override_lengths": [
+          8,
+          14
+        ],
+        "examples": [
+          "Pasta Al",
+          "Cjn Chk Ftt Al"
+        ]
+      }
+    ],
+    "allergen": [
+      {
+        "value": "Chk",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "FS Chk Snd Cmb"
+        ]
+      },
+      {
+        "value": "Mx",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "FS Mx Chk Cmb"
+        ]
+      }
+    ],
+    "arrezzio": [
+      {
+        "value": "Arz",
+        "count": 3,
+        "source_token_counts": [
+          4,
+          4,
+          4
+        ],
+        "override_lengths": [
+          14,
+          15,
+          14
+        ],
+        "examples": [
+          "Arz Lmn It Ice",
+          "Arz Strw IT Ice",
+          "Arz Lmn IT Ice"
+        ]
+      }
+    ],
+    "arroz": [
+      {
+        "value": "Arrz",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Arrz Moro"
+        ]
+      }
+    ],
+    "bacon": [
+      {
+        "value": "Bcn",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          3
+        ],
+        "override_lengths": [
+          14,
+          15
+        ],
+        "examples": [
+          "Bcn Chzbrg Cmb",
+          "Bcn Chzbrg Comb"
+        ]
+      },
+      {
+        "value": "BcnChd",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "BcnChd Chk Snd"
+        ]
+      },
+      {
+        "value": "BcnChdChkSndCmb",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "BcnChdChkSndCmb"
+        ]
+      },
+      {
+        "value": "BcnChsbrg1",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "BcnChsbrg1"
+        ]
+      }
+    ],
+    "baja": [
+      {
+        "value": "BajaHsFrdPotChp",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "BajaHsFrdPotChp"
+        ]
+      }
+    ],
+    "bang": [
+      {
+        "value": "Bang",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          3
+        ],
+        "override_lengths": [
+          9,
+          8
+        ],
+        "examples": [
+          "Bang Tofu",
+          "Bang Chk"
+        ]
+      },
+      {
+        "value": "BangBangChkCmb",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "BangBangChkCmb"
+        ]
+      },
+      {
+        "value": "BangRiceNdlBwl",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "BangRiceNdlBwl"
+        ]
+      },
+      {
+        "value": "Chk",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          8
+        ],
+        "examples": [
+          "Bang Chk"
+        ]
+      },
+      {
+        "value": "Tofu",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Bang Tofu"
+        ]
+      }
+    ],
+    "bar": [
+      {
+        "value": "Bar",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "L Mac Chz Bar"
+        ]
+      },
+      {
+        "value": "Chz",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "L Mac & Chz Bar"
+        ]
+      }
+    ],
+    "basil": [
+      {
+        "value": "Soup",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Crm Tom Soup"
+        ]
+      }
+    ],
+    "biscuit": [
+      {
+        "value": "Biscuit",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Saus Biscuit"
+        ]
+      }
+    ],
+    "black": [
+      {
+        "value": "Blck",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Sprk Ice Blck"
+        ]
+      }
+    ],
+    "blackberry": [
+      {
+        "value": "BlkbryLmnd",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "BlkbryLmnd"
+        ]
+      }
+    ],
+    "bowl": [
+      {
+        "value": "Bowl",
+        "count": 2,
+        "source_token_counts": [
+          4,
+          5
+        ],
+        "override_lengths": [
+          9,
+          9
+        ],
+        "examples": [
+          "Burr Bowl",
+          "Taco Bowl"
+        ]
+      }
+    ],
+    "breakfast": [
+      {
+        "value": "Bfast",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Bfast Ssg Pty"
+        ]
+      }
+    ],
+    "brewed": [
+      {
+        "value": "Coffee",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "Hot Coffee"
+        ]
+      }
+    ],
+    "broccoli": [
+      {
+        "value": "BrcclChdrSoup",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "BrcclChdrSoup"
+        ]
+      },
+      {
+        "value": "Broc",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Broc Chd Soup"
+        ]
+      }
+    ],
+    "buffalo": [
+      {
+        "value": "BffRnch",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "BffRnch ChkWrap"
+        ]
+      }
+    ],
+    "build": [
+      {
+        "value": "BBQ",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          7
+        ],
+        "examples": [
+          "BBQ Bwl"
+        ]
+      },
+      {
+        "value": "Cuban",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "Cuban Bowl"
+        ]
+      },
+      {
+        "value": "Med",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          8
+        ],
+        "examples": [
+          "Med Bowl"
+        ]
+      },
+      {
+        "value": "Moroccan",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Moroccan Bowl"
+        ]
+      },
+      {
+        "value": "Sushi",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "Sushi Bowl"
+        ]
+      }
+    ],
+    "burrito": [
+      {
+        "value": "Burr",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Burr Bowl"
+        ]
+      }
+    ],
+    "buttermilk": [
+      {
+        "value": "Btrmlk",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Btrmlk Crnbrd"
+        ]
+      }
+    ],
+    "caesar": [
+      {
+        "value": "Wrap",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Chk Cae Wrap"
+        ]
+      }
+    ],
+    "cajun": [
+      {
+        "value": "Cjn",
+        "count": 3,
+        "source_token_counts": [
+          2,
+          4,
+          4
+        ],
+        "override_lengths": [
+          11,
+          14,
+          15
+        ],
+        "examples": [
+          "Cjn Chs brg",
+          "Cjn Chk Ftt Al",
+          "Cjn PldPork Snd"
+        ]
+      },
+      {
+        "value": "CjnPldPrkSand",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "CjnPldPrkSand"
+        ]
+      },
+      {
+        "value": "CjnPldPrkSndCmb",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "CjnPldPrkSndCmb"
+        ]
+      },
+      {
+        "value": "Gumbo",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          5
+        ],
+        "examples": [
+          "Gumbo"
+        ]
+      }
+    ],
+    "cheddar": [
+      {
+        "value": "Chd",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Broc Chd Soup"
+        ]
+      }
+    ],
+    "cheese": [
+      {
+        "value": "Chz",
+        "count": 4,
+        "source_token_counts": [
+          2,
+          2,
+          3,
+          4
+        ],
+        "override_lengths": [
+          8,
+          13,
+          13,
+          13
+        ],
+        "examples": [
+          "Chz Pzza",
+          "Chz Quedillas",
+          "Chz Pizza Cmb",
+          "L Mac Chz Bar"
+        ]
+      },
+      {
+        "value": "&",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "L Mac & Chz Bar"
+        ]
+      },
+      {
+        "value": "Txt",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "GrldChz Txt"
+        ]
+      }
+    ],
+    "cheeseburger": [
+      {
+        "value": "Chzbrg",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          3
+        ],
+        "override_lengths": [
+          14,
+          15
+        ],
+        "examples": [
+          "Bcn Chzbrg Cmb",
+          "Bcn Chzbrg Comb"
+        ]
+      }
+    ],
+    "cheeseburgers": [
+      {
+        "value": "Cheeseburgers",
+        "count": 1,
+        "source_token_counts": [
+          1
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Cheeseburgers 1"
+        ]
+      },
+      {
+        "value": "Chs",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "Cjn Chs brg"
+        ]
+      }
+    ],
+    "cherry": [
+      {
+        "value": "Chr",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Ro Chr Tomatoes"
+        ]
+      },
+      {
+        "value": "Tom",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          6
+        ],
+        "examples": [
+          "Ro Tom"
+        ]
+      }
+    ],
+    "chicken": [
+      {
+        "value": "Chk",
+        "count": 3,
+        "source_token_counts": [
+          4,
+          4,
+          4
+        ],
+        "override_lengths": [
+          14,
+          12,
+          12
+        ],
+        "examples": [
+          "Cjn Chk Ftt Al",
+          "Chk Sld Brch",
+          "Chk Cae Wrap"
+        ]
+      },
+      {
+        "value": "Chick",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          4
+        ],
+        "override_lengths": [
+          8,
+          14
+        ],
+        "examples": [
+          "SS Chick",
+          "Nshv Hot Chick"
+        ]
+      },
+      {
+        "value": "ChkAvoWrap",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "ChkAvoWrap"
+        ]
+      },
+      {
+        "value": "ChkBcnRanchPzza",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "ChkBcnRanchPzza"
+        ]
+      },
+      {
+        "value": "Cmb",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "FS Chk Snd Cmb"
+        ]
+      },
+      {
+        "value": "Jambalaya",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Jambalaya"
+        ]
+      },
+      {
+        "value": "Snd",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "BcnChd Chk Snd"
+        ]
+      },
+      {
+        "value": "Wrp",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "HonMust Chk Wrp"
+        ]
+      }
+    ],
+    "chilled": [
+      {
+        "value": "Teri",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Teri Nood Sal"
+        ]
+      }
+    ],
+    "chip": [
+      {
+        "value": "Cook",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Choc Cook Pud"
+        ]
+      }
+    ],
+    "chocolate": [
+      {
+        "value": "Choc",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Choc Cook Pud"
+        ]
+      },
+      {
+        "value": "Choccolate",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "Hot Choccolate"
+        ]
+      },
+      {
+        "value": "Muff",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Choc Muff"
+        ]
+      }
+    ],
+    "club": [
+      {
+        "value": "Club",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "Turk Club Croi"
+        ]
+      }
+    ],
+    "coffee": [
+      {
+        "value": "Coffee",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "Viet Coffee"
+        ]
+      }
+    ],
+    "combo": [
+      {
+        "value": "Cmb",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          3
+        ],
+        "override_lengths": [
+          14,
+          13
+        ],
+        "examples": [
+          "Bcn Chzbrg Cmb",
+          "Chz Pizza Cmb"
+        ]
+      },
+      {
+        "value": "Comb",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Bcn Chzbrg Comb"
+        ]
+      }
+    ],
+    "cookie": [
+      {
+        "value": "Pud",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Choc Cook Pud"
+        ]
+      }
+    ],
+    "corn": [
+      {
+        "value": "Corn",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          7
+        ],
+        "examples": [
+          "St Corn"
+        ]
+      }
+    ],
+    "cornbread": [
+      {
+        "value": "Crnbrd",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Btrmlk Crnbrd"
+        ]
+      }
+    ],
+    "crab": [
+      {
+        "value": "Crab",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Crab Grld Chz"
+        ]
+      }
+    ],
+    "creamy": [
+      {
+        "value": "Crm",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Crm Tom Soup"
+        ]
+      },
+      {
+        "value": "CrmTomBaslSoup",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "CrmTomBaslSoup"
+        ]
+      }
+    ],
+    "croissant": [
+      {
+        "value": "Croi",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          4
+        ],
+        "override_lengths": [
+          7,
+          14
+        ],
+        "examples": [
+          "HP Croi",
+          "Turk Club Croi"
+        ]
+      }
+    ],
+    "double": [
+      {
+        "value": "Choc",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Choc Muff"
+        ]
+      }
+    ],
+    "english": [
+      {
+        "value": "Muff",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "SEC Eng Muff"
+        ]
+      }
+    ],
+    "fettuccine": [
+      {
+        "value": "Ftt",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "Cjn Chk Ftt Al"
+        ]
+      }
+    ],
+    "free": [
+      {
+        "value": "Chk",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "FS Mx Chk Cmb"
+        ]
+      },
+      {
+        "value": "Snd",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "FS Chk Snd Cmb"
+        ]
+      }
+    ],
+    "french": [
+      {
+        "value": "Sticks",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "FT Sticks"
+        ]
+      }
+    ],
+    "fresh": [
+      {
+        "value": "Hot",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "Hot Coffee"
+        ]
+      }
+    ],
+    "fried": [
+      {
+        "value": "FriedChkSandCmb",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "FriedChkSandCmb"
+        ]
+      },
+      {
+        "value": "FT",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "FT Sticks"
+        ]
+      }
+    ],
+    "fruit": [
+      {
+        "value": "Van",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Van Yog Parf"
+        ]
+      }
+    ],
+    "granola": [
+      {
+        "value": "Granola",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "HM Granola"
+        ]
+      }
+    ],
+    "green": [
+      {
+        "value": "GrnChlChpChkEn",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "GrnChlChpChkEn"
+        ]
+      }
+    ],
+    "grilled": [
+      {
+        "value": "Grld",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          3
+        ],
+        "override_lengths": [
+          11,
+          11
+        ],
+        "examples": [
+          "Grld Hmbrgr"
+        ]
+      },
+      {
+        "value": "Chz",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Crab Grld Chz"
+        ]
+      },
+      {
+        "value": "GrldChz",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "GrldChz Txt"
+        ]
+      }
+    ],
+    "guacamole": [
+      {
+        "value": "Guacamole",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "HM Guacamole"
+        ]
+      }
+    ],
+    "hamburgers": [
+      {
+        "value": "Hmbrgr",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          3
+        ],
+        "override_lengths": [
+          11,
+          11
+        ],
+        "examples": [
+          "Grld Hmbrgr"
+        ]
+      }
+    ],
+    "hard": [
+      {
+        "value": "EggsChzGrapeBnt",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "EggsChzGrapeBnt"
+        ]
+      }
+    ],
+    "herb": [
+      {
+        "value": "Ro",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "IT Ro Tom"
+        ]
+      }
+    ],
+    "honey": [
+      {
+        "value": "HonBbqChkWrap",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "HonBbqChkWrap"
+        ]
+      },
+      {
+        "value": "HonMstChkTenWrp",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "HonMstChkTenWrp"
+        ]
+      },
+      {
+        "value": "HonMust",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "HonMust Chk Wrp"
+        ]
+      }
+    ],
+    "hot": [
+      {
+        "value": "Hot",
+        "count": 2,
+        "source_token_counts": [
+          4,
+          2
+        ],
+        "override_lengths": [
+          14,
+          14
+        ],
+        "examples": [
+          "Nshv Hot Chick",
+          "Hot Choccolate"
+        ]
+      },
+      {
+        "value": "Ramen",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Ramen Bar"
+        ]
+      }
+    ],
+    "house": [
+      {
+        "value": "HousMdeSwtHtChp",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "HousMdeSwtHtChp"
+        ]
+      },
+      {
+        "value": "HRoastPullPork",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "HRoastPullPork"
+        ]
+      },
+      {
+        "value": "HRTrkyHamCia",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "HRTrkyHamCia"
+        ]
+      },
+      {
+        "value": "HsMadeWtmlLmnde",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "HsMadeWtmlLmnde"
+        ]
+      }
+    ],
+    "houseandfried": [
+      {
+        "value": "HFriTortChip",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "HFriTortChip"
+        ]
+      }
+    ],
+    "ice": [
+      {
+        "value": "Ice",
+        "count": 5,
+        "source_token_counts": [
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "override_lengths": [
+          13,
+          15,
+          14,
+          15,
+          14
+        ],
+        "examples": [
+          "Sprk Ice Blck",
+          "Sprk Ice KiwiSt",
+          "Arz Lmn It Ice",
+          "Arz Strw IT Ice",
+          "Arz Lmn IT Ice"
+        ]
+      }
+    ],
+    "iced": [
+      {
+        "value": "Tea",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          7
+        ],
+        "examples": [
+          "Swt Tea"
+        ]
+      }
+    ],
+    "italian": [
+      {
+        "value": "IT",
+        "count": 5,
+        "source_token_counts": [
+          3,
+          4,
+          4,
+          4,
+          4
+        ],
+        "override_lengths": [
+          11,
+          9,
+          14,
+          15,
+          14
+        ],
+        "examples": [
+          "IT Wed Soup",
+          "IT Ro Tom",
+          "Arz Lmn It Ice",
+          "Arz Strw IT Ice",
+          "Arz Lmn IT Ice"
+        ]
+      }
+    ],
+    "juice": [
+      {
+        "value": "JuicCranGrap",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "JuicCranGrap"
+        ]
+      },
+      {
+        "value": "JuicPineOran",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "JuicPineOran"
+        ]
+      }
+    ],
+    "kiwi": [
+      {
+        "value": "KiwiSt",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Sprk Ice KiwiSt"
+        ]
+      }
+    ],
+    "lemon": [
+      {
+        "value": "Lmn",
+        "count": 2,
+        "source_token_counts": [
+          4,
+          4
+        ],
+        "override_lengths": [
+          14,
+          14
+        ],
+        "examples": [
+          "Arz Lmn It Ice",
+          "Arz Lmn IT Ice"
+        ]
+      }
+    ],
+    "life": [
+      {
+        "value": "23.7",
+        "count": 1,
+        "source_token_counts": [
+          8
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Pure 23.7"
+        ]
+      }
+    ],
+    "loaded": [
+      {
+        "value": "L",
+        "count": 2,
+        "source_token_counts": [
+          4,
+          4
+        ],
+        "override_lengths": [
+          13,
+          15
+        ],
+        "examples": [
+          "L Mac Chz Bar",
+          "L Mac & Chz Bar"
+        ]
+      },
+      {
+        "value": "LodBkdPotSoup",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "LodBkdPotSoup"
+        ]
+      }
+    ],
+    "mac": [
+      {
+        "value": "Mac",
+        "count": 2,
+        "source_token_counts": [
+          4,
+          4
+        ],
+        "override_lengths": [
+          13,
+          15
+        ],
+        "examples": [
+          "L Mac Chz Bar",
+          "L Mac & Chz Bar"
+        ]
+      }
+    ],
+    "made": [
+      {
+        "value": "MdToOrdBrkfsSnd",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "MdToOrdBrkfsSnd"
+        ]
+      }
+    ],
+    "meat": [
+      {
+        "value": "Meat",
+        "count": 2,
+        "source_token_counts": [
+          2,
+          2
+        ],
+        "override_lengths": [
+          12,
+          11
+        ],
+        "examples": [
+          "Meat Sauce 1",
+          "Taco Meat 1"
+        ]
+      }
+    ],
+    "mexican": [
+      {
+        "value": "Cmb",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "FS Mx Chk Cmb"
+        ]
+      },
+      {
+        "value": "MxChkQuedillas",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "MxChkQuedillas"
+        ]
+      },
+      {
+        "value": "MxStCornChkBwl",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "MxStCornChkBwl"
+        ]
+      }
+    ],
+    "mixed": [
+      {
+        "value": "MixBryVanlYog",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "MixBryVanlYog"
+        ]
+      }
+    ],
+    "moro": [
+      {
+        "value": "Moro",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Arrz Moro"
+        ]
+      }
+    ],
+    "mustard": [
+      {
+        "value": "Chk",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "HonMust Chk Wrp"
+        ]
+      }
+    ],
+    "nashville": [
+      {
+        "value": "Nshv",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "Nshv Hot Chick"
+        ]
+      }
+    ],
+    "noodle": [
+      {
+        "value": "Nood",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "Turk Nood Soup"
+        ]
+      },
+      {
+        "value": "Sal",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Teri Nood Sal"
+        ]
+      }
+    ],
+    "on": [
+      {
+        "value": "Brch",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Chk Sld Brch"
+        ]
+      },
+      {
+        "value": "Eng",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "SEC Eng Muff"
+        ]
+      }
+    ],
+    "or": [
+      {
+        "value": "Bwl",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          8
+        ],
+        "examples": [
+          "Taco Bwl"
+        ]
+      }
+    ],
+    "orange": [
+      {
+        "value": "Orange",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "Pwrd Orange"
+        ]
+      }
+    ],
+    "order": [
+      {
+        "value": "Bar",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Toss CaeSal Bar"
+        ]
+      }
+    ],
+    "oreo": [
+      {
+        "value": "OreoPuddParf",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "OreoPuddParf"
+        ]
+      }
+    ],
+    "pack": [
+      {
+        "value": "Pack",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "FS Pro Pack"
+        ]
+      }
+    ],
+    "pasta": [
+      {
+        "value": "Pasta",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          8
+        ],
+        "examples": [
+          "Pasta Al"
+        ]
+      }
+    ],
+    "patties": [
+      {
+        "value": "Pty",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Bfast Ssg Pty"
+        ]
+      }
+    ],
+    "pizza": [
+      {
+        "value": "Pizza",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Chz Pizza Cmb"
+        ]
+      },
+      {
+        "value": "Pzza",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          8
+        ],
+        "examples": [
+          "Chz Pzza"
+        ]
+      }
+    ],
+    "popping": [
+      {
+        "value": "PpngPchMngTea",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "PpngPchMngTea"
+        ]
+      },
+      {
+        "value": "PpngPssnFrtLmnd",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "PpngPssnFrtLmnd"
+        ]
+      },
+      {
+        "value": "PpngPssnFrtTea",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "PpngPssnFrtTea"
+        ]
+      },
+      {
+        "value": "PpngVietCoff",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "PpngVietCoff"
+        ]
+      }
+    ],
+    "pork": [
+      {
+        "value": "Snd",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Cjn PldPork Snd"
+        ]
+      }
+    ],
+    "powerade": [
+      {
+        "value": "Pwrd",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "Pwrd Orange"
+        ]
+      }
+    ],
+    "protein": [
+      {
+        "value": "Pro",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "FS Pro Pack"
+        ]
+      }
+    ],
+    "pulled": [
+      {
+        "value": "PldPork",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Cjn PldPork Snd"
+        ]
+      }
+    ],
+    "pure": [
+      {
+        "value": "Pure",
+        "count": 1,
+        "source_token_counts": [
+          8
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Pure 23.7"
+        ]
+      }
+    ],
+    "quesadillas": [
+      {
+        "value": "Quedillas",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Chz Quedillas"
+        ]
+      }
+    ],
+    "quinoa": [
+      {
+        "value": "QuinChckpTmts",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "QuinChckpTmts"
+        ]
+      }
+    ],
+    "ramen": [
+      {
+        "value": "Bar",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "Ramen Bar"
+        ]
+      }
+    ],
+    "ranch": [
+      {
+        "value": "ChkWrap",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "BffRnch ChkWrap"
+        ]
+      }
+    ],
+    "rangoon": [
+      {
+        "value": "Grld",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Crab Grld Chz"
+        ]
+      }
+    ],
+    "roasted": [
+      {
+        "value": "Ro",
+        "count": 2,
+        "source_token_counts": [
+          3,
+          3
+        ],
+        "override_lengths": [
+          6,
+          15
+        ],
+        "examples": [
+          "Ro Tom",
+          "Ro Chr Tomatoes"
+        ]
+      },
+      {
+        "value": "RstdCartsShalts",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "RstdCartsShalts"
+        ]
+      },
+      {
+        "value": "Tom",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "IT Ro Tom"
+        ]
+      }
+    ],
+    "salad": [
+      {
+        "value": "Sld",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Chk Sld Brch"
+        ]
+      }
+    ],
+    "sauce": [
+      {
+        "value": "Sauce",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Meat Sauce 1"
+        ]
+      }
+    ],
+    "sausage": [
+      {
+        "value": "Saus",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Saus Biscuit"
+        ]
+      },
+      {
+        "value": "Ssg",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Bfast Ssg Pty"
+        ]
+      }
+    ],
+    "sauteed": [
+      {
+        "value": "StSmmrSqshTom",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "StSmmrSqshTom"
+        ]
+      }
+    ],
+    "seasoned": [
+      {
+        "value": "SsnWhtBns",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          9
+        ],
+        "examples": [
+          "SsnWhtBns"
+        ]
+      }
+    ],
+    "sensation": [
+      {
+        "value": "SenCcmbrShkrs",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "SenCcmbrShkrs"
+        ]
+      }
+    ],
+    "soup": [
+      {
+        "value": "Soup",
+        "count": 3,
+        "source_token_counts": [
+          3,
+          3,
+          3
+        ],
+        "override_lengths": [
+          11,
+          13,
+          14
+        ],
+        "examples": [
+          "IT Wed Soup",
+          "Broc Chd Soup",
+          "Turk Nood Soup"
+        ]
+      }
+    ],
+    "sparkling": [
+      {
+        "value": "Sprk",
+        "count": 2,
+        "source_token_counts": [
+          4,
+          4
+        ],
+        "override_lengths": [
+          13,
+          15
+        ],
+        "examples": [
+          "Sprk Ice Blck",
+          "Sprk Ice KiwiSt"
+        ]
+      }
+    ],
+    "steamed": [
+      {
+        "value": "St",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          7
+        ],
+        "examples": [
+          "St Corn"
+        ]
+      }
+    ],
+    "strawberry": [
+      {
+        "value": "Strw",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Arz Strw IT Ice"
+        ]
+      }
+    ],
+    "super": [
+      {
+        "value": "SuprCksCrmCone",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          14
+        ],
+        "examples": [
+          "SuprCksCrmCone"
+        ]
+      }
+    ],
+    "sweetened": [
+      {
+        "value": "Swt",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          7
+        ],
+        "examples": [
+          "Swt Tea"
+        ]
+      }
+    ],
+    "taco": [
+      {
+        "value": "Taco",
+        "count": 2,
+        "source_token_counts": [
+          2,
+          5
+        ],
+        "override_lengths": [
+          11,
+          9
+        ],
+        "examples": [
+          "Taco Meat 1",
+          "Taco Bowl"
+        ]
+      }
+    ],
+    "tacos": [
+      {
+        "value": "Taco",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          8
+        ],
+        "examples": [
+          "Taco Bwl"
+        ]
+      }
+    ],
+    "tender": [
+      {
+        "value": "Cae",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Chk Cae Wrap"
+        ]
+      }
+    ],
+    "teriyaki": [
+      {
+        "value": "Nood",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          13
+        ],
+        "examples": [
+          "Teri Nood Sal"
+        ]
+      },
+      {
+        "value": "Teri",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "Teri Chick"
+        ]
+      }
+    ],
+    "to": [
+      {
+        "value": "CaeSal",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Toss CaeSal Bar"
+        ]
+      }
+    ],
+    "tomato": [
+      {
+        "value": "Tom",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Crm Tom Soup"
+        ]
+      }
+    ],
+    "tomatoes": [
+      {
+        "value": "Tomatoes",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Ro Chr Tomatoes"
+        ]
+      }
+    ],
+    "top": [
+      {
+        "value": "FS",
+        "count": 2,
+        "source_token_counts": [
+          6,
+          6
+        ],
+        "override_lengths": [
+          14,
+          13
+        ],
+        "examples": [
+          "FS Chk Snd Cmb",
+          "FS Mx Chk Cmb"
+        ]
+      }
+    ],
+    "tori": [
+      {
+        "value": "Chick",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          10
+        ],
+        "examples": [
+          "Teri Chick"
+        ]
+      }
+    ],
+    "tossed": [
+      {
+        "value": "Toss",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "Toss CaeSal Bar"
+        ]
+      }
+    ],
+    "turkey": [
+      {
+        "value": "Turk",
+        "count": 2,
+        "source_token_counts": [
+          4,
+          3
+        ],
+        "override_lengths": [
+          14,
+          14
+        ],
+        "examples": [
+          "Turk Club Croi",
+          "Turk Nood Soup"
+        ]
+      }
+    ],
+    "vanilla": [
+      {
+        "value": "Yog",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Van Yog Parf"
+        ]
+      }
+    ],
+    "vietnamese": [
+      {
+        "value": "Viet",
+        "count": 1,
+        "source_token_counts": [
+          2
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "Viet Coffee"
+        ]
+      },
+      {
+        "value": "VietCoffWithCar",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          15
+        ],
+        "examples": [
+          "VietCoffWithCar"
+        ]
+      }
+    ],
+    "wedding": [
+      {
+        "value": "Wed",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          11
+        ],
+        "examples": [
+          "IT Wed Soup"
+        ]
+      }
+    ],
+    "welch": [
+      {
+        "value": "WFS",
+        "count": 1,
+        "source_token_counts": [
+          6
+        ],
+        "override_lengths": [
+          3
+        ],
+        "examples": [
+          "WFS"
+        ]
+      }
+    ],
+    "wrap": [
+      {
+        "value": "Wrap",
+        "count": 1,
+        "source_token_counts": [
+          3
+        ],
+        "override_lengths": [
+          7
+        ],
+        "examples": [
+          "HC Wrap"
+        ]
+      }
+    ],
+    "yogurt": [
+      {
+        "value": "Parf",
+        "count": 1,
+        "source_token_counts": [
+          4
+        ],
+        "override_lengths": [
+          12
+        ],
+        "examples": [
+          "Van Yog Parf"
+        ]
+      }
+    ],
+    "your": [
+      {
+        "value": "Bowl",
+        "count": 4,
+        "source_token_counts": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "override_lengths": [
+          8,
+          10,
+          10,
+          13
+        ],
+        "examples": [
+          "Med Bowl",
+          "Cuban Bowl",
+          "Sushi Bowl",
+          "Moroccan Bowl"
+        ]
+      },
+      {
+        "value": "Bwl",
+        "count": 1,
+        "source_token_counts": [
+          5
+        ],
+        "override_lengths": [
+          7
+        ],
+        "examples": [
+          "BBQ Bwl"
+        ]
+      }
+    ]
+  },
+  "pos_name_acronym_rules": [
+    {
+      "suffix_tokens": [
+        "made"
+      ],
+      "span_length": 2,
+      "count": 2,
+      "examples": [
+        "HM Granola",
+        "HM Guacamole"
+      ]
+    },
+    {
+      "suffix_tokens": [
+        "cheese"
+      ],
+      "span_length": 2,
+      "count": 1,
+      "examples": [
+        "HC Wrap"
+      ]
+    },
+    {
+      "suffix_tokens": [
+        "egg",
+        "cheese"
+      ],
+      "span_length": 3,
+      "count": 1,
+      "examples": [
+        "SEC Eng Muff"
+      ]
+    },
+    {
+      "suffix_tokens": [
+        "provolone"
+      ],
+      "span_length": 2,
+      "count": 1,
+      "examples": [
+        "HP Croi"
+      ]
+    },
+    {
+      "suffix_tokens": [
+        "sour"
+      ],
+      "span_length": 2,
+      "count": 1,
+      "examples": [
+        "SS Chick"
+      ]
+    },
+    {
+      "suffix_tokens": [
+        "style"
+      ],
+      "span_length": 2,
+      "count": 1,
+      "examples": [
+        "FS Pro Pack"
+      ]
+    }
+  ],
+  "pos_name_style": {
+    "spaced_overrides": 75,
+    "compact_overrides": 44
+  }
+}

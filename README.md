@@ -16,6 +16,7 @@ Core Catalogue export, run manifest, and run summary.
 ```powershell
 uv sync
 uv run lt-prod-init
+uv run lt-prod-init-debug
 uv run lt-pos-name
 ```
 
@@ -42,6 +43,7 @@ Focused checks:
 uv run pytest -q
 uv run ruff check .
 uv run lt-prod-init --smoke-test
+uv run lt-prod-init-debug --smoke-test
 uv run lt-pos-name --smoke-test
 ```
 
@@ -133,6 +135,20 @@ uv run lt-pos-profile-infer "path\to\Lunchtab Product Import.csv" --profile "pat
 The command writes a proposed profile JSON plus inference and profile audits. The inference audit
 flags competing token rules for review, and the command does not overwrite the active venue profile.
 The same proposal workflow is also available after export from the app's Export Complete tab.
+
+## Developer Debug Launcher
+
+For stage-locked workflow testing, run:
+
+```powershell
+uv run lt-prod-init-debug
+```
+
+The debug launcher uses the tracked sanitized fixture under
+`src\lunchtab_product_init\debug_fixtures\default`, validates fixture hashes before loading, and
+writes generated debug exports and POS profile inference artifacts under ignored `debug-output\`.
+It can launch the main app directly at Step 1-6 complete presets, open Step 4 profile editing, or
+run POS profile inference from the fixture or a selected final import CSV.
 
 ## BaseProductPosName-only App
 

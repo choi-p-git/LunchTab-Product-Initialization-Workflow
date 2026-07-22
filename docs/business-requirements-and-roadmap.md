@@ -202,6 +202,8 @@ assignment is limited to category names the operator enters or loads through a v
      1366x768.
    - Preserve the controller/session separation while moving any repeated widget-state rules into
      testable helpers.
+   - Dev debug launcher is available for stage-locked workflow testing with sanitized tracked
+     fixtures, Step 1-6 complete presets, Step 4 profile editing, and isolated debug output.
 
 3. **Operator Documentation**
    - Operator quick-start is available in `docs/operator-quick-start.md` for running the app,

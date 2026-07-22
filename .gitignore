@@ -10,6 +10,7 @@ business-analysis/
 business analysis/
 .agents/skills/business-analysis/
 demo output/
+debug-output/
 release/
 
 # Source exports and generated artifacts stay local to the operator machine.

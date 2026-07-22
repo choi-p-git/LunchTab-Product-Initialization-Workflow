@@ -15,6 +15,7 @@ dependencies = [
 [project.scripts]
 lt-prod-init = "lunchtab_product_init.gui:main"
 lt-prod-init-cli = "lunchtab_product_init.workflow:main"
+lt-prod-init-debug = "lunchtab_product_init.debug_gui:main"
 lt-pos-name = "lunchtab_product_init.pos_name_gui:main"
 lt-pos-profile-infer = "lunchtab_product_init.pos_profile_inference:main"
 

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "name": "default-debug-fixture",
+  "description": "Sanitized fixture for the Lunchtab Product Initialization dev debug launcher.",
+  "sanitization": "Item names, prices, categories, and POS names preserved; barcodes, source keys, and timestamps sanitized.",
+  "files": [
+    {
+      "name": "product_template.csv",
+      "sha256": "3ab2cf3df8de9b5e9c68564711dfe23d66b663873a4d53d304330ab8a930b505",
+      "bytes": 280
+    },
+    {
+      "name": "recipe_list.csv",
+      "sha256": "18b72329e9a964e0a3b2f94e5be3c1f31365e705d922fd38dfcf683acbcfe73c",
+      "bytes": 28544
+    },
+    {
+      "name": "generic_inventory.csv",
+      "sha256": "834398ca9160cc42fed825151bceee7f791bdf0d943eb6f73271ec9474d2795c",
+      "bytes": 39
+    },
+    {
+      "name": "venue_profile.json",
+      "sha256": "be1984da8b52aa66fe2e8ef39f725703ea7d1ec9292a1f633603c45f6be8ba45",
+      "bytes": 55433
+    },
+    {
+      "name": "final_import.csv",
+      "sha256": "e05498e251d64f42c46566106303ea88bea7aa81c846d3eb0cb524fb08b3c221",
+      "bytes": 64568
+    },
+    {
+      "name": "session_audit.csv",
+      "sha256": "2be89d5bca28f6d596ebe930c29c4390933fe5ea6f29ae200cb493222770650a",
+      "bytes": 147625
+    }
+  ]
+}
