@@ -45,6 +45,7 @@ from lunchtab_product_init.session_workflow import (
     validate_final_review_edit,
     validate_pos_name_for_row,
 )
+from lunchtab_product_init.workflow import NAME_MISMATCH_REVIEW_REASON
 
 
 def test_category_assignment_filters_and_marks_rows() -> None:
@@ -655,6 +656,65 @@ def test_merge_rows_transfers_barcodes_deletes_sources_and_revalidates() -> None
     assert source.merge_action_timestamp
     datetime.fromisoformat(source.merge_action_timestamp)
     assert "barcode transferred to row-1" in source.review_reason
+
+
+def test_merge_rows_dedupes_same_barcode_values() -> None:
+    session = _session(
+        [
+            _row("row-1", "Target Item", "1.00", "111", category="Snacks", status="needs_edit"),
+            _row("row-2", "Source Item", "1.00", "111", category="Snacks", status="needs_edit"),
+        ]
+    )
+
+    session = merge_rows(session, "row-1", {"row-2"})
+    target = next(row for row in session.rows if row.row_id == "row-1")
+
+    assert target.barcode == "111"
+
+
+def test_name_mismatch_row_requires_edit_before_leaving_review() -> None:
+    session = _session(
+        [
+            _row(
+                "row-1",
+                "Hot Chocolate",
+                "1.50",
+                "111",
+                category="Beverages",
+                status="needs_edit",
+                review_reason=NAME_MISMATCH_REVIEW_REASON,
+                candidate_review_reason=NAME_MISMATCH_REVIEW_REASON,
+            )
+        ]
+    )
+    session = prepare_edit_review(session)
+
+    unchanged = save_edit(
+        session,
+        "row-1",
+        item_name="Hot Chocolate",
+        price="1.50",
+        barcode="111",
+        category="Beverages",
+    )
+    row = unchanged.rows[0]
+
+    assert row.status == "needs_edit"
+    assert row.review_reason == NAME_MISMATCH_REVIEW_REASON
+
+    edited = save_edit(
+        session,
+        "row-1",
+        item_name="Hot Chocolate Drink",
+        price="1.50",
+        barcode="111",
+        category="Beverages",
+    )
+    row = edited.rows[0]
+
+    assert row.status == "edit_complete"
+    assert row.review_reason == ""
+    assert row.candidate.review_reason == ""
 
 
 def test_saving_one_edit_row_does_not_complete_other_operator_review_rows() -> None:
@@ -1767,6 +1827,7 @@ def _row(
     core_catalogue: bool = False,
     source: str = "test",
     stock: str = "",
+    candidate_review_reason: str = "",
 ) -> SessionRow:
     return SessionRow(
         row_id=row_id,
@@ -1778,6 +1839,7 @@ def _row(
             barcode=barcode,
             category=old_category or category,
             stock=stock,
+            review_reason=candidate_review_reason,
         ),
         old_category=old_category or category,
         category=category,

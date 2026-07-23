@@ -39,6 +39,7 @@ NAMING_AUDIT_NAME = "BaseProductPosName Audit.csv"
 CATEGORY_AUDIT_NAME = "Product Category Audit.csv"
 ZERO_STOCK_REVIEW_NAME = "Zero Stock Odin Review.csv"
 GENERIC_INVENTORY_HEADERS = ("Item Name", "Price", "Category", "Barcode", "Stock")
+NAME_MISMATCH_REVIEW_REASON = "Name Mismatch"
 
 
 def default_output_root() -> Path:
@@ -212,6 +213,11 @@ def merge_candidates(
                     stock=odin.stock,
                     recipe_name=recipe.item_name,
                     odin_name=odin.item_name,
+                    review_reason=(
+                        NAME_MISMATCH_REVIEW_REASON
+                        if _is_name_mismatch(recipe.item_name, odin.item_name)
+                        else ""
+                    ),
                 )
             )
         else:
@@ -222,6 +228,16 @@ def merge_candidates(
             merged.append(odin)
     merged.extend(no_barcode)
     return merged
+
+
+def _is_name_mismatch(left: str, right: str) -> bool:
+    left_normalized = _identity_name(left)
+    right_normalized = _identity_name(right)
+    return bool(left_normalized and right_normalized and left_normalized != right_normalized)
+
+
+def _identity_name(value: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9]+", str(value or "").casefold()))
 
 
 def classify_candidates(
@@ -240,7 +256,7 @@ def classify_candidates(
     accepted: list[ProductCandidate] = []
     review: list[ProductCandidate] = []
     for candidate in candidates:
-        reasons = []
+        reasons = _reason_parts(candidate.review_reason)
         barcodes = parse_barcodes(candidate.barcode)
         if not candidate.item_name:
             reasons.append("missing item name")
@@ -272,6 +288,10 @@ def classify_candidates(
         else:
             accepted.append(replace(candidate, confidence="auto", review_reason=""))
     return accepted, review, generated
+
+
+def _reason_parts(value: str) -> list[str]:
+    return [reason.strip() for reason in str(value or "").split(";") if reason.strip()]
 
 
 def product_row(

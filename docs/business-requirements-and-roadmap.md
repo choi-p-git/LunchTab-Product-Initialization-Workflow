@@ -23,9 +23,9 @@ assignment is limited to category names the operator enters or loads through a v
 - Generic inventory CSV files must contain `Item Name`, `Price`, `Category`, `Barcode`, and
   `Stock` headers.
 - Rows enter category assignment when they have usable item name and price.
-- Missing barcode, duplicate barcode, duplicate item name before edit approval, missing name,
-  missing price, missing category, invalid POS name, and duplicate POS name must block final
-  export.
+- Missing barcode, duplicate barcode, barcode-matched source name mismatch, duplicate item name
+  before edit approval, missing name, missing price, missing category, invalid POS name, and
+  duplicate POS name must block final export.
 - Comma-separated barcode fields represent multiple barcodes for one product and must be split for
   duplicate validation.
 - Final-row `Handle` should mirror `BaseProductName`.
@@ -83,6 +83,8 @@ assignment is limited to category names the operator enters or loads through a v
    - Duplicate item names are automatically queued for manual review when the operator leaves
      category assignment; the operator must edit or approve each duplicate-name row before POS
      generation.
+   - Barcode-matched recipe/inventory rows with mismatched source names are queued as
+     `Name Mismatch` and require an edit, delete, or merge-style resolution before POS generation.
    - Save actions from mouse click or Enter key advance to the next displayed review row and
      focus the edit form for fast queue processing.
    - Saving a row re-runs required-field, barcode, category, and duplicate-name review checks so

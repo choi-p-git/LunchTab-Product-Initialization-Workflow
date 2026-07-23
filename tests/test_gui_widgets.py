@@ -20,6 +20,7 @@ from lunchtab_product_init.session_workflow import (
     SessionOutputPaths,
     SessionRow,
 )
+from lunchtab_product_init.workflow import NAME_MISMATCH_REVIEW_REASON
 
 
 @pytest.fixture(scope="module")
@@ -385,6 +386,33 @@ def test_save_edit_confirms_unchanged_valid_review_row(app, monkeypatch) -> None
     assert row_1.status == "edit_complete"
     assert row_1.review_reason == ""
     assert row_1.edited
+
+
+def test_edit_review_displays_name_mismatch_reason(app) -> None:
+    session = ImportSession(
+        headers=list(LUNCHTAB_TEMPLATE_HEADERS),
+        rows=(
+            _row(
+                "row-1",
+                "Hot Chocolate",
+                "1.25",
+                "111",
+                category="Beverages",
+                status="needs_edit",
+                review_reason=NAME_MISMATCH_REVIEW_REASON,
+            ),
+        ),
+        category_names=("Beverages",),
+    )
+    app.controller = gui_module.AppController()
+    app.controller.set_session(session, phase=gui_module.AppPhase.EDIT_REVIEW)
+
+    app._render()
+    app.root.update()
+
+    tree = app._tree_widget(app.edit_tree)
+
+    assert tree.set("row-1", "reason") == NAME_MISMATCH_REVIEW_REASON
 
 
 def test_save_edit_advances_to_next_displayed_row_and_focuses_name(app, monkeypatch) -> None:

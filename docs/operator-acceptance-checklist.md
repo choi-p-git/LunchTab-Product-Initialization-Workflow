@@ -82,8 +82,8 @@ Confirm the test run has:
 
 ### Step 3 - Edit Review
 
-- Missing barcode, duplicate barcode, missing price, missing category, and duplicate-name rows are
-  queued for review.
+- Missing barcode, duplicate barcode, name mismatch, missing price, missing category, and
+  duplicate-name rows are queued for review.
 - Manually marked review rows from Step 2 remain in the queue.
 - No-barcode filter and select-all shown support fast deletion of invalid no-barcode rows.
 - Duplicate-name filter groups rows by duplicated name for review or merge work.
@@ -95,6 +95,8 @@ Confirm the test run has:
 - Valid but unchanged rows require confirmation before approval.
 - Merge popup shows a scrollable preview, transfers barcode values to the selected target row, and
   deletes the source row from export.
+- Name mismatch rows cannot be approved unchanged; the operator must edit the surviving row,
+  delete the row, or merge related rows so one barcode exports on one item only.
 - Undo reverses the most recent supported edit-review action.
 - Next remains disabled until all non-deleted queued rows are complete.
 

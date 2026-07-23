@@ -8,8 +8,10 @@ from openpyxl import Workbook
 
 from lunchtab_product_init.models import BuildInputs, CategoryResult, ProductCandidate
 from lunchtab_product_init.workflow import (
+    NAME_MISMATCH_REVIEW_REASON,
     build_product_import,
     classify_candidates,
+    merge_candidates,
     write_generic_inventory_template,
 )
 
@@ -96,6 +98,70 @@ def test_build_product_import_accepts_complete_matched_row(tmp_path: Path) -> No
     assert audit_rows[0]["FinalCategories"] == "Breakfast;"
     assert audit_rows[0]["RestrictionPolicy"] == "exempt"
     assert audit_rows[0]["ConfidenceBand"] == "high"
+
+
+def test_merge_candidates_flags_name_mismatch_on_barcode_match() -> None:
+    merged = merge_candidates(
+        [
+            ProductCandidate(
+                "recipe",
+                "recipe:2",
+                "Hot Chocolate",
+                "1.50",
+                "111",
+                "",
+                recipe_name="Hot Chocolate",
+            )
+        ],
+        [
+            ProductCandidate(
+                "odin",
+                "odin:2",
+                "Cappuccino / Ice Coffee",
+                "1.50",
+                "111",
+                "Beverages",
+                odin_name="Cappuccino / Ice Coffee",
+            )
+        ],
+    )
+
+    assert len(merged) == 1
+    assert merged[0].source == "recipe+odin"
+    assert merged[0].review_reason == NAME_MISMATCH_REVIEW_REASON
+    assert merged[0].recipe_name == "Hot Chocolate"
+    assert merged[0].odin_name == "Cappuccino / Ice Coffee"
+
+
+def test_merge_candidates_does_not_flag_normalized_same_name() -> None:
+    merged = merge_candidates(
+        [
+            ProductCandidate(
+                "recipe",
+                "recipe:2",
+                "Cappuccino Ice Coffee",
+                "1.50",
+                "111",
+                "",
+                recipe_name="Cappuccino Ice Coffee",
+            )
+        ],
+        [
+            ProductCandidate(
+                "inventory",
+                "inventory:2",
+                "cappuccino / ice coffee",
+                "1.50",
+                "111",
+                "Beverages",
+                odin_name="cappuccino / ice coffee",
+            )
+        ],
+    )
+
+    assert len(merged) == 1
+    assert merged[0].source == "recipe+inventory"
+    assert merged[0].review_reason == ""
 
 
 def test_write_generic_inventory_template_uses_required_headers(tmp_path: Path) -> None:

@@ -22,6 +22,7 @@ from lunchtab_product_init.naming import (
 from lunchtab_product_init.workflow import (
     CATEGORY_AUDIT_NAME,
     FINAL_OUTPUT_NAME,
+    NAME_MISMATCH_REVIEW_REASON,
     NAMING_AUDIT_NAME,
     merge_candidates,
     product_row,
@@ -471,10 +472,17 @@ def merge_rows(
     rows = []
     for row in session.rows:
         if row.row_id == target_row_id:
+            candidate = replace(
+                row.candidate,
+                barcode=merged_barcode,
+                review_reason=_remove_reason(
+                    row.candidate.review_reason, NAME_MISMATCH_REVIEW_REASON
+                ),
+            )
             rows.append(
                 replace(
                     row,
-                    candidate=replace(row.candidate, barcode=merged_barcode),
+                    candidate=candidate,
                     edited=True,
                     review_reason=_append_reason(
                         row.review_reason, "merged barcode from selected row"
@@ -589,12 +597,25 @@ def save_edit(
             continue
         cleaned_name = _clean_text(item_name)
         name_changed = cleaned_name != row.item_name
+        cleaned_price = _clean_text(price)
+        cleaned_barcode = format_barcodes(parse_barcodes(barcode))
+        material_changed = (
+            cleaned_name != row.item_name
+            or cleaned_price != row.price
+            or cleaned_barcode != row.barcode
+            or category != row.category
+        )
         candidate = replace(
             row.candidate,
             item_name=cleaned_name,
-            price=_clean_text(price),
-            barcode=format_barcodes(parse_barcodes(barcode)),
+            price=cleaned_price,
+            barcode=cleaned_barcode,
             category=category,
+            review_reason=(
+                _remove_reason(row.candidate.review_reason, NAME_MISMATCH_REVIEW_REASON)
+                if material_changed
+                else row.candidate.review_reason
+            ),
         )
         reasons = _core_review_reasons(candidate, set())
         if not category:
@@ -1336,7 +1357,7 @@ def _session_row(
 
 
 def _core_review_reasons(candidate: ProductCandidate, barcode_duplicates: set[str]) -> list[str]:
-    reasons = []
+    reasons = _reason_parts(candidate.review_reason)
     barcodes = parse_barcodes(candidate.barcode)
     if not candidate.item_name:
         reasons.append("missing item name")
@@ -1347,6 +1368,14 @@ def _core_review_reasons(candidate: ProductCandidate, barcode_duplicates: set[st
     if any(barcode.casefold() in barcode_duplicates for barcode in barcodes):
         reasons.append("duplicate barcode")
     return reasons
+
+
+def _remove_reason(value: str, reason_to_remove: str) -> str:
+    return "; ".join(
+        reason
+        for reason in _reason_parts(value)
+        if reason.casefold() != reason_to_remove.casefold()
+    )
 
 
 def _refresh_barcode_review(
