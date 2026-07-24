@@ -12,6 +12,7 @@ from lunchtab_product_init.workflow import (
     build_product_import,
     classify_candidates,
     merge_candidates,
+    read_lunchtab_product_data,
     write_generic_inventory_template,
 )
 
@@ -164,6 +165,48 @@ def test_merge_candidates_does_not_flag_normalized_same_name() -> None:
     assert merged[0].review_reason == ""
 
 
+def test_read_lunchtab_product_data_stages_prepopulated_rows_and_removes_demo(
+    tmp_path: Path,
+) -> None:
+    template = tmp_path / "ProductData.csv"
+    headers = list(_template_headers())
+    write_csv(
+        template,
+        [
+            {"Handle": "example-product", "BaseProductName": "Example Product (Please Remove)"},
+            {
+                "Handle": "Apple Juice",
+                "ProductVersionType": "Standard",
+                "Price": "1.25",
+                "Barcodes": " ABC123 ",
+                "BaseProductName": "Apple Juice",
+                "BaseProductPosName": "Apple Juice",
+                "ProductCategories": "Beverages;",
+                "TaxCategories": "Prepared Food;",
+                "IsPublished": "true",
+                "IsOrderable": "false",
+            },
+        ],
+        headers,
+    )
+
+    blank = read_lunchtab_product_data(template, mode="blank_template")
+    prepopulated = read_lunchtab_product_data(template, mode="prepopulated")
+
+    assert blank.headers == headers
+    assert blank.existing_rows == ()
+    assert blank.demo_row_count == 1
+    assert len(prepopulated.existing_rows) == 1
+    row = prepopulated.existing_rows[0]
+    assert row.source_key == "lunchtab:3"
+    assert row.item_name == "Apple Juice"
+    assert row.price == "1.25"
+    assert row.barcode == "ABC123"
+    assert row.category == "Beverages"
+    assert row.pos_name == "Apple Juice"
+    assert row.values["TaxCategories"] == "Prepared Food;"
+
+
 def test_write_generic_inventory_template_uses_required_headers(tmp_path: Path) -> None:
     template = tmp_path / "generic-inventory-template.csv"
 
@@ -278,27 +321,7 @@ def test_classify_candidates_detects_duplicate_barcode_inside_comma_list() -> No
 
 def _build_basic_files(tmp_path: Path, *, stock: str) -> tuple[Path, Path, Path]:
     template = tmp_path / "ProductData.csv"
-    headers = [
-        "Handle",
-        "ProductVersionType",
-        "Price",
-        "UnitCost",
-        "Barcodes",
-        "LowInventoryThreshold",
-        "BaseProductName",
-        "BaseProductPosName",
-        "ShortDescription",
-        "LongDescription",
-        "IsPublished",
-        "IsOrderable",
-        "MaxPerPersonOrderQty",
-        "ValidToDate",
-        "ProductCategories",
-        "RequirementCategories",
-        "RestrictionCategories",
-        "TaxCategories",
-        "Vendor",
-    ]
+    headers = list(_template_headers())
     write_csv(
         template,
         [{"Handle": "example-product", "BaseProductName": "Example Product (Please Remove)"}],
@@ -326,3 +349,27 @@ def _build_basic_files(tmp_path: Path, *, stock: str) -> tuple[Path, Path, Path]
     sheet.append([stock, "Assorted Cold Cereals", "1.75", "Breakfast", "ABC123"])
     workbook.save(inventory)
     return template, recipe, inventory
+
+
+def _template_headers() -> tuple[str, ...]:
+    return (
+        "Handle",
+        "ProductVersionType",
+        "Price",
+        "UnitCost",
+        "Barcodes",
+        "LowInventoryThreshold",
+        "BaseProductName",
+        "BaseProductPosName",
+        "ShortDescription",
+        "LongDescription",
+        "IsPublished",
+        "IsOrderable",
+        "MaxPerPersonOrderQty",
+        "ValidToDate",
+        "ProductCategories",
+        "RequirementCategories",
+        "RestrictionCategories",
+        "TaxCategories",
+        "Vendor",
+    )

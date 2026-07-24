@@ -38,6 +38,18 @@ def app():
         root.destroy()
 
 
+def test_parse_tab_product_data_mode_updates_controller(app) -> None:
+    app.product_data_mode.set("prepopulated")
+    app._set_product_data_mode()
+
+    assert app.controller.state.product_data_mode == "prepopulated"
+
+    app.product_data_mode.set("blank_template")
+    app._set_product_data_mode()
+
+    assert app.controller.state.product_data_mode == "blank_template"
+
+
 def test_category_delete_key_deletes_highlighted_row_after_confirmation(app, monkeypatch) -> None:
     session = ImportSession(
         headers=list(LUNCHTAB_TEMPLATE_HEADERS),

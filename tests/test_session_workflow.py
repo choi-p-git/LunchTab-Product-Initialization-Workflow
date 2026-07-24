@@ -9,6 +9,7 @@ import pytest
 
 from lunchtab_product_init.models import BuildInputs, LUNCHTAB_TEMPLATE_HEADERS, ProductCandidate
 from lunchtab_product_init.session_workflow import (
+    EXISTING_DATA_MISMATCH_REVIEW_REASON,
     ImportSession,
     SessionRow,
     apply_venue_profile,
@@ -162,6 +163,193 @@ def test_parse_sources_can_merge_generic_inventory_csv(tmp_path: Path) -> None:
     assert row.candidate.category == "Beverages"
     assert row.candidate.stock == "5"
     assert row.old_category == "Beverages"
+
+
+def test_parse_sources_prepopulated_mode_stages_existing_and_new_rows(tmp_path: Path) -> None:
+    template = tmp_path / "ProductData.csv"
+    recipe = tmp_path / "recipe.csv"
+    _write_csv(
+        template,
+        [
+            {"Handle": "example-product", "BaseProductName": "Example Product (Please Remove)"},
+            {
+                "Handle": "Existing Juice",
+                "ProductVersionType": "Standard",
+                "Price": "1.25",
+                "UnitCost": "0.50",
+                "Barcodes": "111",
+                "BaseProductName": "Existing Juice",
+                "BaseProductPosName": "Exist Juice",
+                "ProductCategories": "Beverages;",
+                "TaxCategories": "Prepared Food;",
+                "IsPublished": "true",
+                "IsOrderable": "true",
+            },
+        ],
+        list(LUNCHTAB_TEMPLATE_HEADERS),
+    )
+    _write_csv(
+        recipe,
+        [
+            {"Menu Item Name": "Existing Juice", "Price": "1.25", "Barcode": "111"},
+            {"Menu Item Name": "New Cookie", "Price": "2.00", "Barcode": "222"},
+        ],
+        ["Menu Item Name", "Price", "Barcode"],
+    )
+
+    session = parse_sources(
+        BuildInputs(
+            product_template_path=template,
+            recipe_list_path=recipe,
+            output_root=tmp_path / "out",
+            product_data_mode="prepopulated",
+        )
+    )
+
+    assert session.product_data_demo_rows == 1
+    assert session.product_data_existing_rows == 1
+    assert session.product_data_matched_rows == 1
+    assert session.product_data_unmatched_source_rows == 1
+    assert [row.candidate.source for row in session.rows] == ["lunchtab+recipe", "recipe"]
+    existing = session.rows[0]
+    assert existing.category == "Beverages"
+    assert existing.old_category == "Beverages"
+    assert existing.pos_name == "Exist Juice"
+    assert existing.is_published
+    assert existing.is_orderable
+    assert dict(existing.target_values)["TaxCategories"] == "Prepared Food;"
+    assert session.rows[1].item_name == "New Cookie"
+
+
+def test_prepopulated_match_difference_requires_edit_review(tmp_path: Path) -> None:
+    template = tmp_path / "ProductData.csv"
+    recipe = tmp_path / "recipe.csv"
+    _write_csv(
+        template,
+        [
+            {
+                "Handle": "Apple Juice",
+                "Price": "1.00",
+                "Barcodes": "111",
+                "BaseProductName": "Apple Juice",
+                "BaseProductPosName": "Apple Juice",
+                "ProductCategories": "Beverages;",
+            }
+        ],
+        list(LUNCHTAB_TEMPLATE_HEADERS),
+    )
+    _write_csv(
+        recipe,
+        [{"Menu Item Name": "Apple Juice", "Price": "1.25", "Barcode": "111"}],
+        ["Menu Item Name", "Price", "Barcode"],
+    )
+
+    session = parse_sources(
+        BuildInputs(
+            product_template_path=template,
+            recipe_list_path=recipe,
+            output_root=tmp_path / "out",
+            product_data_mode="prepopulated",
+        )
+    )
+
+    row = session.rows[0]
+    assert row.status == "needs_edit"
+    assert EXISTING_DATA_MISMATCH_REVIEW_REASON in row.review_reason
+    assert "price: ProductData=1.00 Source=1.25" in row.product_data_evidence
+    assert final_review_metadata(session).product_data_mismatch_rows == 1
+
+    session = save_edit(
+        session,
+        row.row_id,
+        item_name="Apple Juice",
+        price="1.25",
+        barcode="111",
+        category="Beverages",
+    )
+
+    row = session.rows[0]
+    assert row.status == "edit_complete"
+    assert EXISTING_DATA_MISMATCH_REVIEW_REASON not in row.review_reason
+    assert row.product_data_evidence == ""
+    assert final_review_metadata(session).product_data_mismatch_rows == 0
+
+
+def test_prepopulated_existing_pos_name_is_preserved_and_validated(tmp_path: Path) -> None:
+    template = tmp_path / "ProductData.csv"
+    recipe = tmp_path / "recipe.csv"
+    _write_csv(
+        template,
+        [
+            {
+                "Handle": "Apple Juice",
+                "Price": "1.25",
+                "Barcodes": "111",
+                "BaseProductName": "Apple Juice",
+                "BaseProductPosName": "Existing POS Name Too Long",
+                "ProductCategories": "Beverages;",
+            }
+        ],
+        list(LUNCHTAB_TEMPLATE_HEADERS),
+    )
+    _write_csv(recipe, [], ["Menu Item Name", "Price", "Barcode"])
+
+    session = parse_sources(
+        BuildInputs(
+            product_template_path=template,
+            recipe_list_path=recipe,
+            output_root=tmp_path / "out",
+            product_data_mode="prepopulated",
+        )
+    )
+
+    session = run_pos_generation(session)
+
+    assert session.rows[0].pos_name == "Existing POS Name Too Long"
+    assert session.rows[0].status == "pos_needs_review"
+    assert "longer than 15" in session.rows[0].review_reason
+
+
+def test_final_rows_preserve_existing_uncontrolled_columns(tmp_path: Path) -> None:
+    template = tmp_path / "ProductData.csv"
+    recipe = tmp_path / "recipe.csv"
+    _write_csv(
+        template,
+        [
+            {
+                "Handle": "Apple Juice",
+                "ProductVersionType": "Standard",
+                "Price": "1.25",
+                "UnitCost": "0.50",
+                "Barcodes": "111",
+                "BaseProductName": "Apple Juice",
+                "BaseProductPosName": "Apple Juice",
+                "LongDescription": "Existing long description",
+                "ProductCategories": "Beverages;",
+                "TaxCategories": "Prepared Food;",
+                "Vendor": "Original Vendor",
+            }
+        ],
+        list(LUNCHTAB_TEMPLATE_HEADERS),
+    )
+    _write_csv(recipe, [], ["Menu Item Name", "Price", "Barcode"])
+    session = parse_sources(
+        BuildInputs(
+            product_template_path=template,
+            recipe_list_path=recipe,
+            output_root=tmp_path / "out",
+            product_data_mode="prepopulated",
+        )
+    )
+    session = run_pos_generation(session)
+
+    rows = final_rows(session)
+
+    assert rows[0]["UnitCost"] == "0.50"
+    assert rows[0]["LongDescription"] == "Existing long description"
+    assert rows[0]["TaxCategories"] == "Prepared Food;"
+    assert rows[0]["Vendor"] == "Original Vendor"
+    assert rows[0]["ProductCategories"] == "Beverages;"
 
 
 def test_parse_sources_rejects_multiple_inventory_sources(tmp_path: Path) -> None:

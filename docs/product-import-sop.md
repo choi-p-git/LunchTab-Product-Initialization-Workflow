@@ -29,7 +29,7 @@ Use the final live version of each source file before starting.
 
 | File | Required | Owner | Source |
 | --- | --- | --- | --- |
-| ProductData template | Yes | FSD or menu/pricing owner | Lunchtab Admin Portal -> venue cafeteria/location -> Base Products -> Actions -> Upload Product Data -> Download CSV Template |
+| ProductData CSV | Yes | FSD or menu/pricing owner | Lunchtab Admin Portal -> venue cafeteria/location -> Base Products -> Actions -> Upload Product Data -> Download CSV Template, or the current ProductData export used for update work |
 | SAGE recipe list CSV | Yes | FSD or menu/pricing owner | Current live SAGE recipe list export |
 | Odin inventory workbook | Optional | FSD or menu/pricing owner | Store Manager Reports -> Inventory Reports -> Select Sales Area -> Report Type `Stocks and Prices` -> Sort Order `Department` -> Report Option `Export` |
 | Generic inventory CSV | Optional | FSD or menu/pricing owner | Created from the app's generic inventory template |
@@ -50,7 +50,9 @@ Item Name,Price,Category,Barcode,Stock
 
 Complete this checklist before running the app.
 
-- [ ] Confirm the ProductData template is from the correct Lunchtab venue/location.
+- [ ] Confirm the ProductData CSV is from the correct Lunchtab venue/location.
+- [ ] Confirm whether the ProductData CSV should be treated as a blank template or as
+      prepopulated ProductData containing existing products.
 - [ ] Confirm source files are the final live version for the menu cycle.
 - [ ] For seasonal updates, export the current live sales items report from Lunchtab.
 - [ ] Create all needed product categories in Lunchtab before import.
@@ -79,16 +81,22 @@ Category names entered in the app must exactly match the names created in Luncht
 ## Run the Product Initialization App
 
 1. Launch the Lunchtab Product Initialization app.
-2. Select the ProductData template.
-3. Select the SAGE recipe list CSV.
-4. Optionally select one inventory file:
+2. Select the ProductData CSV.
+3. Choose `Blank template` for a downloaded template, or `Prepopulated ProductData` when the CSV
+   already contains real existing products.
+4. Select the SAGE recipe list CSV.
+5. Optionally select one inventory file:
    - Odin inventory workbook, or
    - generic inventory CSV.
-5. Optionally load a venue profile JSON.
-6. Confirm the output folder.
-7. Leave `IsPublished` false unless the FSD or menu/pricing owner decides otherwise.
-8. Leave `IsOrderable` false unless the FSD or menu/pricing owner decides otherwise.
-9. Click `Parse sources`.
+6. Optionally load a venue profile JSON.
+7. Confirm the output folder.
+8. Leave `IsPublished` false unless the FSD or menu/pricing owner decides otherwise.
+9. Leave `IsOrderable` false unless the FSD or menu/pricing owner decides otherwise.
+10. Click `Parse sources`.
+
+In `Prepopulated ProductData` mode, the app removes demo/example rows, stages existing rows for
+review, and keeps them in the final CSV unless the operator deletes them. If existing ProductData
+values do not match recipe or inventory values, those rows must be reviewed in Step 3.
 
 ## Assign Categories
 

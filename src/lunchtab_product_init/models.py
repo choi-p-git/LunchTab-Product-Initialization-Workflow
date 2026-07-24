@@ -54,6 +54,7 @@ class PosNameResult:
 
 CategoryRole = Literal["food", "policy", "hybrid"]
 SpendingPolicy = Literal["none", "non_exempt", "restrictable", "exempt"]
+ProductDataMode = Literal["blank_template", "prepopulated"]
 CategoryRuleType = Literal[
     "barcode",
     "item_name",
@@ -112,6 +113,7 @@ class BuildInputs:
     odin_inventory_path: Path | None = None
     generic_inventory_path: Path | None = None
     category_profile_path: Path | None = None
+    product_data_mode: ProductDataMode = "blank_template"
     is_published: bool = False
     is_orderable: bool = False
 

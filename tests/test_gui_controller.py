@@ -31,6 +31,18 @@ def test_controller_ready_to_parse_after_required_files_selected() -> None:
     inputs = controller.build_inputs()
     assert inputs.odin_inventory_path is None
     assert inputs.generic_inventory_path is None
+    assert inputs.product_data_mode == "blank_template"
+
+
+def test_controller_tracks_product_data_mode() -> None:
+    controller = AppController()
+
+    state = controller.set_product_data_mode("prepopulated")
+
+    assert state.product_data_mode == "prepopulated"
+    controller.select_product_template(Path("ProductData.csv"))
+    controller.select_recipe_list(Path("recipeList.csv"))
+    assert controller.build_inputs().product_data_mode == "prepopulated"
 
 
 def test_controller_inventory_inputs_are_mutually_exclusive() -> None:
@@ -169,6 +181,11 @@ def test_final_review_audit_text_includes_source_filenames_and_short_hashes() ->
         published_rows=2,
         orderable_rows=1,
         core_catalogue_rows=4,
+        existing_product_data_rows=5,
+        matched_product_data_rows=3,
+        unmatched_existing_product_data_rows=2,
+        unmatched_new_source_rows=1,
+        product_data_mismatch_rows=2,
         duplicate_barcodes=0,
         duplicate_pos_names=1,
         category_counts=(("Bread", 4), ("Snacks", 4)),
@@ -188,6 +205,10 @@ def test_final_review_audit_text_includes_source_filenames_and_short_hashes() ->
     assert "Categories: Bread: 4, Snacks: 4" in text
     assert (
         "POS overrides: 3 | Published rows: 2 | Orderable rows: 1 | Core Catalogue rows: 4" in text
+    )
+    assert (
+        "ProductData: existing 5 | matched 3 | existing-only 2 | new source 1 | mismatches 2"
+        in text
     )
     assert (
         "Sources: Template: ProductData.csv (abcdef123456); Recipe: recipeList.csv (123456abcdef)"

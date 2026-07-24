@@ -24,10 +24,11 @@ from lunchtab_product_init.workflow import (
     FINAL_OUTPUT_NAME,
     NAME_MISMATCH_REVIEW_REASON,
     NAMING_AUDIT_NAME,
+    ExistingProductDataRow,
     merge_candidates,
     product_row,
     read_generic_inventory_candidates,
-    read_lunchtab_template,
+    read_lunchtab_product_data,
     read_odin_candidates,
     read_recipe_candidates,
 )
@@ -52,6 +53,7 @@ CORE_CATALOGUE_NAME = "Core Catalogue.csv"
 POS_PROFILE_AUDIT_NAME = "POS Preference Profile.csv"
 POS_NAME_STOP_WORDS = {"a", "an", "and", "of", "the", "with"}
 POS_NAME_PHRASE_REPLACEMENTS = {("english", "muffin"): "Muff"}
+EXISTING_DATA_MISMATCH_REVIEW_REASON = "Existing Data Mismatch"
 
 
 @dataclass(frozen=True)
@@ -116,6 +118,9 @@ class SessionRow:
     pos_token_changes: int = 0
     pos_active_edit_actions: int = 0
     pos_edit_effort: str = ""
+    target_values: tuple[tuple[str, str], ...] = ()
+    product_data_match_status: str = ""
+    product_data_evidence: str = ""
 
     @property
     def item_name(self) -> str:
@@ -138,6 +143,13 @@ class ImportSession:
     pos_preferences: PosNamePreferenceProfile = field(
         default_factory=lambda: PosNamePreferenceProfile(abbreviations={})
     )
+    product_data_mode: str = "blank_template"
+    product_data_demo_rows: int = 0
+    product_data_existing_rows: int = 0
+    product_data_matched_rows: int = 0
+    product_data_unmatched_existing_rows: int = 0
+    product_data_unmatched_source_rows: int = 0
+    product_data_mismatch_rows: int = 0
 
     @property
     def active_rows(self) -> tuple[SessionRow, ...]:
@@ -215,6 +227,11 @@ class FinalReviewMetadata:
     published_rows: int
     orderable_rows: int
     core_catalogue_rows: int
+    existing_product_data_rows: int
+    matched_product_data_rows: int
+    unmatched_existing_product_data_rows: int
+    unmatched_new_source_rows: int
+    product_data_mismatch_rows: int
     duplicate_barcodes: int
     duplicate_pos_names: int
     category_counts: tuple[tuple[str, int], ...]
@@ -227,7 +244,10 @@ class FinalReviewMetadata:
 
 def parse_sources(inputs: BuildInputs) -> ImportSession:
     _require_single_inventory_source(inputs)
-    headers = read_lunchtab_template(inputs.product_template_path)
+    product_data = read_lunchtab_product_data(
+        inputs.product_template_path,
+        mode=inputs.product_data_mode,
+    )
     recipes = read_recipe_candidates(inputs.recipe_list_path)
     inventory = []
     if inputs.odin_inventory_path is not None:
@@ -235,18 +255,23 @@ def parse_sources(inputs: BuildInputs) -> ImportSession:
     if inputs.generic_inventory_path is not None:
         inventory.extend(read_generic_inventory_candidates(inputs.generic_inventory_path))
     candidates = merge_candidates(recipes, inventory)
-    barcode_duplicates = duplicate_barcodes(candidate.barcode for candidate in candidates)
-    rows = tuple(
-        _session_row(
-            index,
-            candidate,
-            barcode_duplicates,
-            is_published=inputs.is_published,
-            is_orderable=inputs.is_orderable,
-        )
-        for index, candidate in enumerate(candidates, start=1)
+    rows, matched_count, unmatched_source_count, mismatch_count = _build_session_rows(
+        candidates,
+        product_data.existing_rows,
+        is_published=inputs.is_published,
+        is_orderable=inputs.is_orderable,
     )
-    return ImportSession(headers=headers, rows=rows)
+    return ImportSession(
+        headers=product_data.headers,
+        rows=rows,
+        product_data_mode=inputs.product_data_mode,
+        product_data_demo_rows=product_data.demo_row_count,
+        product_data_existing_rows=len(product_data.existing_rows),
+        product_data_matched_rows=matched_count,
+        product_data_unmatched_existing_rows=len(product_data.existing_rows) - matched_count,
+        product_data_unmatched_source_rows=unmatched_source_count,
+        product_data_mismatch_rows=mismatch_count,
+    )
 
 
 def _require_single_inventory_source(inputs: BuildInputs) -> None:
@@ -612,7 +637,10 @@ def save_edit(
             barcode=cleaned_barcode,
             category=category,
             review_reason=(
-                _remove_reason(row.candidate.review_reason, NAME_MISMATCH_REVIEW_REASON)
+                _remove_reason(
+                    _remove_reason(row.candidate.review_reason, NAME_MISMATCH_REVIEW_REASON),
+                    EXISTING_DATA_MISMATCH_REVIEW_REASON,
+                )
                 if material_changed
                 else row.candidate.review_reason
             ),
@@ -627,6 +655,7 @@ def save_edit(
                 category=category,
                 status="needs_edit" if reasons else "edit_complete",
                 review_reason="; ".join(sorted(set(reasons))),
+                product_data_evidence="" if material_changed else row.product_data_evidence,
                 edited=True,
             )
         )
@@ -811,6 +840,7 @@ def save_final_review_edit(
                 pos_name=_clean_text(pos_name),
                 status="pos_ready",
                 review_reason="",
+                product_data_evidence="",
                 edited=True,
                 is_published=is_published,
                 is_orderable=is_orderable,
@@ -1162,6 +1192,7 @@ def final_rows(session: ImportSession) -> list[dict[str, str]]:
                 _category_result(row.category),
                 row.is_published,
                 row.is_orderable,
+                dict(row.target_values),
             )
         )
     return rows
@@ -1328,11 +1359,155 @@ def final_review_metadata(session: ImportSession) -> FinalReviewMetadata:
         published_rows=sum(1 for row in session.active_rows if row.is_published),
         orderable_rows=sum(1 for row in session.active_rows if row.is_orderable),
         core_catalogue_rows=sum(1 for row in session.active_rows if row.core_catalogue),
+        existing_product_data_rows=session.product_data_existing_rows,
+        matched_product_data_rows=session.product_data_matched_rows,
+        unmatched_existing_product_data_rows=session.product_data_unmatched_existing_rows,
+        unmatched_new_source_rows=session.product_data_unmatched_source_rows,
+        product_data_mismatch_rows=sum(
+            1
+            for row in session.active_rows
+            if row.product_data_evidence
+            or EXISTING_DATA_MISMATCH_REVIEW_REASON in _reason_parts(row.review_reason)
+        ),
         duplicate_barcodes=len(barcode_duplicates),
         duplicate_pos_names=len(pos_duplicates),
         category_counts=tuple(sorted(category_counts.items(), key=lambda item: item[0].casefold())),
         export_errors=tuple(validate_session_export_ready(session)),
     )
+
+
+def _build_session_rows(
+    candidates: list[ProductCandidate],
+    existing_rows: tuple[ExistingProductDataRow, ...],
+    *,
+    is_published: bool = False,
+    is_orderable: bool = False,
+) -> tuple[tuple[SessionRow, ...], int, int, int]:
+    staged: list[tuple[ProductCandidate, ExistingProductDataRow | None, str, str]] = []
+    matched_source_keys: set[str] = set()
+    matched_count = 0
+    mismatch_count = 0
+    for existing in existing_rows:
+        match = _match_existing_product_data(existing, candidates)
+        if match is None:
+            staged.append(
+                (_candidate_from_existing_product_data(existing), existing, "existing", "")
+            )
+            continue
+        matched_count += 1
+        matched_source_keys.add(match.source_key)
+        candidate, evidence, has_mismatch = _candidate_from_existing_match(existing, match)
+        if has_mismatch:
+            mismatch_count += 1
+        staged.append((candidate, existing, "matched", evidence))
+    for candidate in candidates:
+        if candidate.source_key not in matched_source_keys:
+            staged.append((candidate, None, "new_source", ""))
+    barcode_duplicates = duplicate_barcodes(candidate.barcode for candidate, *_rest in staged)
+    rows = tuple(
+        _session_row(
+            index,
+            candidate,
+            barcode_duplicates,
+            is_published=_row_bool(existing, "IsPublished", is_published),
+            is_orderable=_row_bool(existing, "IsOrderable", is_orderable),
+            category=existing.category if existing is not None else "",
+            pos_name=existing.pos_name if existing is not None else "",
+            target_values=tuple(existing.values.items()) if existing is not None else (),
+            product_data_match_status=match_status,
+            product_data_evidence=evidence,
+        )
+        for index, (candidate, existing, match_status, evidence) in enumerate(staged, start=1)
+    )
+    return rows, matched_count, len(candidates) - len(matched_source_keys), mismatch_count
+
+
+def _match_existing_product_data(
+    existing: ExistingProductDataRow,
+    candidates: list[ProductCandidate],
+) -> ProductCandidate | None:
+    existing_barcodes = {barcode.casefold() for barcode in parse_barcodes(existing.barcode)}
+    if existing_barcodes:
+        for candidate in candidates:
+            candidate_barcodes = {
+                barcode.casefold() for barcode in parse_barcodes(candidate.barcode)
+            }
+            if existing_barcodes & candidate_barcodes:
+                return candidate
+    existing_name = normalize_text(existing.item_name)
+    if existing_name:
+        for candidate in candidates:
+            if normalize_text(candidate.item_name) == existing_name:
+                return candidate
+    existing_handle = normalize_text(existing.handle)
+    if existing_handle:
+        for candidate in candidates:
+            if normalize_text(candidate.item_name) == existing_handle:
+                return candidate
+    return None
+
+
+def _candidate_from_existing_product_data(existing: ExistingProductDataRow) -> ProductCandidate:
+    return ProductCandidate(
+        source="lunchtab",
+        source_key=existing.source_key,
+        item_name=existing.item_name,
+        price=existing.price,
+        barcode=format_barcodes(parse_barcodes(existing.barcode)),
+        category=existing.category,
+    )
+
+
+def _candidate_from_existing_match(
+    existing: ExistingProductDataRow,
+    source: ProductCandidate,
+) -> tuple[ProductCandidate, str, bool]:
+    mismatches = _existing_match_mismatches(existing, source)
+    reasons = _reason_parts(source.review_reason)
+    if mismatches:
+        reasons.append(EXISTING_DATA_MISMATCH_REVIEW_REASON)
+    candidate = ProductCandidate(
+        source=f"lunchtab+{source.source}",
+        source_key=f"{existing.source_key}|{source.source_key}",
+        item_name=existing.item_name,
+        price=existing.price,
+        barcode=format_barcodes(parse_barcodes(existing.barcode)),
+        category=existing.category,
+        stock=source.stock,
+        recipe_name=source.recipe_name,
+        odin_name=source.odin_name,
+        review_reason="; ".join(sorted(set(reasons))),
+    )
+    return candidate, " | ".join(mismatches), bool(mismatches)
+
+
+def _existing_match_mismatches(
+    existing: ExistingProductDataRow,
+    source: ProductCandidate,
+) -> list[str]:
+    mismatches = []
+    if normalize_text(existing.item_name) != normalize_text(source.item_name):
+        mismatches.append(f"name: ProductData={existing.item_name} Source={source.item_name}")
+    if existing.price != source.price:
+        mismatches.append(f"price: ProductData={existing.price} Source={source.price}")
+    if {barcode.casefold() for barcode in parse_barcodes(existing.barcode)} != {
+        barcode.casefold() for barcode in parse_barcodes(source.barcode)
+    }:
+        mismatches.append(f"barcode: ProductData={existing.barcode} Source={source.barcode}")
+    if normalize_text(existing.category) != normalize_text(source.category):
+        mismatches.append(f"category: ProductData={existing.category} Source={source.category}")
+    return mismatches
+
+
+def _row_bool(existing: ExistingProductDataRow | None, field: str, fallback: bool) -> bool:
+    if existing is None:
+        return fallback
+    value = str(existing.values.get(field, "")).strip().casefold()
+    if value in {"true", "1", "yes", "y"}:
+        return True
+    if value in {"false", "0", "no", "n"}:
+        return False
+    return fallback
 
 
 def _session_row(
@@ -1342,6 +1517,11 @@ def _session_row(
     *,
     is_published: bool = False,
     is_orderable: bool = False,
+    category: str = "",
+    pos_name: str = "",
+    target_values: tuple[tuple[str, str], ...] = (),
+    product_data_match_status: str = "",
+    product_data_evidence: str = "",
 ) -> SessionRow:
     reasons = _core_review_reasons(candidate, barcode_duplicates)
     status: RowStatus = "active" if candidate.item_name and candidate.price else "needs_edit"
@@ -1349,10 +1529,15 @@ def _session_row(
         row_id=f"row-{index}",
         candidate=candidate,
         old_category=candidate.category,
+        category=category,
+        pos_name=pos_name,
         status=status if not reasons else "needs_edit",
         review_reason="; ".join(reasons),
         is_published=is_published,
         is_orderable=is_orderable,
+        target_values=target_values,
+        product_data_match_status=product_data_match_status,
+        product_data_evidence=product_data_evidence,
     )
 
 
@@ -2190,6 +2375,8 @@ def _session_audit_headers() -> list[str]:
         "IsPublished",
         "IsOrderable",
         "CoreCatalogue",
+        "ProductDataMatchStatus",
+        "ProductDataEvidence",
         "Status",
         "Edited",
         "DeletedReason",
@@ -2225,6 +2412,8 @@ def _session_audit_rows(rows_or_session):
             "IsPublished": "true" if row.is_published else "false",
             "IsOrderable": "true" if row.is_orderable else "false",
             "CoreCatalogue": "true" if row.core_catalogue else "false",
+            "ProductDataMatchStatus": row.product_data_match_status,
+            "ProductDataEvidence": row.product_data_evidence,
             "Status": row.status,
             "Edited": "true" if row.edited else "false",
             "DeletedReason": row.deleted_reason,
@@ -2275,6 +2464,13 @@ def _write_manifest(
             "duplicate_barcodes": summary.duplicate_barcodes,
             "duplicate_pos_names": summary.duplicate_pos_names,
             "core_catalogue_rows": summary.core_catalogue_rows,
+            "product_data_mode": session.product_data_mode,
+            "product_data_demo_rows_removed": session.product_data_demo_rows,
+            "product_data_existing_rows": session.product_data_existing_rows,
+            "product_data_matched_rows": session.product_data_matched_rows,
+            "product_data_unmatched_existing_rows": session.product_data_unmatched_existing_rows,
+            "product_data_unmatched_new_source_rows": session.product_data_unmatched_source_rows,
+            "product_data_mismatch_rows": session.product_data_mismatch_rows,
         },
         "categories": list(session.category_names),
         "pos_name_preferences": session.pos_preferences.abbreviations,

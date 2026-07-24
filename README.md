@@ -2,7 +2,7 @@
 
 This Windows desktop utility builds an audited Lunchtab product import CSV from:
 
-- the Lunchtab `ProductData...csv` template;
+- the Lunchtab `ProductData...csv` template or prepopulated ProductData export;
 - the corporate menu-builder `recipeList...csv` export;
 - optional inventory enrichment from either the Odin `Cafeteria Inventory Stock and Prices
   Report...xlsx` export or a generic inventory CSV.
@@ -61,21 +61,23 @@ ignored by Git.
 
 ## Operator Workflow
 
-1. Select the Lunchtab product template CSV.
-2. Select the recipe-list CSV exported from Menu Builder -> Recipe List.
-3. Optionally select either the Odin cafeteria inventory workbook or a generic inventory CSV.
-4. Choose an output folder, or keep the default `Documents\Lunchtab Product Initialization`.
-5. Confirm whether imported rows should default to published and/or orderable.
-6. Parse the source files to build the working set.
-7. Add valid Lunchtab category names, filter rows by keyword or price, assign categories, delete
+1. Select the Lunchtab ProductData CSV.
+2. Choose `Blank template` for a downloaded template, or `Prepopulated ProductData` when the CSV
+   contains real existing Lunchtab products that should be staged and reviewed.
+3. Select the recipe-list CSV exported from Menu Builder -> Recipe List.
+4. Optionally select either the Odin cafeteria inventory workbook or a generic inventory CSV.
+5. Choose an output folder, or keep the default `Documents\Lunchtab Product Initialization`.
+6. Confirm whether imported rows should default to published and/or orderable.
+7. Parse the source files to build the working set.
+8. Add valid Lunchtab category names, filter rows by keyword or price, assign categories, delete
    rows that should not be imported, or mark rows for edit review.
-8. Review queued rows in the edit tab. Use the no-barcode filter and select-all action for fast
+9. Review queued rows in the edit tab. Use the no-barcode filter and select-all action for fast
    deletion of unneeded no-barcode rows, or edit name, price, barcode, and category.
-9. Review generated `BaseProductPosName` values, replace invalid or unwanted names, and use the
+10. Review generated `BaseProductPosName` values, replace invalid or unwanted names, and use the
    suggestions generated from the base algorithm plus session preference learning.
-10. Review final upload data, audit counts, row-level published/orderable flags, and Core Catalogue
+11. Review final upload data, audit counts, row-level published/orderable flags, and Core Catalogue
     selections.
-11. Open the final import, Core Catalogue export, audits, summary, output folder, or a POS profile
+12. Open the final import, Core Catalogue export, audits, summary, output folder, or a POS profile
     proposal from the export-complete tab.
 
 ## Current Automation Rules
@@ -84,6 +86,11 @@ Rows now move through a guided session before export. Rows with a usable item na
 category assignment; missing or duplicate barcode issues are flagged for edit review before export.
 Final export is blocked until every non-deleted row has a usable item name, valid price, barcode,
 category, and unique `BaseProductPosName` of 15 characters or fewer.
+
+In `Prepopulated ProductData` mode, demo/example rows are removed, real existing Lunchtab rows are
+staged and exported unless deleted, and matching recipe/inventory differences are queued as
+`Existing Data Mismatch` for Step 3 review. Existing ProductData-only columns are preserved unless
+the row is edited through the workflow.
 
 `IsPublished` and `IsOrderable` default from Step 1 and can be corrected by row in final review.
 Rows can also be marked for the separate Core Catalogue export.

@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from collections import Counter
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -28,6 +28,7 @@ from lunchtab_product_init.models import (
     CategoryResult,
     PosNameResult,
     ProductCandidate,
+    ProductDataMode,
 )
 from lunchtab_product_init.naming import duplicate_values, generate_pos_name
 
@@ -40,6 +41,26 @@ CATEGORY_AUDIT_NAME = "Product Category Audit.csv"
 ZERO_STOCK_REVIEW_NAME = "Zero Stock Odin Review.csv"
 GENERIC_INVENTORY_HEADERS = ("Item Name", "Price", "Category", "Barcode", "Stock")
 NAME_MISMATCH_REVIEW_REASON = "Name Mismatch"
+
+
+@dataclass(frozen=True)
+class ExistingProductDataRow:
+    source_key: str
+    row_number: int
+    values: dict[str, str]
+    item_name: str
+    price: str
+    barcode: str
+    category: str
+    pos_name: str
+    handle: str
+
+
+@dataclass(frozen=True)
+class LunchtabProductData:
+    headers: list[str]
+    existing_rows: tuple[ExistingProductDataRow, ...]
+    demo_row_count: int
 
 
 def default_output_root() -> Path:
@@ -77,19 +98,59 @@ def _is_zero_stock(candidate: ProductCandidate) -> bool:
 
 
 def read_lunchtab_template(path: Path) -> list[str]:
+    return read_lunchtab_product_data(path, mode="blank_template").headers
+
+
+def read_lunchtab_product_data(
+    path: Path,
+    *,
+    mode: ProductDataMode = "blank_template",
+) -> LunchtabProductData:
     headers, rows = read_csv(path)
     missing = [header for header in LUNCHTAB_TEMPLATE_HEADERS if header not in headers]
     if missing:
         raise ValueError(f"Lunchtab template is missing required columns: {', '.join(missing)}")
-    example_rows = [
-        row
-        for row in rows
-        if row.get("Handle") == "example-product"
-        or row.get("BaseProductName", "").startswith("Example Product")
-    ]
-    if len(rows) == len(example_rows):
-        return headers
-    return headers
+    demo_rows = [row for row in rows if _is_demo_product_data_row(row)]
+    if mode == "blank_template":
+        return LunchtabProductData(headers=headers, existing_rows=(), demo_row_count=len(demo_rows))
+    existing = []
+    for index, row in enumerate(rows, start=2):
+        if _is_demo_product_data_row(row):
+            continue
+        item_name = _clean_product_category(row.get("BaseProductName", "")) or _handle(
+            row.get("Handle", "")
+        )
+        barcode = _barcode(row.get("Barcodes", ""))
+        if not item_name and not barcode:
+            continue
+        existing.append(
+            ExistingProductDataRow(
+                source_key=f"lunchtab:{index}",
+                row_number=index,
+                values={header: str(row.get(header, "")) for header in headers},
+                item_name=item_name,
+                price=_money_text(row.get("Price", "")),
+                barcode=barcode,
+                category=_clean_product_category(row.get("ProductCategories", "")),
+                pos_name=_handle(row.get("BaseProductPosName", "")),
+                handle=_handle(row.get("Handle", "")),
+            )
+        )
+    return LunchtabProductData(
+        headers=headers,
+        existing_rows=tuple(existing),
+        demo_row_count=len(demo_rows),
+    )
+
+
+def _is_demo_product_data_row(row: dict[str, str]) -> bool:
+    return row.get("Handle") == "example-product" or row.get("BaseProductName", "").startswith(
+        "Example Product"
+    )
+
+
+def _clean_product_category(value: str) -> str:
+    return str(value or "").split(";", 1)[0].strip()
 
 
 def read_recipe_candidates(path: Path) -> list[ProductCandidate]:
@@ -301,8 +362,11 @@ def product_row(
     category_result: CategoryResult,
     is_published: bool,
     is_orderable: bool,
+    base_values: dict[str, str] | None = None,
 ) -> dict[str, str]:
     row = {header: "" for header in headers}
+    if base_values:
+        row.update({header: str(base_values.get(header, "")) for header in headers})
     row.update(
         {
             "Handle": _handle(candidate.item_name),

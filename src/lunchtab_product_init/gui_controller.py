@@ -6,7 +6,7 @@ from dataclasses import dataclass, replace
 from enum import Enum
 from pathlib import Path
 
-from lunchtab_product_init.models import BuildInputs
+from lunchtab_product_init.models import BuildInputs, ProductDataMode
 from lunchtab_product_init.session_workflow import (
     FinalReviewMetadata,
     ImportSession,
@@ -39,6 +39,7 @@ class AppState:
     output_root: Path = default_output_root()
     is_published: bool = False
     is_orderable: bool = False
+    product_data_mode: ProductDataMode = "blank_template"
     phase: AppPhase = AppPhase.EMPTY
     session: ImportSession | None = None
     result: SessionExportResult | None = None
@@ -146,6 +147,11 @@ def final_review_audit_text(
         f"Categories: {category_counts}\n"
         f"POS overrides: {metadata.pos_overrides} | Published rows: {metadata.published_rows} | "
         f"Orderable rows: {metadata.orderable_rows} | Core Catalogue rows: {metadata.core_catalogue_rows}\n"
+        f"ProductData: existing {metadata.existing_product_data_rows} | "
+        f"matched {metadata.matched_product_data_rows} | "
+        f"existing-only {metadata.unmatched_existing_product_data_rows} | "
+        f"new source {metadata.unmatched_new_source_rows} | "
+        f"mismatches {metadata.product_data_mismatch_rows}\n"
         f"Sources: {source_text}"
     )
 
@@ -257,6 +263,10 @@ class AppController:
         )
         return self.state
 
+    def set_product_data_mode(self, mode: ProductDataMode) -> AppState:
+        self.state = replace(self.state, product_data_mode=mode, session=None, result=None)
+        return self.state
+
     def build_inputs(self) -> BuildInputs:
         if self.state.product_template_path is None or self.state.recipe_list_path is None:
             raise RuntimeError(
@@ -268,6 +278,7 @@ class AppController:
             output_root=self.state.output_root,
             odin_inventory_path=self.state.odin_inventory_path,
             generic_inventory_path=self.state.generic_inventory_path,
+            product_data_mode=self.state.product_data_mode,
             is_published=self.state.is_published,
             is_orderable=self.state.is_orderable,
         )

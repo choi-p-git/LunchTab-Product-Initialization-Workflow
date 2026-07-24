@@ -7,7 +7,7 @@ The app does not change the files you select.
 
 Prepare these files:
 
-- Lunchtab `ProductData...csv` template.
+- Lunchtab `ProductData...csv` template or prepopulated ProductData CSV.
 - SAGE recipe list CSV.
 - Optional inventory file: choose either Odin inventory or generic inventory, not both.
 - Optional venue profile JSON.
@@ -31,15 +31,21 @@ new folder for that run.
 
 ## Step 1: Parse Sources
 
-1. Select the ProductData template.
-2. Select the SAGE recipe list.
-3. Optionally select one inventory file.
-4. Optionally load a venue profile.
-5. Confirm the output folder.
-6. Confirm whether rows should default to `IsPublished` or `IsOrderable`.
-7. Click `Parse sources`.
+1. Select the ProductData CSV.
+2. Choose the ProductData mode:
+   - Use `Blank template` for a freshly downloaded template.
+   - Use `Prepopulated ProductData` when the CSV already contains real Lunchtab products.
+3. Select the SAGE recipe list.
+4. Optionally select one inventory file.
+5. Optionally load a venue profile.
+6. Confirm the output folder.
+7. Confirm whether new rows should default to `IsPublished` or `IsOrderable`.
+8. Click `Parse sources`.
 
 Normal starting setting: leave `IsOrderable` false unless the venue owner decides otherwise.
+
+In `Prepopulated ProductData` mode, the app removes the demo row, stages existing product rows for
+review, and keeps them in the final CSV unless you delete them.
 
 ## Step 2: Categories
 

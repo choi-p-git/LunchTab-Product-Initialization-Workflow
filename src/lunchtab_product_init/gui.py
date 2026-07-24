@@ -90,6 +90,7 @@ class ProductInitializationApp:
         size_and_center(root, 1120, 760)
 
         self.product_template_text = tk.StringVar()
+        self.product_data_mode = tk.StringVar(value="blank_template")
         self.recipe_list_text = tk.StringVar()
         self.odin_inventory_text = tk.StringVar()
         self.generic_inventory_text = tk.StringVar()
@@ -188,27 +189,44 @@ class ProductInitializationApp:
         self._file_row(
             form, 0, "ProductData template", self.product_template_text, self._choose_template
         )
-        self._file_row(form, 1, "Recipe list", self.recipe_list_text, self._choose_recipe)
+        mode_frame = ttk.Frame(form)
+        mode_frame.grid(row=1, column=1, sticky="w", pady=(4, 8))
+        ttk.Label(form, text="ProductData mode").grid(row=1, column=0, sticky="w", pady=(4, 8))
+        ttk.Radiobutton(
+            mode_frame,
+            text="Blank template",
+            variable=self.product_data_mode,
+            value="blank_template",
+            command=self._set_product_data_mode,
+        ).pack(side="left")
+        ttk.Radiobutton(
+            mode_frame,
+            text="Prepopulated ProductData",
+            variable=self.product_data_mode,
+            value="prepopulated",
+            command=self._set_product_data_mode,
+        ).pack(side="left", padx=(14, 0))
+        self._file_row(form, 2, "Recipe list", self.recipe_list_text, self._choose_recipe)
         self._file_row(
-            form, 2, "Odin inventory (optional)", self.odin_inventory_text, self._choose_odin
+            form, 3, "Odin inventory (optional)", self.odin_inventory_text, self._choose_odin
         )
-        self._generic_inventory_row(form, 3)
+        self._generic_inventory_row(form, 4)
         self._file_row(
-            form, 4, "Venue profile", self.venue_profile_text, self._choose_venue_profile
+            form, 5, "Venue profile", self.venue_profile_text, self._choose_venue_profile
         )
-        self._file_row(form, 5, "Save results in", self.output_text, self._choose_output)
+        self._file_row(form, 6, "Save results in", self.output_text, self._choose_output)
         ttk.Checkbutton(
             form,
             text="Set target CSV IsPublished to true",
             variable=self.is_published,
             command=self._set_import_flags,
-        ).grid(row=6, column=0, columnspan=3, sticky="w", pady=(10, 0))
+        ).grid(row=7, column=0, columnspan=3, sticky="w", pady=(10, 0))
         ttk.Checkbutton(
             form,
             text="Set target CSV IsOrderable to true",
             variable=self.is_orderable,
             command=self._set_import_flags,
-        ).grid(row=7, column=0, columnspan=3, sticky="w", pady=(4, 0))
+        ).grid(row=8, column=0, columnspan=3, sticky="w", pady=(4, 0))
         actions = ttk.Frame(parent)
         actions.grid(row=1, column=0, sticky="ew", pady=(12, 0))
         actions.columnconfigure(0, weight=1)
@@ -869,6 +887,14 @@ class ProductInitializationApp:
             is_published=bool(self.is_published.get()),
             is_orderable=bool(self.is_orderable.get()),
         )
+        self._render()
+
+    def _set_product_data_mode(self) -> None:
+        mode = self.product_data_mode.get()
+        if mode not in {"blank_template", "prepopulated"}:
+            mode = "blank_template"
+            self.product_data_mode.set(mode)
+        self.controller.set_product_data_mode(mode)  # type: ignore[arg-type]
         self._render()
 
     def _start_parse(self) -> None:

@@ -3,11 +3,11 @@
 ## Summary
 
 Lunchtab Product Initialization is a Windows desktop workflow for building upload-ready
-ProductData CSV files from Lunchtab ProductData templates, SAGE recipe-list exports, and optional
-inventory exports. Inventory enrichment can come from an Odin workbook or a generic five-column
-CSV template. The current refined workflow is operator-guided: parse source rows first, assign
-venue categories manually, review and repair row data, steer POS names, review final output, then
-export audited artifacts.
+ProductData CSV files from Lunchtab ProductData templates or prepopulated ProductData exports,
+SAGE recipe-list exports, and optional inventory exports. Inventory enrichment can come from an
+Odin workbook or a generic five-column CSV template. The current refined workflow is
+operator-guided: parse source rows first, assign venue categories manually, review and repair row
+data, steer POS names, review final output, then export audited artifacts.
 
 The app does not administer Lunchtab restriction policies in this workflow. Product category
 assignment is limited to category names the operator enters or loads through a venue profile.
@@ -18,14 +18,18 @@ assignment is limited to category names the operator enters or loads through a v
 - Final output must match the selected Lunchtab ProductData template headers.
 - ProductData template and recipe list are required to parse; Odin workbook and generic inventory
   CSV inputs are optional enrichment sources.
+- Step 1 requires the operator to choose whether the selected ProductData CSV is a blank template
+  or prepopulated ProductData.
+- In prepopulated mode, demo/example rows are removed, real existing ProductData rows are staged
+  and exported unless deleted, and existing ProductData-only columns are preserved unless edited.
 - Only one inventory source can be selected per run. Operators must choose either the Odin workbook
   or the generic inventory CSV, not both.
 - Generic inventory CSV files must contain `Item Name`, `Price`, `Category`, `Barcode`, and
   `Stock` headers.
 - Rows enter category assignment when they have usable item name and price.
 - Missing barcode, duplicate barcode, barcode-matched source name mismatch, duplicate item name
-  before edit approval, missing name, missing price, missing category, invalid POS name, and
-  duplicate POS name must block final export.
+  before edit approval, existing ProductData/source mismatch, missing name, missing price, missing
+  category, invalid POS name, and duplicate POS name must block final export.
 - Comma-separated barcode fields represent multiple barcodes for one product and must be split for
   duplicate validation.
 - Final-row `Handle` should mirror `BaseProductName`.
@@ -56,13 +60,19 @@ assignment is limited to category names the operator enters or loads through a v
 ## Current Guided Workflow
 
 1. **Parse Sources**
-   - Operator selects ProductData template, recipe list, optional Odin inventory workbook,
-     optional generic inventory CSV, optional venue profile, output folder, `IsPublished`, and
-     `IsOrderable`.
+   - Operator selects ProductData CSV, ProductData mode, recipe list, optional Odin inventory
+     workbook, optional generic inventory CSV, optional venue profile, output folder,
+     `IsPublished`, and `IsOrderable`.
    - Selecting an Odin inventory workbook clears any generic inventory CSV selection, and selecting
      a generic inventory CSV clears any Odin inventory workbook selection.
    - App parses and merges candidate rows into a working session.
+   - In blank-template mode, ProductData rows are ignored and only headers are used.
+   - In prepopulated mode, demo/example ProductData rows are removed, real existing rows are
+     staged, existing rows are compared to recipe/inventory candidates by barcode then name, and
+     mismatches are queued as `Existing Data Mismatch`.
    - `old_category` is preserved from source data for filtering.
+   - Existing ProductData categories are staged as current category values and also available as
+     `old_category`.
    - A blank generic inventory CSV template is available from Step 1 for venues without usable
      Odin exports.
    - If a venue has rows from multiple inventory systems, the operator must manually consolidate
